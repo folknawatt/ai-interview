@@ -1,0 +1,19 @@
+[project]
+name = "ai-interview"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "av>=16.0.1",
+    "cuda-python>=12.3",
+    "ffmpeg-python>=0.2.0",
+    "google-genai>=1.52.0",
+    "moviepy>=2.2.1",
+    "openai-whisper>=20250625",
+    "pandas>=2.3.3",
+    "python-dotenv>=1.2.1",
+    "streamlit>=1.51.0",
+    "streamlit-webrtc>=0.64.0",
+    "typhoon-asr>=0.1.0",
+]

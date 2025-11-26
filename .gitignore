@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+
+check_gpu.py
+app_test.py
+main.py
+
+my_app.log
+temp_video.mp4
+tests
