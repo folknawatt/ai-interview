@@ -12,7 +12,7 @@ wheels/
 
 check_gpu.py
 app_test.py
-main.py
+
 
 my_app.log
 temp_video.mp4
