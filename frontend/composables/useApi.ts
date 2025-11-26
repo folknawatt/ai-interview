@@ -1,8 +1,8 @@
 export const useApi = () => {
-  const { $api, $externalApi } = useNuxtApp()
+    const { $axios, $externalApi } = useNuxtApp()
 
-  return {
-    api: $api,
-    externalApi: $externalApi,
-  }
+    return {
+        api: $axios,
+        externalApi: $externalApi,
+    }
 }
