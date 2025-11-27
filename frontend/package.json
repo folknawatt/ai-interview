@@ -11,15 +11,16 @@
     },
     "dependencies": {
         "@nuxt/ui": "^4.2.1",
-        "axios": "^1.13.2",
-        "nuxt": "^4.2.1",
-        "pinia": "^3.0.2",
+        "@pinia/nuxt": "^0.11.3",
         "@vee-validate/zod": "^4.15.0",
-        "typescript": "^5.9.3",
-        "vue": "^3.5.25",
-        "zod": "^3.24.4",
         "@vueuse/core": "^13.2.0",
         "@vueuse/nuxt": "13.2.0",
-        "vue-router": "^4.6.3"
+        "axios": "^1.13.2",
+        "nuxt": "^4.2.1",
+        "pinia": "^3.0.4",
+        "typescript": "^5.9.3",
+        "vue": "^3.5.25",
+        "vue-router": "^4.6.3",
+        "zod": "^3.24.4"
     }
 }
