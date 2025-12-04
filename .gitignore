@@ -13,7 +13,15 @@ wheels/
 check_gpu.py
 app_test.py
 
-
+data
 my_app.log
 temp_video.mp4
 tests
+test.py 
+test_tts_generator.py
+streamlit_test.py
+video_test.mp4
+test_split_audio.py
+test_audio_to_transcript.py
+test_split_audio_with_overlap.py
+split_audio_with_overlap.py
