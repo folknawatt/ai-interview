@@ -1,10 +1,34 @@
-# core/tts_generator.py
+"""
+Text-to-Speech (TTS) generation module.
+
+This module provides text-to-speech generation capabilities using multiple providers:
+- Google Gemini TTS: High-quality neural TTS with multiple voice options
+- Microsoft Edge TTS: Free TTS service with support for multiple languages
+
+The module includes:
+- Custom exception classes for TTS error handling
+- Provider-specific generation functions (generate_gemini_tts, generate_edge_tts)
+- Unified interface (generate_tts) for easy provider switching
+- WAV file creation utilities for audio output
+
+Example:
+    Generate speech using Gemini TTS:
+        >>> audio_path = generate_gemini_tts("Hello, world!", api_key="your-key")
+    
+    Generate speech using Edge TTS (async):
+        >>> audio_path = await generate_edge_tts("Hello, world!")
+    
+    Use unified interface:
+        >>> audio_path = await generate_tts("Hello!", provider="gemini", api_key="your-key")
+"""
 import os
+import wave
 import logging
 import tempfile
-import wave
 from typing import Optional
-from pathlib import Path
+import edge_tts
+from google import genai
+from google.genai import types
 
 # Configure logging
 logging.basicConfig(
@@ -104,10 +128,6 @@ def generate_gemini_tts(
                 text[:50], voice)
 
     try:
-        # Import Gemini client
-        from google import genai
-        from google.genai import types
-
         # Initialize client
         client = genai.Client(api_key=api_key)
 
@@ -174,9 +194,6 @@ async def generate_edge_tts(
                 text[:50], voice)
 
     try:
-        # Import edge_tts
-        import edge_tts
-
         # Create communicator
         communicate = edge_tts.Communicate(text, voice)
 
@@ -199,7 +216,6 @@ async def generate_edge_tts(
 async def generate_tts(
     text: str,
     provider: str = "gemini",
-    voice: Optional[str] = None,
     api_key: Optional[str] = None,
     output_path: Optional[str] = None
 ) -> str:
@@ -211,7 +227,6 @@ async def generate_tts(
     Args:
         text (str): Text to convert to speech
         provider (str): TTS provider to use ("gemini" or "edge", default: "gemini")
-        voice (Optional[str]): Voice name. Uses provider defaults if None
         api_key (Optional[str]): API key for providers that require it (Gemini)
         output_path (Optional[str]): Path to save audio file. If None, creates temp file
 
@@ -225,29 +240,20 @@ async def generate_tts(
     provider = provider.lower()
 
     if provider == "gemini":
-        # Use default Gemini voice if not specified
-        if voice is None:
-            voice = os.getenv("GEMINI_TTS_VOICE", "kore")
 
         return generate_gemini_tts(
             text=text,
             api_key=api_key,
-            voice=voice,
             output_path=output_path
         )
 
-    elif provider == "edge":
-        # Use default Edge voice if not specified
-        if voice is None:
-            voice = os.getenv("EDGE_TTS_VOICE", "th-TH-PremwadeeNeural")
+    if provider == "edge":
 
         return await generate_edge_tts(
             text=text,
-            voice=voice,
             output_path=output_path
         )
 
-    else:
-        error_msg = f"Invalid TTS provider: {provider}. Supported providers: 'gemini', 'edge'"
-        logger.error(error_msg)
-        raise TTSConfigurationError(error_msg)
+    error_msg = f"Invalid TTS provider: {provider}. Supported providers: 'gemini', 'edge'"
+    logger.error(error_msg)
+    raise TTSConfigurationError(error_msg)
