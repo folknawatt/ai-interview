@@ -13,6 +13,7 @@ wheels/
 check_gpu.py
 app_test.py
 
+
 data
 my_app.log
 temp_video.mp4
@@ -25,3 +26,9 @@ test_split_audio.py
 test_audio_to_transcript.py
 test_split_audio_with_overlap.py
 split_audio_with_overlap.py
+test_audio_split_ffmpeg.py
+test_split_audio_ffmpeg.py
+split_audio.py
+test_split_audio_pipeline.py
+split_audio_and_transcript.py
+split_audio_and_transcript_3.py
