@@ -51,9 +51,6 @@ def evaluate_candidate(api_key, question, transcript):
 
     # เตรียม Prompt
     final_prompt = SYSTEM_PROMPT.format(question=question, answer=transcript)
-    print("*" * 50)
-    print("Prompt :", final_prompt)
-    print("*" * 50)
 
     # LLM
     try:
@@ -66,8 +63,16 @@ def evaluate_candidate(api_key, question, transcript):
                 "temperature": 0.2,
             })
         return response.parsed
-    except Exception as e:
-        return {"error": str(e)}
+    except ValueError as e:
+        # Handle validation or parsing errors
+        raise ValueError(f"Failed to parse API response: {str(e)}") from e
+    except ConnectionError as e:
+        # Handle network/connection errors
+        raise ConnectionError(
+            f"Failed to connect to Gemini API: {str(e)}") from e
+    except RuntimeError as e:
+        # Handle API-specific runtime errors
+        raise RuntimeError(f"Gemini API error: {str(e)}") from e
 
 
 # ---- Gemini ----
