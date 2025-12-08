@@ -1,15 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-import shutil
 import os
-from typing import Optional
+import shutil
 from dotenv import load_dotenv
 from core.audio_processor import extract_audio, transcribe_audio
 from core.ai_evaluator import evaluate_candidate
 from core.tts_generator import generate_tts, TTSError
 from pydantic import BaseModel
-import asyncio
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 load_dotenv()
 
@@ -33,11 +31,22 @@ class AnalysisRequest(BaseModel):
 class TTSRequest(BaseModel):
     text: str
     provider: str = "gemini"  # Default to Gemini TTS
-    voice: Optional[str] = "kore"  # Use provider default if not specified
 
 
 @app.post("/upload")
 async def upload_video(file: UploadFile = File(...)):
+    """
+    Upload a video file, extract audio, and transcribe it.
+
+    Args:
+        file: UploadFile containing the video file to process
+
+    Returns:
+        dict: Contains transcript text and the temporary filename
+
+    Raises:
+        HTTPException: If video processing, audio extraction, or transcription fails
+    """
     try:
         file_location = f"temp_{file.filename}"
         with open(file_location, "wb+") as file_object:
@@ -53,11 +62,20 @@ async def upload_video(file: UploadFile = File(...)):
 
         return {"transcript": transcript, "filename": file_location}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/analyze")
 async def analyze_interview(request: AnalysisRequest):
+    """
+    Analyze a candidate's interview response using AI evaluation.
+
+    Args:
+        request: AnalysisRequest containing the interview question and candidate's transcript
+
+    Returns:
+        dict: Evaluation results including scores, feedback, and analysis
+    """
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="Google API Key not found")
@@ -91,7 +109,6 @@ async def generate_tts_audio(request: TTSRequest):
         audio_path = await generate_tts(
             text=request.text,
             provider=request.provider,
-            voice=request.voice,
             api_key=api_key
         )
 
@@ -104,10 +121,10 @@ async def generate_tts_audio(request: TTSRequest):
 
     except TTSError as e:
         raise HTTPException(
-            status_code=500, detail=f"TTS generation failed: {str(e)}")
+            status_code=500, detail=f'TTS generation failed: {str(e)}') from e
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Unexpected error: {str(e)}")
+            status_code=500, detail=f'Unexpected error: {str(e)}') from e
 
 
 @app.get("/tts/audio/{filename}")
