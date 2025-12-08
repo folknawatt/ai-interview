@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 try:
     from typhoon_asr import transcribe
 except ImportError:
-    logger.warning("typhoon_asr not found. Using mock transcription.")
+    logger.warning("typhoon_asr not found.")
 
 
 def transcribe_audio(audio_path: str) -> str:
@@ -48,7 +48,7 @@ def transcribe_audio(audio_path: str) -> str:
     try:
         # Note: typhoon_asr.transcribe seems to load the model internally or globally.
         if 'typhoon_asr' not in globals() and 'transcribe' not in globals():
-            return "Mock transcription: typhoon_asr not installed."
+            return "Warning: typhoon_asr not installed."
 
         result_no_timestamps = transcribe(
             audio_path, with_timestamps=False, device="auto"
