@@ -27,14 +27,15 @@
       </div>
 
       <div class="mt-10">
-        <UButton
+        <button
           @click="goToRecord"
-          size="xl"
-          color="primary"
-          icon="i-heroicons-video-camera"
+          class="inline-flex items-center px-6 py-3 text-lg font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
         >
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
           พร้อมแล้ว! เริ่มอัดวิดีโอเลย
-        </UButton>
+        </button>
       </div>
     </div>
   </div>
@@ -45,7 +46,7 @@ const { question } = useInterview();
 const router = useRouter();
 
 const timeLeft = ref(30);
-let timer: NodeJS.Timeout;
+let timer: ReturnType<typeof setInterval>;
 
 onMounted(() => {
   timer = setInterval(() => {

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview (Camera Mode)</title>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif, Arial;
+            background-color: #20232a; /* พื้นหลังสีเข้มเพื่อให้ดู Professional */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #2c313c;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        /* กรอบแสดงวิดีโอ (Webcam) */
+        #video-container {
+            width: 100%;
+            max-width: 640px;
+            height: 360px; /* 16:9 Aspect Ratio */
+            background-color: #000;
+            margin: 0 auto 20px auto;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #444;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* ให้ภาพเต็มกรอบ */
+            transform: scaleX(-1); /* กลับด้านภาพให้เหมือนกระจกเงา */
+        }
+
+        /* ไฟสถานะการอัด (REC) */
+        .rec-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: red;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: none; /* ซ่อนไว้ก่อน */
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        h1 { color: #61dafb; margin-bottom: 10px; }
+
+        #question-display {
+            font-size: 1.3rem;
+            color: #fff;
+            background-color: #3e4452;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 5px solid #61dafb;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        #start-btn { background-color: #28a745; color: white; }
+        #start-btn:hover { background-color: #218838; transform: scale(1.05); }
+
+        #next-btn { background-color: #61dafb; color: #20232a; }
+        #next-btn:hover { background-color: #4fa8d1; }
+        
+        .hidden { display: none; }
+
+        #results-area a {
+            display: block;
+            background: #fff;
+            color: #333;
+            margin: 10px 0;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: left;
+        }
+        #results-area a:hover { background: #eee; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎥 AI Interview Simulator</h1>
+        <p style="color: #aaa; margin-top: 0;">โหมดบันทึกกล้องและไมโครโฟน</p>
+
+        <div id="video-container">
+            <video id="camera-preview" autoplay muted playsinline></video>
+            <div id="rec-dot" class="rec-indicator">● REC</div>
+        </div>
+
+        <div id="question-display">
+            เตรียมความพร้อม... <br>กดปุ่ม "อนุญาตกล้อง & เริ่มต้น"
+        </div>
+
+        <div id="controls">
+            <button id="start-btn" class="btn">อนุญาตกล้อง & เริ่มต้น</button>
+            <button id="next-btn" class="btn hidden">จบคำตอบนี้ / ไปข้อถัดไป</button>
+        </div>
+
+        <div id="results-area" class="hidden">
+            <h3>🎉 บันทึกเสร็จสิ้น!</h3>
+            <p>ดาวน์โหลดวิดีโอการสัมภาษณ์ของคุณ:</p>
+            <div id="download-links"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ข้อมูลคำถาม ---
+        const questions = [
+            "คำถามที่ 1: ช่วยแนะนำตัวเองสั้นๆ ให้เรารู้จักหน่อยครับ?",
+            "คำถามที่ 2: อะไรคือจุดแข็งที่สุดของคุณ และจะนำมาใช้ประโยชน์กับงานนี้อย่างไร?",
+            "คำถามที่ 3: คุณมีคำถามอะไรอยากจะถามเรากลับบ้างไหมครับ?"
+        ];
+
+        let currentQIndex = 0;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let videoFiles = [];
+        let globalStream = null; // เก็บ Stream กล้องไว้ใช้ยาวๆ
+
+        const videoPreview = document.getElementById('camera-preview');
+        const questionText = document.getElementById('question-display');
+        const startBtn = document.getElementById('start-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const recDot = document.getElementById('rec-dot');
+        const resultsArea = document.getElementById('results-area');
+        const downloadContainer = document.getElementById('download-links');
+
+        // --- 2. เริ่มต้น ---
+        startBtn.addEventListener('click', async () => {
+            try {
+                // ขอสิทธิ์เข้าถึงกล้องและไมค์
+                // หมายเหตุ: video: { width: 1280, height: 720 } เพื่อคุณภาพ HD (ถ้ามี)
+                globalStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                
+                // แสดงภาพ Preview
+                videoPreview.srcObject = globalStream;
+
+                // เปลี่ยนหน้าจอ UI
+                startBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                // เริ่มรันคำถามแรก
+                runSegment();
+
+            } catch (err) {
+                console.error("Camera Error:", err);
+                alert("ไม่สามารถเข้าถึงกล้องได้ กรุณาตรวจสอบสิทธิ์การเข้าถึง (Permission)");
+            }
+        });
+
+        nextBtn.addEventListener('click', finishSegment);
+
+        // --- 3. ฟังก์ชันการทำงาน ---
+
+        function runSegment() {
+            if (currentQIndex >= questions.length) {
+                finishInterview();
+                return;
+            }
+
+            // แสดงคำถาม
+            questionText.textContent = questions[currentQIndex];
+            
+            // เริ่มบันทึก (Recording)
+            startRecording();
+        }
+
+        function startRecording() {
+            recordedChunks = [];
+            // ใช้ Stream เดิมที่เปิดไว้แล้ว
+            mediaRecorder = new MediaRecorder(globalStream);
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                // เซฟไฟล์เมื่อหยุด
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                videoFiles.push({ index: currentQIndex + 1, url: url });
+                
+                // ไปข้อถัดไป
+                currentQIndex++;
+                runSegment();
+            };
+
+            mediaRecorder.start();
+            recDot.style.display = 'block'; // โชว์ไฟแดง REC
+            nextBtn.disabled = false;
+        }
+
+        function finishSegment() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                nextBtn.disabled = true; // กันกดเบิ้ล
+                recDot.style.display = 'none'; // ซ่อนไฟแดง
+                mediaRecorder.stop(); // สั่งหยุด -> จะไปเข้า onstop ด้านบนอัตโนมัติ
+            }
+        }
+
+        function finishInterview() {
+            // ปิดกล้อง
+            if (globalStream) {
+                globalStream.getTracks().forEach(track => track.stop());
+            }
+            videoPreview.srcObject = null;
+
+            // แสดงหน้าจบ
+            questionText.textContent = "การสัมภาษณ์เสร็จสิ้น ขอบคุณครับ";
+            nextBtn.classList.add('hidden');
+            resultsArea.classList.remove('hidden');
+            document.getElementById('video-container').style.display = 'none'; // ซ่อนจอกล้อง
+
+            // สร้างลิงก์ดาวน์โหลด
+            videoFiles.forEach(file => {
+                const link = document.createElement('a');
+                link.href = file.url;
+                link.download = `Camera_Interview_Q${file.index}.webm`;
+                link.innerHTML = `📹 <b>ดาวน์โหลดคำตอบ ข้อที่ ${file.index}</b>`;
+                downloadContainer.appendChild(link);
+            });
+        }
+    </script>
+</body>
+</html>

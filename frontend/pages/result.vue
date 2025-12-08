@@ -76,7 +76,7 @@
 
       <div v-else class="text-center text-gray-400 mt-10">
         <p>ไม่พบข้อมูลผลลัพธ์ กรุณากลับไปหน้าแรก</p>
-        <UButton to="/" color="gray" class="mt-4">กลับหน้าแรก</UButton>
+        <NuxtLink to="/" class="inline-block px-6 py-3 mt-4 text-lg font-semibold text-white bg-gray-600 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">กลับหน้าแรก</NuxtLink>
       </div>
     </div>
   </div>

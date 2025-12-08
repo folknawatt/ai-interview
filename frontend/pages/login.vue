@@ -13,24 +13,23 @@
           <label class="block text-left text-sm font-medium mb-2"
             >ชื่อ-นามสกุล ของคุณ</label
           >
-          <UInput
+          <input
             v-model="name"
-            size="lg"
+            type="text"
             placeholder="กรอกชื่อของคุณ..."
             autofocus
             required
+            class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
           />
         </div>
 
-        <UButton
+        <button
           type="submit"
-          block
-          size="lg"
-          color="primary"
           :disabled="!name.trim()"
+          class="w-full px-6 py-3 text-lg font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           เริ่มการสัมภาษณ์ (Start Interview)
-        </UButton>
+        </button>
       </form>
     </div>
   </div>
