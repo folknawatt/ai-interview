@@ -162,3 +162,8 @@ async def get_tts_audio(filename: str):
             )
 
     raise HTTPException(status_code=404, detail="Audio file not found")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
