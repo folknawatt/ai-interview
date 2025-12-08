@@ -27,6 +27,21 @@ Output เป็น JSON เท่านั้น (ไม่ต้องมี M
 """
 
 
+QUESTION_PROMPT = """
+คุณคือ HR Specialist คิดคำถามสัมภาษณ์ 3 คำถามจากเนื้อหาที่ให้ไปดังนี้:
+{job_description}
+
+Output เป็น JSON เท่านั้น (ไม่ต้องมี Markdown):
+{{
+  "questions": [
+    "คำถาม 1",
+    "คำถาม 2",
+    "คำถาม 3"
+  ]
+}}
+"""
+
+
 # # Prompt ที่สั่งให้ฟังเสียงและวิเคราะห์
 # SYSTEM_PROMPT_AUDIO = """
 # คุณคือ HR ผู้เชี่ยวชาญ
