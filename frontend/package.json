@@ -7,25 +7,45 @@
         "dev": "nuxt dev",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
-        "postinstall": "nuxt prepare"
+        "postinstall": "nuxt prepare",
+        "lint": "eslint --ext .ts,.js,.vue .",
+        "lint:fix": "eslint --ext .ts,.js,.vue . --fix",
+        "format": "prettier --write \"**/*.{js,ts,vue,css,md}\"",
+        "type-check": "nuxt typecheck",
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest --coverage"
     },
     "dependencies": {
+        "@heroicons/vue": "^2.2.0",
         "@pinia/nuxt": "^0.11.3",
         "@vee-validate/zod": "^4.15.0",
         "@vueuse/core": "^13.2.0",
         "@vueuse/nuxt": "13.2.0",
         "axios": "^1.13.2",
+        "chart.js": "^4.5.1",
         "nuxt": "^4.2.1",
         "pinia": "^3.0.4",
         "typescript": "^5.9.3",
         "vue": "^3.5.25",
+        "vue-chartjs": "^5.3.3",
         "vue-router": "^4.6.3",
         "zod": "^3.24.4"
     },
     "devDependencies": {
+        "@nuxtjs/eslint-config-typescript": "^12.1.0",
         "@nuxtjs/tailwindcss": "^6.14.0",
+        "@types/node": "^24.10.1",
+        "@vitest/ui": "^2.1.0",
+        "@vue/test-utils": "^2.4.6",
         "autoprefixer": "^10.4.22",
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-prettier": "^5.2.1",
+        "happy-dom": "^15.0.0",
         "postcss": "^8.5.6",
-        "tailwindcss": "^3.4.18"
+        "prettier": "^3.3.3",
+        "tailwindcss": "^3.4.18",
+        "vitest": "^2.1.0"
     }
 }

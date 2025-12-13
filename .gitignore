@@ -1,34 +1,102 @@
-# Python-generated files
+# ============================================
+# Python
+# ============================================
 __pycache__/
-*.py[oc]
+*.py[cod]
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
 build/
 dist/
 wheels/
-*.egg-info
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.cover
 
-# Virtual environments
-.venv
+# ============================================
+# Virtual Environments
+# ============================================
+.venv/
+venv/
+ENV/
+env/
+
+# ============================================
+# Environment Variables
+# ============================================
 .env
+.env.local
+.env.*.local
 
-check_gpu.py
-app_test.py
-
-
-data
+# ============================================
+# Logs (ALL log files should be ignored)
+# ============================================
+*.log
+logs/
 my_app.log
+
+# ============================================
+# Storage & Runtime Data
+# ============================================
+/storage/
+/backend/storage/
+/backend/temp_storage/
+/data/uploads/
+/data/temp/
+/data/cache/
 temp_video.mp4
-tests
-test.py 
-test_tts_generator.py
-streamlit_test.py
 video_test.mp4
-test_split_audio.py
-test_audio_to_transcript.py
-test_split_audio_with_overlap.py
-split_audio_with_overlap.py
-test_audio_split_ffmpeg.py
-test_split_audio_ffmpeg.py
-split_audio.py
-test_split_audio_pipeline.py
-split_audio_and_transcript.py
-split_audio_and_transcript_3.py
+
+# Keep test fixtures (important!)
+!/data/fixtures/
+!/tests/
+
+# ============================================
+# Frontend / Node.js
+# ============================================
+node_modules/
+.nuxt/
+.output/
+dist/
+.cache/
+.env.local
+
+# ============================================
+# IDE & Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============================================
+# OS
+# ============================================
+.DS_Store
+Thumbs.db
+*.tmp
+
+# ============================================
+# Project Specific
+# ============================================
+# Individual legacy/test scripts in root (not test directories!)
+/check_gpu.py
+/app_test.py
+/streamlit_test.py
+
+# Temporary test files
+test_deps.py
+pyproject_minimal.toml
+uv_output.txt
+*_test.py
+
+# Data directory (but keep fixtures and seeds)
+/data/*
+!/data/fixtures/
+!/data/seeds/
+!/data/.gitkeep

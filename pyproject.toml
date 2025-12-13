@@ -1,24 +1,195 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/app", "backend/config"]
+
 [project]
 name = "ai-interview"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered interview platform for HR question generation and candidate evaluation"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 dependencies = [
-    "av>=16.0.1",
-    "cuda-python>=12.3",
-    "edge-tts>=7.2.3",
-    "fastapi>=0.122.0",
-    "faster-whisper>=1.2.1",
+    "aiofiles>=23.2.0",
+    "av>=13.0.0",
+    "edge-tts>=6.0.0",
+    "fastapi>=0.100.0",
+    "faster-whisper>=1.0.0",
     "ffmpeg-python>=0.2.0",
-    "google-genai>=1.52.0",
-    "moviepy>=2.2.1",
-    "openai-whisper>=20250625",
-    "pandas>=2.3.3",
-    "python-dotenv>=1.2.1",
-    "python-multipart>=0.0.20",
+    "google-genai>=1.0.0",
+    "moviepy>=1.0.0",
+    "openai-whisper>=20231117",
+    "pandas>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.9",
+    "streamlit>=1.30.0",
+    "streamlit-webrtc>=0.47.0",
+    "typhoon-asr>=0.1.1",
+    "uvicorn>=0.20.0",
+    "numpy==1.26.4",
+    "sqlalchemy>=2.0.0",
+    "reportlab>=4.0.0",
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "pytest-asyncio>=0.25.0",
+    "httpx>=0.27.0",  # For FastAPI testing
+    "black>=24.0.0",
+    "ruff>=0.7.0",
+    "mypy>=1.8.0",
+    "pre-commit>=4.0.0",
+]
+
+# Machine Learning dependencies (optional for deployments without ML features)
+# Note: For CUDA support, install torch from PyTorch's index:
+# uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+ml = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "faster-whisper>=1.2.1",
+]
+
+# Streaming dependencies (optional)
+streaming = [
     "streamlit>=1.51.0",
     "streamlit-webrtc>=0.64.0",
-    "typhoon-asr>=0.1.0",
-    "uvicorn>=0.38.0",
+]
+
+# ===================================
+# Testing Configuration (Pytest)
+# ===================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--cov=app",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+]
+
+# ===================================
+# Code Formatting (Black)
+# ===================================
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# ===================================
+# Linting (Ruff)
+# ===================================
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "UP",  # pyupgrade
+    "ANN", # flake8-annotations
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "S",   # flake8-bandit (security)
+]
+ignore = [
+    "D100", # Missing docstring in public module (can enable later)
+    "D104", # Missing docstring in public package
+    "ANN101", # Missing type annotation for self
+    "ANN102", # Missing type annotation for cls
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101", # Allow assert in tests
+    "D103", # Missing docstring in public function (tests)
+    "ANN", # No need for type annotations in tests
+]
+
+# ===================================
+# Type Checking (MyPy)
+# ===================================
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Set to true when all functions have type hints
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "moviepy.*",
+    "streamlit.*",
+    "av.*",
+    "edge_tts.*",
+]
+ignore_missing_imports = true
+
+# ===================================
+# Coverage
+# ===================================
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
 ]
