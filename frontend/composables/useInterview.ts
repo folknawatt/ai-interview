@@ -4,7 +4,7 @@ import type { Question, AnalysisResponse, SessionSummary } from '~/types/api';
  * Updated Interview composable with API integration
  */
 export const useInterview = () => {
-  const { get, uploadFile } = useApi();
+  const { get, post, uploadFile } = useApi();
 
   // State management
   const candidateName = useState<string>('candidateName', () => '');
@@ -89,7 +89,7 @@ export const useInterview = () => {
    */
   const completeInterview = async () => {
     try {
-      const response = await get<{
+      const response = await post<{
         message: string;
         session_id: string;
         recommendation: string;

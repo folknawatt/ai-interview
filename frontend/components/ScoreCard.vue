@@ -25,7 +25,7 @@
       />
     </svg>
     <div class="score-content">
-      <div class="score-value">{{ score.toFixed(1) }}</div>
+      <div class="score-value">{{ score }}</div>
       <div class="score-max">/ 10</div>
     </div>
   </div>

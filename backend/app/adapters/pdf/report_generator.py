@@ -222,7 +222,7 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
                 f"{q.relevance_score}/10",
                 f"{q.quality_score}/10",
                 f"{q.total_score}/10",
-                "✓" if q.pass_prediction else "✗"
+                "PASS" if q.pass_prediction else "FAIL"
             ]
         ]
 

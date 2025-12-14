@@ -52,25 +52,25 @@
             <div class="score-item">
               <div class="score-label">Communication</div>
               <div class="score-value">
-                {{ report.aggregated_score.communication_avg.toFixed(1) }} / 10
+                {{ report.aggregated_score.communication_avg }} / 10
               </div>
             </div>
             <div class="score-item">
               <div class="score-label">Relevance</div>
               <div class="score-value">
-                {{ report.aggregated_score.relevance_avg.toFixed(1) }} / 10
+                {{ report.aggregated_score.relevance_avg }} / 10
               </div>
             </div>
             <div class="score-item">
               <div class="score-label">Quality</div>
               <div class="score-value">
-                {{ report.aggregated_score.quality_avg.toFixed(1) }} / 10
+                {{ report.aggregated_score.quality_avg }} / 10
               </div>
             </div>
             <div class="score-item">
               <div class="score-label">Pass Rate</div>
               <div class="score-value">
-                {{ report.aggregated_score.pass_rate.toFixed(1) }}%
+                {{ report.aggregated_score.pass_rate }}%
               </div>
             </div>
             <div class="score-item">

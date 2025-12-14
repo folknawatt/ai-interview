@@ -18,7 +18,7 @@
           <ChartBarIcon class="icon-svg" />
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ statistics.average_score.toFixed(1) }}</div>
+          <div class="stat-value">{{ statistics.average_score }}</div>
           <div class="stat-label">Average Score</div>
         </div>
       </div>
@@ -27,7 +27,7 @@
           <CheckCircleIcon class="icon-svg" />
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ statistics.pass_rate.toFixed(1) }}%</div>
+          <div class="stat-value">{{ statistics.pass_rate }}%</div>
           <div class="stat-label">Pass Rate</div>
         </div>
       </div>
@@ -116,7 +116,7 @@
           <td>{{ formatDate(report.interview_date) }}</td>
           <td>
             <span class="score-badge" :class="getScoreClass(report.total_score)">
-              {{ report.total_score?.toFixed(1) || 'N/A' }}
+              {{ report.total_score || 'N/A' }}
             </span>
           </td>
           <td>

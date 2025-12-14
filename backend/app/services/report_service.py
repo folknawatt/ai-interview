@@ -20,6 +20,7 @@ from app.schemas import (
     QuestionResultResponse,
     AggregatedScoreResponse
 )
+from app.adapters.pdf.report_generator import generate_pdf_report
 
 
 class ReportService:
@@ -55,8 +56,6 @@ class ReportService:
         ).outerjoin(
             AggregatedScore,
             Candidate.id == AggregatedScore.candidate_id
-        ).filter(
-            Candidate.completed.is_(True)
         )
 
         # Apply filters
@@ -184,7 +183,6 @@ class ReportService:
         Raises:
             NotFoundError: If session not found
         """
-        from app.adapters.pdf.report_generator import generate_pdf_report
 
         # Get report data
         report = ReportService.get_report_details(session, session_id)

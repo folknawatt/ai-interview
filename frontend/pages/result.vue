@@ -6,7 +6,25 @@
         ผลการวิเคราะห์ (Analysis Result)
       </h1>
 
-      <div v-if="result" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div v-if="loading" class="text-center py-12">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-minimal-info mx-auto mb-4"
+        ></div>
+        <p class="text-minimal-text-secondary">กำลังประมวลผลคะแนน...</p>
+      </div>
+
+      <div
+        v-else-if="error"
+        class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+        role="alert"
+      >
+        <strong class="font-bold">Error: </strong>
+        <span class="block sm:inline">{{ error }}</span>
+      </div>
+
+      <div v-else-if="!result" class="text-center py-12 text-gray-500">ไม่พบข้อมูลผลลัพธ์</div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Scores -->
         <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
           <h2 class="text-xl font-semibold mb-4">คะแนนประเมิน (Scores)</h2>
@@ -25,9 +43,7 @@
             </div>
             <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center">
               <div class="text-sm text-minimal-text-secondary">Quality</div>
-              <div class="text-2xl font-bold text-minimal-info">
-                {{ result.scores.quality }}/10
-              </div>
+              <div class="text-2xl font-bold text-minimal-info">{{ result.scores.quality }}/10</div>
             </div>
             <div class="bg-emerald-50 p-4 rounded border-2 border-minimal-success text-center">
               <div class="text-sm text-minimal-text-secondary">Total Score</div>
@@ -39,7 +55,9 @@
         </div>
 
         <!-- Pass/Fail -->
-        <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border flex flex-col items-center justify-center">
+        <div
+          class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border flex flex-col items-center justify-center"
+        >
           <h2 class="text-xl font-semibold mb-4">ผลสรุป (Conclusion)</h2>
           <div v-if="result.pass_prediction" class="text-center">
             <div class="flex justify-center mb-2">
@@ -56,27 +74,49 @@
         </div>
 
         <!-- Feedback -->
-        <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border md:col-span-2">
+        <div
+          class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border md:col-span-2"
+        >
           <h2 class="text-xl font-semibold mb-4">คำติชม (Feedback)</h2>
-          <div class="space-y-4">
-            <div>
-              <h3 class="text-sm font-medium text-minimal-success mb-1 flex items-center gap-1">
+          <div class="space-y-6">
+            <div v-if="result.feedback.strengths.length > 0">
+              <h3 class="text-sm font-medium text-minimal-success mb-2 flex items-center gap-1">
                 <SparklesIcon class="w-4 h-4" />
                 จุดแข็ง
               </h3>
-              <p class="text-minimal-text-secondary">{{ result.feedback.strengths }}</p>
+              <ul class="list-disc list-inside text-minimal-text-secondary space-y-1">
+                <li v-for="(item, index) in result.feedback.strengths" :key="index">{{ item }}</li>
+              </ul>
             </div>
-            <div>
-              <h3 class="text-sm font-medium text-amber-500 mb-1 flex items-center gap-1">
+            <div v-else>
+               <h3 class="text-sm font-medium text-minimal-success mb-2 flex items-center gap-1">
+                <SparklesIcon class="w-4 h-4" />
+                จุดแข็ง
+              </h3>
+              <p class="text-minimal-text-secondary italic">ไม่มีระบุ</p>
+            </div>
+            
+            <div v-if="result.feedback.weaknesses.length > 0">
+              <h3 class="text-sm font-medium text-amber-500 mb-2 flex items-center gap-1">
                 <ExclamationTriangleIcon class="w-4 h-4" />
                 จุดที่ควรพัฒนา
               </h3>
-              <p class="text-minimal-text-secondary">{{ result.feedback.weaknesses }}</p>
+               <ul class="list-disc list-inside text-minimal-text-secondary space-y-1">
+                <li v-for="(item, index) in result.feedback.weaknesses" :key="index">{{ item }}</li>
+              </ul>
             </div>
-            <div>
-              <h3 class="text-sm font-medium text-minimal-info mb-1 flex items-center gap-1">
+            <div v-else>
+              <h3 class="text-sm font-medium text-amber-500 mb-2 flex items-center gap-1">
+                <ExclamationTriangleIcon class="w-4 h-4" />
+                จุดที่ควรพัฒนา
+              </h3>
+               <p class="text-minimal-text-secondary italic">ไม่มีระบุ</p>
+            </div>
+
+            <div v-if="result.feedback.summary">
+              <h3 class="text-sm font-medium text-minimal-info mb-2 flex items-center gap-1">
                 <DocumentTextIcon class="w-4 h-4" />
-                สรุป
+                สรุปภาพรวม
               </h3>
               <p class="text-minimal-text-secondary">{{ result.feedback.summary }}</p>
             </div>
@@ -110,67 +150,77 @@ import {
   XCircleIcon,
   SparklesIcon,
   ExclamationTriangleIcon,
-  DocumentTextIcon
-} from '@heroicons/vue/24/solid';
+  DocumentTextIcon,
+} from '@heroicons/vue/24/solid'
 
-const { sessionId, getSummary, resetInterview } = useInterview();
-const router = useRouter();
+const { sessionId, getSummary, resetInterview } = useInterview()
+const router = useRouter()
 
 // State for aggregated results
-const loading = ref(true);
-const error = ref('');
-const aggregatedScore = ref<any>(null);
+const loading = ref(true)
+const error = ref('')
+const aggregatedScore = ref<any>(null)
+const questionResults = ref<any[]>([])
 
 // Fetch aggregated scores on mount
 onMounted(async () => {
   if (!sessionId.value) {
     // No session, redirect to login
-    router.push('/login');
-    return;
+    router.push('/login')
+    return
   }
 
   try {
-    loading.value = true;
-    const summary = await getSummary();
-    
+    loading.value = true
+    const summary = await getSummary()
+
     if (summary.aggregated_score) {
-      aggregatedScore.value = summary.aggregated_score;
+      aggregatedScore.value = summary.aggregated_score
+      questionResults.value = summary.details || []
     } else {
-      error.value = 'ยังไม่มีผลคะแนนรวม กรุณารอสักครู่';
+      error.value = 'ยังไม่มีผลคะแนนรวม กรุณารอสักครู่'
     }
   } catch (err: any) {
-    console.error('Error fetching summary:', err);
-    error.value = 'ไม่สามารถโหลดผลคะแนนได้';
+    console.error('Error fetching summary:', err)
+    error.value = 'ไม่สามารถโหลดผลคะแนนได้'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-});
+})
 
 // Computed result for template (transform aggregated score to match old format)
 const result = computed(() => {
-  if (!aggregatedScore.value) return null;
-  
-  const agg = aggregatedScore.value;
-  const isPassed = agg.overall_recommendation === 'Strong Pass' || agg.overall_recommendation === 'Pass';
-  
+  if (!aggregatedScore.value) return null
+
+  const agg = aggregatedScore.value
+  const isPassed =
+    agg.overall_recommendation === 'Strong Pass' || agg.overall_recommendation === 'Pass'
+
+  // Helper to extract non-empty feedback items
+  const extractFeedback = (key: string) => {
+    return questionResults.value
+      .map(q => q.evaluation?.feedback?.[key])
+      .filter(item => item && item.trim() !== '' && item !== 'None')
+  }
+
   return {
     scores: {
       communication: agg.communication_avg.toFixed(1),
       relevance: agg.relevance_avg.toFixed(1),
       quality: agg.quality_avg.toFixed(1),
-      total: agg.total_score.toFixed(1)
+      total: agg.total_score.toFixed(1),
     },
     pass_prediction: isPassed,
     feedback: {
-      strengths: `คุณตอบคำถามได้ ${agg.questions_answered} จาก ${agg.total_questions} ข้อ`,
-      weaknesses: `อัตราผ่านต่อคำถาม: ${agg.pass_rate.toFixed(1)}%`,
-      summary: `ผลการประเมินโดยรวม: ${agg.overall_recommendation} (คะแนนเฉลี่ย ${agg.total_score.toFixed(1)}/10)`
-    }
-  };
-});
+      strengths: extractFeedback('strengths'),
+      weaknesses: extractFeedback('weaknesses'),
+      summary: `ผลการประเมินโดยรวม: ${agg.overall_recommendation} (คะแนนเฉลี่ย ${agg.total_score.toFixed(1)}/10)`,
+    },
+  }
+})
 
 const startNewInterview = () => {
-  resetInterview();
-  router.push('/login');
-};
+  resetInterview()
+  router.push('/login')
+}
 </script>
