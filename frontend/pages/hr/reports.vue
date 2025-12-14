@@ -1,5 +1,10 @@
 <template>
   <div class="reports-container">
+    <div class="mb-6">
+        <NuxtLink to="/hr/dashboard" class="text-minimal-info hover:text-sky-600">
+          ← Back to Dashboard
+        </NuxtLink>
+    </div>
     <h1>Interview Reports</h1>
 
     <!-- Statistics Cards -->
