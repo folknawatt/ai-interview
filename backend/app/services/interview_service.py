@@ -6,14 +6,13 @@ Encapsulates business logic for candidate interviews, including:
 - Scoring and Summaries
 """
 import os
-import uuid
 import logging
 import asyncio
+import uuid
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
 
-import aiofiles
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
@@ -22,43 +21,20 @@ from app.adapters.ai.typhoon_asr import extract_audio, transcribe_audio
 from app.domain.scoring.aggregator import calculate_aggregated_score
 from app.exceptions import NotFoundError, ValidationError
 from app.database.models import Candidate, QuestionResult, AggregatedScore
-from app.domain.models import (
-    QuestionResult as DomainQuestionResult,
-    Evaluation,
-    Score,
-    Feedback
-)
 from app.services.candidate_service import CandidateService
 from app.services.question_service import QuestionService
-from app.utils.file_ops import cleanup_files
+from app.services.storage_service import StorageService
+from app.services.mappers import InterviewMapper
 from app.config.settings import settings
+
 
 logger = logging.getLogger(__name__)
 
 TEMP_DIR = Path(settings.temp_storage_dir)
-TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class InterviewService:
     """Service class for handling interview business logic."""
-
-    @staticmethod
-    def _format_question_result(qr: QuestionResult) -> Dict[str, Any]:
-        """Format QuestionResult object to dictionary."""
-        return {
-            "question": qr.question,
-            "transcript": qr.transcript,
-            "evaluation": {
-                "scores": {
-                    "communication": qr.communication_score,
-                    "relevance": qr.relevance_score,
-                    "quality": qr.quality_score,
-                    "total": qr.total_score
-                },
-                "feedback": qr.feedback,
-                "pass_prediction": qr.pass_prediction
-            }
-        }
 
     @staticmethod
     async def process_answer(
@@ -79,17 +55,19 @@ class InterviewService:
             session, session_id, name, email, role_id
         )
 
-        # Prepare file paths
-        file_ext = os.path.splitext(file.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
-        file_location = TEMP_DIR / unique_filename
+        file_location = None
         audio_path = None
 
         try:
-            # Save video file
-            async with aiofiles.open(file_location, 'wb') as out_file:
-                content = await file.read()
-                await out_file.write(content)
+            # Save video file (renaming handled by StorageService or assumed safe)
+            # Ideally we'd set file.filename to UUID before passing, or StorageService generates it.
+            # Current StorageService implementation uses file.filename directly.
+            # So we should rename it here as we did before.
+            file_ext = os.path.splitext(file.filename)[1]
+            unique_filename = f"{uuid.uuid4()}{file_ext}"
+            file.filename = unique_filename
+
+            file_location = await StorageService.save_upload(file, TEMP_DIR)
 
             # Process video
             loop = asyncio.get_event_loop()
@@ -105,51 +83,21 @@ class InterviewService:
                 )
 
             # Cleanup
-            cleanup_files(file_location, audio_path)
+            StorageService.cleanup([file_location, audio_path])
 
-            # Save result (convert domain model to ORM model)
-            question_result = QuestionResult(
-                candidate_id=candidate.id,
-                question=question,
-                transcript=transcript,
-                communication_score=evaluation.scores.communication,
-                relevance_score=evaluation.scores.relevance,
-                quality_score=evaluation.scores.quality,
-                total_score=evaluation.scores.total,
-                feedback={
-                    "strengths": evaluation.feedback.strengths,
-                    "weaknesses": evaluation.feedback.weaknesses,
-                    "summary": evaluation.feedback.summary
-                },
-                pass_prediction=evaluation.pass_prediction
+            # Save result using Mapper
+            question_result = InterviewMapper.to_orm_question_result(
+                candidate.id, question, transcript, evaluation
             )
             session.add(question_result)
             session.commit()
             session.refresh(question_result)
 
-            # Convert domain model to dict for response
-            return {
-                "question": question,
-                "transcript": transcript,
-                "evaluation": {
-                    "scores": {
-                        "communication": evaluation.scores.communication,
-                        "relevance": evaluation.scores.relevance,
-                        "quality": evaluation.scores.quality,
-                        "total": evaluation.scores.total
-                    },
-                    "feedback": {
-                        "strengths": evaluation.feedback.strengths,
-                        "weaknesses": evaluation.feedback.weaknesses,
-                        "summary": evaluation.feedback.summary
-                    },
-                    "pass_prediction": evaluation.pass_prediction
-                }
-            }
+            return InterviewMapper.to_dict(question_result)
 
         except Exception as e:
             # Cleanup files before re-raising
-            cleanup_files(file_location, audio_path)
+            StorageService.cleanup([file_location, audio_path])
             logger.error("Error processing answer: %s", e)
             raise
 
@@ -180,24 +128,7 @@ class InterviewService:
 
         # Convert ORM models to domain models first
         domain_question_results = [
-            DomainQuestionResult(
-                question=qr.question,
-                transcript=qr.transcript,
-                evaluation=Evaluation(
-                    scores=Score(
-                        communication=qr.communication_score,
-                        relevance=qr.relevance_score,
-                        quality=qr.quality_score,
-                        total=qr.total_score
-                    ),
-                    feedback=Feedback(
-                        strengths=qr.feedback.get("strengths", ""),
-                        weaknesses=qr.feedback.get("weaknesses", ""),
-                        summary=qr.feedback.get("summary", "")
-                    ),
-                    pass_prediction=qr.pass_prediction
-                )
-            )
+            InterviewMapper.to_domain_question_result(qr)
             for qr in question_results
         ]
 
@@ -207,7 +138,7 @@ class InterviewService:
             total_questions
         )
 
-        # Save or update aggregated score (convert domain to ORM)
+        # Save or update aggregated score
         existing_score = (
             session.query(AggregatedScore)
             .filter(AggregatedScore.candidate_id == candidate.id)
@@ -265,7 +196,7 @@ class InterviewService:
         )
 
         results = [
-            InterviewService._format_question_result(qr)
+            InterviewMapper.to_dict(qr)
             for qr in question_results
         ]
 

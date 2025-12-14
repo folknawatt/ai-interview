@@ -1,4 +1,5 @@
 """
+# pylint: disable=too-few-public-methods
 Common/shared Pydantic schemas.
 
 Shared schemas used across multiple endpoints:
