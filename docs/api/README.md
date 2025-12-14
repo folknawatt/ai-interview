@@ -66,31 +66,28 @@ Get all available job roles.
 }
 ```
 
-### Create Role
+### Save Questions
 
-Create a new job role.
+Save approved questions for a role.
 
-**Endpoint:** `POST /hr/roles`
+**Endpoint:** `POST /hr/save-questions`
 
 **Request Body:**
 
 ```json
 {
-  "name": "Data Scientist",
-  "description": "ML and analytics focused role",
-  "skills": ["Python", "ML", "Statistics"]
+  "role_id": "role123",
+  "role_title": "Software Engineer",
+  "questions": ["Question 1", "Question 2"]
 }
 ```
 
-**Response:** `201 Created`
+**Response:** `200 OK`
 
 ```json
 {
-  "id": "role2",
-  "name": "Data Scientist",
-  "description": "ML and analytics focused role",
-  "skills": ["Python", "ML", "Statistics"],
-  "created_at": "2025-12-09T01:00:00Z"
+  "status": "success",
+  "message": "Saved questions for Software Engineer"
 }
 ```
 

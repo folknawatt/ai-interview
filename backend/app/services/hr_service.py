@@ -9,7 +9,7 @@ Encapsulates business logic for HR management, including:
 from typing import Dict, Any, List
 
 from app.database.repositories import get_question_repository
-from app.domain.interview.question_manager import generate_questions
+from app.domain.interview.question_manager import gen_questions
 from app.exceptions import NotFoundError
 
 
@@ -33,7 +33,7 @@ class HRService:
         Returns:
             List of generated questions
         """
-        questions = generate_questions(api_key, role_title, job_description)
+        questions = gen_questions(api_key, role_title, job_description)
         return questions
 
     @staticmethod

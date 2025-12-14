@@ -17,9 +17,6 @@ Technical architecture and system design documentation
 API endpoint documentation and examples
 
 - [API Overview](./api/README.md)
-- [HR Endpoints](./api/hr-endpoints.md)
-- [Interview Endpoints](./api/interview-endpoints.md)
-- [TTS Endpoints](./api/tts-endpoints.md)
 
 ### [Setup](./setup/)
 

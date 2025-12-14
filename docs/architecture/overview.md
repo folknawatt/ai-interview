@@ -168,7 +168,7 @@ sequenceDiagram
 ├── /hr/
 │   ├── POST /generate-questions
 │   ├── GET  /roles
-│   ├── POST /roles
+│   ├── POST /save-questions
 │   └── GET  /roles/{id}
 │
 ├── /interview/

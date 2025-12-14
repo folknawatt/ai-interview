@@ -43,8 +43,8 @@ my_app.log
 # Storage & Runtime Data
 # ============================================
 /storage/
-/backend/storage/
 /backend/temp_storage/
+backend/app/storage/
 /data/uploads/
 /data/temp/
 /data/cache/
@@ -94,9 +94,18 @@ test_deps.py
 pyproject_minimal.toml
 uv_output.txt
 *_test.py
+test.py
 
 # Data directory (but keep fixtures and seeds)
 /data/*
 !/data/fixtures/
 !/data/seeds/
 !/data/.gitkeep
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+backend/app/config/questions_db.json
+
+storage/

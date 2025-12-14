@@ -4,6 +4,7 @@ Centralized configuration for AI Interview system.
 This module provides application-wide settings using Pydantic for
 environment variable validation and type safety.
 """
+import os
 from typing import List
 from pydantic_settings import BaseSettings
 
@@ -20,8 +21,10 @@ class Settings(BaseSettings):
     google_api_key: str
 
     # Storage Configuration
-    database_file: str = "app/config/questions_db.json"
-    temp_storage_dir: str = "storage/temp"
+    questions_file_path: str = os.path.join(
+        os.path.dirname(__file__), "questions_db.json")
+    temp_storage_dir: str = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), r"storage\temp")
 
     # CORS Configuration
     cors_origins: str = "http://localhost:3000"
@@ -42,7 +45,8 @@ class Settings(BaseSettings):
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
-        "case_sensitive": False
+        "case_sensitive": False,
+        "extra": "ignore"
     }
 
 

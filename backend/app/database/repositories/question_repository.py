@@ -19,7 +19,7 @@ class QuestionRepository:
 
     def __init__(self):
         """Initialize question repository with database file path."""
-        self.db_file = settings.database_file
+        self.questions_file_path = settings.questions_file_path
 
     def load_all(self) -> Dict[str, Any]:
         """
@@ -38,19 +38,22 @@ class QuestionRepository:
             }
         """
         try:
-            if not os.path.exists(self.db_file):
+            print(
+                f"DEBUG REPO: Loading from {self.questions_file_path}, Exists: {os.path.exists(self.questions_file_path)}")
+            if not os.path.exists(self.questions_file_path):
                 logger.info(
                     "Database file not found, returning empty dict: %s",
-                    self.db_file
+                    self.questions_file_path
                 )
                 return {}
 
-            with open(self.db_file, "r", encoding="utf-8") as f:
+            with open(self.questions_file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+                print(f"DEBUG REPO: Loaded {len(data)} roles")
                 logger.debug("Loaded database with %d roles", len(data))
                 return data
         except json.JSONDecodeError as e:
-            logger.error("Invalid JSON in %s: %s", self.db_file, e)
+            logger.error("Invalid JSON in %s: %s", self.questions_file_path, e)
             return {}
         except (IOError, OSError) as e:
             logger.error("Failed to load database: %s", e)
@@ -148,9 +151,10 @@ class QuestionRepository:
         """
         try:
             # Ensure parent directory exists
-            os.makedirs(os.path.dirname(self.db_file), exist_ok=True)
+            os.makedirs(os.path.dirname(
+                self.questions_file_path), exist_ok=True)
 
-            with open(self.db_file, "w", encoding="utf-8") as f:
+            with open(self.questions_file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
 
             logger.debug("Saved database with %d roles", len(data))

@@ -15,7 +15,7 @@ class Response(BaseModel):
     questions: list[str]
 
 
-def generate_questions(
+def gen_questions(
     gemini_api_key: str,
     role: str,
     description: str
