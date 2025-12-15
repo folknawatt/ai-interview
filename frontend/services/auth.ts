@@ -1,6 +1,6 @@
 import axios from 'axios'
-import type { ApiResponse } from '~/types/services'
-import type { LoginResponse } from '~/types/services/login'
+import type { ApiResponse, LoginResponse } from '../types/api'
+import { useRuntimeConfig } from '#app'
 
 export const refreshToken = (token: string): ApiResponse<LoginResponse> => {
     const {

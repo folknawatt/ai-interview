@@ -1,4 +1,4 @@
-import type { Question, AnalysisResponse, SessionSummary } from '~/types/api';
+import type { Question, AnalysisResponse, SessionSummary } from '../types/api';
 
 /**
  * Updated Interview composable with API integration

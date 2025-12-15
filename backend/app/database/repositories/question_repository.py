@@ -1,177 +1,205 @@
 """
-Question Repository for JSON-based question storage.
+Question Repository for Question storage in Database.
 
 This module provides a repository pattern for managing interview questions
-stored in JSON files.
+stored in the relational database.
 """
-import json
-import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from sqlalchemy.orm import Session
 
 from app.config.logging_config import get_logger
-from app.config.settings import settings
+from app.database.db import SessionLocal
+from app.database.models import JobRole, Question
 
 logger = get_logger(__name__)
 
 
 class QuestionRepository:
-    """Repository for managing interview questions in JSON storage."""
+    """Repository for managing interview questions in the database."""
 
     def __init__(self):
-        """Initialize question repository with database file path."""
-        self.questions_file_path = settings.questions_file_path
+        """Initialize question repository."""
+        self.db_factory = SessionLocal
+
+    def _get_session(self) -> Session:
+        """Get a new database session."""
+        return self.db_factory()
 
     def load_all(self) -> Dict[str, Any]:
         """
-        Load all roles and questions from JSON file.
+        Load all roles and questions from the database.
 
         Returns:
-            dict: Dictionary containing role questions, empty dict if file
-                doesn't exist
-
-        Example structure:
-            {
-                "role_id_1": {
-                    "title": "Software Engineer",
-                    "questions": ["Q1", "Q2", ...]
-                }
-            }
+            Dict[str, Any]: A dictionary where keys are role IDs and values are dictionaries
+                            containing 'title' and a list of 'questions'.
+                            Example:
+                            {
+                                "role_id": {
+                                    "title": "Role Title",
+                                    "questions": ["Question 1", "Question 2"]
+                                }
+                            }
         """
+        session = self._get_session()
         try:
-            print(
-                f"DEBUG REPO: Loading from {self.questions_file_path}, Exists: {os.path.exists(self.questions_file_path)}")
-            if not os.path.exists(self.questions_file_path):
-                logger.info(
-                    "Database file not found, returning empty dict: %s",
-                    self.questions_file_path
-                )
-                return {}
+            roles = session.query(JobRole).all()
+            result = {}
+            for role in roles:
+                questions = session.query(Question)\
+                    .filter(Question.role_id == role.id)\
+                    .order_by(Question.order)\
+                    .all()
 
-            with open(self.questions_file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                print(f"DEBUG REPO: Loaded {len(data)} roles")
-                logger.debug("Loaded database with %d roles", len(data))
-                return data
-        except json.JSONDecodeError as e:
-            logger.error("Invalid JSON in %s: %s", self.questions_file_path, e)
-            return {}
-        except (IOError, OSError) as e:
-            logger.error("Failed to load database: %s", e)
-            return {}
+                result[role.id] = {
+                    "title": role.title,
+                    "questions": [q.content for q in questions]
+                }
+            return result
+        finally:
+            session.close()
 
     def save(self, role_id: str, title: str, questions: List[str]) -> None:
         """
-        Save questions for a specific role.
+        Save questions for a specific role (Create or Update).
 
         Args:
-            role_id: Unique role identifier
-            title: Role title
-            questions: List of interview questions
+            role_id (str): Unique identifier for the job role.
+            title (str): Display title for the role.
+            questions (List[str]): List of question strings to associate with the role.
 
         Raises:
-            RuntimeError: If file save operation fails
+            RuntimeError: If the database operation fails.
         """
-        data = self.load_all()
-        data[role_id] = {
-            "title": title,
-            "questions": questions
-        }
-        self._save_all(data)
+        session = self._get_session()
+        try:
+            role = session.query(JobRole).filter(JobRole.id == role_id).first()
+            if not role:
+                role = JobRole(id=role_id, title=title)
+                session.add(role)
+            else:
+                role.title = title
 
-    def get_by_id(self, role_id: str) -> Dict[str, Any] | None:
+            # Clear existing questions to replace (brute force update)
+            session.query(Question).filter(
+                Question.role_id == role_id).delete()
+
+            for idx, q_text in enumerate(questions):
+                q = Question(role_id=role_id, content=q_text, order=idx)
+                session.add(q)
+
+            session.commit()
+            logger.info(
+                f"Saved role {role_id} with {len(questions)} questions")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Failed to save role {role_id}: {e}")
+            raise RuntimeError(f"Database save failed: {e}")
+        finally:
+            session.close()
+
+    def get_by_id(self, role_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get role questions by role ID.
+        Retrieves role questions by role ID.
 
         Args:
-            role_id: Role identifier
+            role_id (str): The role ID to search for.
 
         Returns:
-            dict: Role data or None if not found
+            Optional[Dict[str, Any]]: A dictionary with 'title' and 'questions' keys,
+                                      or None if the role is not found.
         """
-        data = self.load_all()
-        return data.get(role_id)
+        session = self._get_session()
+        try:
+            role = session.query(JobRole).filter(JobRole.id == role_id).first()
+            if not role:
+                return None
+
+            questions = session.query(Question)\
+                .filter(Question.role_id == role.id)\
+                .order_by(Question.order)\
+                .all()
+
+            return {
+                "title": role.title,
+                "questions": [q.content for q in questions]
+            }
+        finally:
+            session.close()
 
     def delete(self, role_id: str) -> bool:
         """
-        Delete a role and its questions.
+        Delete a role and its associated questions.
 
         Args:
-            role_id: Role identifier
+            role_id (str): The ID of the role to delete.
 
         Returns:
-            bool: True if deleted, False if not found
+            bool: True if the role was found and deleted, False otherwise.
         """
-        data = self.load_all()
-        if role_id in data:
-            del data[role_id]
-            self._save_all(data)
-            return True
-        return False
+        session = self._get_session()
+        try:
+            role = session.query(JobRole).filter(JobRole.id == role_id).first()
+            if role:
+                session.delete(role)  # Cascade should handle questions
+                session.commit()
+                return True
+            return False
+        finally:
+            session.close()
 
     def exists(self, role_id: str) -> bool:
         """
-        Check if a role exists.
+        Check if a role exists in the database.
 
         Args:
-            role_id: Role identifier
+            role_id (str): The role ID to check.
 
         Returns:
-            bool: True if role exists
+            bool: True if the role exists, False otherwise.
         """
-        data = self.load_all()
-        return role_id in data
+        session = self._get_session()
+        try:
+            return session.query(JobRole).filter(JobRole.id == role_id).count() > 0
+        finally:
+            session.close()
 
     def update_questions(self, role_id: str, questions: List[str]) -> None:
         """
         Update questions for an existing role.
 
         Args:
-            role_id: Role identifier
-            questions: Updated list of questions
+            role_id (str): The ID of the role to update.
+            questions (List[str]): Loop of new question content strings.
 
         Raises:
-            ValueError: If role doesn't exist
+            ValueError: If the role does not exist.
         """
-        data = self.load_all()
-        if role_id not in data:
-            raise ValueError(f"Role '{role_id}' not found")
-
-        data[role_id]["questions"] = questions
-        self._save_all(data)
-
-    def _save_all(self, data: Dict[str, Any]) -> None:
-        """
-        Save all data to JSON file.
-
-        Args:
-            data: Dictionary containing all role questions
-
-        Raises:
-            RuntimeError: If file save operation fails
-        """
+        session = self._get_session()
         try:
-            # Ensure parent directory exists
-            os.makedirs(os.path.dirname(
-                self.questions_file_path), exist_ok=True)
+            role = session.query(JobRole).filter(JobRole.id == role_id).first()
+            if not role:
+                raise ValueError(f"Role '{role_id}' not found")
 
-            with open(self.questions_file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+            # Simplistic approach: delete all and recreate
+            session.query(Question).filter(
+                Question.role_id == role_id).delete()
 
-            logger.debug("Saved database with %d roles", len(data))
-        except (IOError, OSError) as e:
-            logger.error("Failed to save database: %s", e)
-            raise RuntimeError(f"Failed to save database: {str(e)}") from e
+            for idx, q_text in enumerate(questions):
+                q = Question(role_id=role_id, content=q_text, order=idx)
+                session.add(q)
+
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
 
-# Singleton instance - initialized at module load time
+# Singleton instance
 _QUESTION_REPOSITORY = QuestionRepository()
 
 
 def get_question_repository() -> QuestionRepository:
-    """
-    Get singleton instance of QuestionRepository.
-
-    Returns:
-        QuestionRepository: Singleton instance
-    """
+    """Get singleton instance of QuestionRepository."""
     return _QUESTION_REPOSITORY

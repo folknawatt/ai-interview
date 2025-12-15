@@ -1,5 +1,33 @@
 // API Response Types
 
+import type { AxiosPromise } from 'axios'
+
+export type Response<T> = {
+    error?: {
+        code: never
+        message: string
+    }
+    data?: {
+        title: string
+        description: string
+    } & T
+}
+
+export type ApiResponse<T> = AxiosPromise<
+    Response<
+        T extends unknown[]
+            ? {
+                  items: T
+              }
+            : { item: T }
+    >
+>
+
+export interface LoginResponse {
+    accessToken: string
+    refreshToken: string
+}
+
 export interface Role {
   id: string;
   name: string;

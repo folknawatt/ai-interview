@@ -29,28 +29,24 @@
         <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
           <h2 class="text-xl font-semibold mb-4">คะแนนประเมิน (Scores)</h2>
           <div class="grid grid-cols-2 gap-4">
-            <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center">
-              <div class="text-sm text-minimal-text-secondary">Communication</div>
-              <div class="text-2xl font-bold text-minimal-info">
-                {{ result.scores.communication }}/10
-              </div>
-            </div>
-            <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center">
-              <div class="text-sm text-minimal-text-secondary">Relevance</div>
-              <div class="text-2xl font-bold text-minimal-info">
-                {{ result.scores.relevance }}/10
-              </div>
-            </div>
-            <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center">
-              <div class="text-sm text-minimal-text-secondary">Quality</div>
-              <div class="text-2xl font-bold text-minimal-info">{{ result.scores.quality }}/10</div>
-            </div>
-            <div class="bg-emerald-50 p-4 rounded border-2 border-minimal-success text-center">
-              <div class="text-sm text-minimal-text-secondary">Total Score</div>
-              <div class="text-3xl font-bold text-minimal-success">
-                {{ result.scores.total }}/30
-              </div>
-            </div>
+             <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center">
+               <div class="text-sm text-minimal-text-secondary mb-2">Communication</div>
+               <ScoreCard :score="Number(result.scores.communication)" :size="80" />
+             </div>
+             <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center">
+               <div class="text-sm text-minimal-text-secondary mb-2">Relevance</div>
+               <ScoreCard :score="Number(result.scores.relevance)" :size="80" />
+             </div>
+             <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center">
+               <div class="text-sm text-minimal-text-secondary mb-2">Logical Thinking</div>
+               <ScoreCard :score="Number(result.scores.logical_thinking)" :size="80" />
+             </div>
+             <div class="bg-emerald-50 p-4 rounded border-2 border-minimal-success text-center flex flex-col items-center">
+               <div class="text-sm text-minimal-text-secondary mb-2">Total Score</div>
+                <div class="text-3xl font-bold text-minimal-success">
+                 {{ result.scores.total }}/30
+               </div>
+             </div>
           </div>
         </div>
 
@@ -74,54 +70,12 @@
         </div>
 
         <!-- Feedback -->
-        <div
-          class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border md:col-span-2"
-        >
-          <h2 class="text-xl font-semibold mb-4">คำติชม (Feedback)</h2>
-          <div class="space-y-6">
-            <div v-if="result.feedback.strengths.length > 0">
-              <h3 class="text-sm font-medium text-minimal-success mb-2 flex items-center gap-1">
-                <SparklesIcon class="w-4 h-4" />
-                จุดแข็ง
-              </h3>
-              <ul class="list-disc list-inside text-minimal-text-secondary space-y-1">
-                <li v-for="(item, index) in result.feedback.strengths" :key="index">{{ item }}</li>
-              </ul>
-            </div>
-            <div v-else>
-               <h3 class="text-sm font-medium text-minimal-success mb-2 flex items-center gap-1">
-                <SparklesIcon class="w-4 h-4" />
-                จุดแข็ง
-              </h3>
-              <p class="text-minimal-text-secondary italic">ไม่มีระบุ</p>
-            </div>
-            
-            <div v-if="result.feedback.weaknesses.length > 0">
-              <h3 class="text-sm font-medium text-amber-500 mb-2 flex items-center gap-1">
-                <ExclamationTriangleIcon class="w-4 h-4" />
-                จุดที่ควรพัฒนา
-              </h3>
-               <ul class="list-disc list-inside text-minimal-text-secondary space-y-1">
-                <li v-for="(item, index) in result.feedback.weaknesses" :key="index">{{ item }}</li>
-              </ul>
-            </div>
-            <div v-else>
-              <h3 class="text-sm font-medium text-amber-500 mb-2 flex items-center gap-1">
-                <ExclamationTriangleIcon class="w-4 h-4" />
-                จุดที่ควรพัฒนา
-              </h3>
-               <p class="text-minimal-text-secondary italic">ไม่มีระบุ</p>
-            </div>
+        <FeedbackSection 
+          :strengths="result.feedback.strengths"
+          :weaknesses="result.feedback.weaknesses"
+          :summary="result.feedback.summary"
+        />
 
-            <div v-if="result.feedback.summary">
-              <h3 class="text-sm font-medium text-minimal-info mb-2 flex items-center gap-1">
-                <DocumentTextIcon class="w-4 h-4" />
-                สรุปภาพรวม
-              </h3>
-              <p class="text-minimal-text-secondary">{{ result.feedback.summary }}</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Action Buttons -->
@@ -148,10 +102,9 @@ import {
   ChartBarIcon,
   CheckCircleIcon,
   XCircleIcon,
-  SparklesIcon,
-  ExclamationTriangleIcon,
-  DocumentTextIcon,
 } from '@heroicons/vue/24/solid'
+import ScoreCard from '@/components/ScoreCard.vue'
+import FeedbackSection from '@/components/FeedbackSection.vue'
 
 const { sessionId, getSummary, resetInterview } = useInterview()
 const router = useRouter()
@@ -207,14 +160,20 @@ const result = computed(() => {
     scores: {
       communication: agg.communication_avg.toFixed(1),
       relevance: agg.relevance_avg.toFixed(1),
-      quality: agg.quality_avg.toFixed(1),
+      logical_thinking: agg.logical_thinking_avg.toFixed(1),
       total: agg.total_score.toFixed(1),
     },
     pass_prediction: isPassed,
     feedback: {
       strengths: extractFeedback('strengths'),
-      weaknesses: extractFeedback('weaknesses'),
+
       summary: `ผลการประเมินโดยรวม: ${agg.overall_recommendation} (คะแนนเฉลี่ย ${agg.total_score.toFixed(1)}/10)`,
+      // Merge reasoning into weaknesses
+      weaknesses: [
+        ...extractFeedback('weaknesses'),
+        ...extractFeedback('reasoning').map(r => `(เพิ่ม) การลำดับความคิด: ${r}`)
+      ],
+      reasonings: [] // Clear this so it doesn't show up elsewhere if verified
     },
   }
 })

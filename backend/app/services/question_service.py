@@ -102,3 +102,21 @@ class QuestionService:
             raise NotFoundError(f"Role '{role_id}' not found")
 
         return len(role_data.get("questions", []))
+
+    @staticmethod
+    def get_role_title(role_id: str) -> str:
+        """
+        Get the human-readable title for a role.
+
+        Args:
+            role_id: Unique role identifier
+
+        Returns:
+            Role title string, or role_id if not found
+        """
+        repo = get_question_repository()
+        role_data = repo.get_by_id(role_id)
+
+        if role_data and "title" in role_data:
+            return role_data["title"]
+        return role_id

@@ -1,4 +1,4 @@
-import type { JDInput, SaveQuestionsRequest, GenerateQuestionsResponse, Role } from '~/types/api';
+import type { JDInput, SaveQuestionsRequest, GenerateQuestionsResponse, Role } from '../types/api';
 
 /**
  * Composable for HR-related API operations

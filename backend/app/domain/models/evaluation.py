@@ -15,18 +15,18 @@ class Score:
     Attributes:
         communication: Score for communication skills (1-10)
         relevance: Score for answer relevance to question (1-10)
-        quality: Score for answer quality and depth (1-10)
+        logical_thinking: Score for answer logical thinking (1-10)
         total: Total/average score (1-10)
     """
 
     communication: float
     relevance: float
-    quality: float
+    logical_thinking: float
     total: float
 
     def __post_init__(self):
         """Validate score ranges."""
-        for field_name in ['communication', 'relevance', 'quality', 'total']:
+        for field_name in ['communication', 'relevance', 'logical_thinking', 'total']:
             value = getattr(self, field_name)
             if not 1.0 <= value <= 10.0:
                 raise ValueError(
@@ -49,6 +49,7 @@ class Feedback:
     strengths: str
     weaknesses: str
     summary: str
+    reasoning: str = ""
 
 
 @dataclass

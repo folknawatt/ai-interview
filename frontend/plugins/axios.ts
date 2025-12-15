@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { AxiosResponse } from 'axios'
-import { useAuth } from '~/store/auth'
+import { useAuth } from '../store/auth'
 
 export default defineNuxtPlugin(() => {
     const {
@@ -10,7 +10,7 @@ export default defineNuxtPlugin(() => {
     const auth = useAuth()
     const router = useRouter()
     const instance = axios.create({
-        baseURL: apiBaseUrl,
+        baseURL: apiBaseUrl as string,
     })
 
     let isRefreshing = false

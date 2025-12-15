@@ -29,7 +29,7 @@ def calculate_aggregated_score(
             total_score=0.0,
             communication_avg=0.0,
             relevance_avg=0.0,
-            quality_avg=0.0,
+            logical_thinking_avg=0.0,
             pass_rate=0.0,
             overall_recommendation="Fail",
             questions_answered=0,
@@ -50,8 +50,8 @@ def calculate_aggregated_score(
         sum(q.evaluation.scores.relevance for q in question_results) /
         num_questions
     )
-    quality_avg = (
-        sum(q.evaluation.scores.quality for q in question_results) /
+    logical_thinking_avg = (
+        sum(q.evaluation.scores.logical_thinking for q in question_results) /
         num_questions
     )
 
@@ -68,7 +68,7 @@ def calculate_aggregated_score(
         total_score=round(total_score, 2),
         communication_avg=round(communication_avg, 2),
         relevance_avg=round(relevance_avg, 2),
-        quality_avg=round(quality_avg, 2),
+        logical_thinking_avg=round(logical_thinking_avg, 2),
         pass_rate=round(pass_rate, 2),
         overall_recommendation=recommendation,
         questions_answered=num_questions,

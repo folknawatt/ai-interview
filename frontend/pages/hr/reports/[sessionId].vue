@@ -1,82 +1,116 @@
 <template>
-  <div class="report-detail-container">
-    <div v-if="loading" class="loading">Loading report...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="report" class="report-content">
+  <div class="min-h-screen bg-minimal-bg text-minimal-text-primary p-8">
+    <div v-if="loading" class="text-center py-12">
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-minimal-info mx-auto mb-4"
+      ></div>
+      <p class="text-minimal-text-secondary">Loading report...</p>
+    </div>
+    <div
+      v-else-if="error"
+      class="max-w-4xl mx-auto bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+    >
+      {{ error }}
+    </div>
+    <div v-else-if="report" class="max-w-6xl mx-auto">
       <!-- Header -->
-      <div class="header">
-        <button @click="router.back()" class="btn-back">← Back to Reports</button>
-        <button @click="handleDownloadPDF" class="btn-download">
-          <ArrowDownTrayIcon class="icon-inline" />
+      <div class="flex justify-between items-center mb-8">
+        <button
+          @click="router.back()"
+          class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+        >
+          ← Back to Reports
+        </button>
+        <button
+          @click="handleDownloadPDF"
+          class="flex items-center gap-2 px-4 py-2 bg-minimal-info text-white rounded-lg hover:bg-sky-600 transition-colors font-semibold"
+        >
+          <ArrowDownTrayIcon class="w-5 h-5" />
           Download PDF
         </button>
       </div>
 
       <!-- Candidate Info -->
-      <div class="candidate-section">
-        <h1>{{ report.candidate.name }}</h1>
-        <div class="candidate-info">
-          <div class="info-item">
-            <span class="label">Email:</span>
-            <span>{{ report.candidate.email || 'N/A' }}</span>
+      <div
+        class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6"
+      >
+        <h1 class="text-2xl font-bold mb-4 text-minimal-text-primary">
+          {{ report.candidate.name }}
+        </h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
+              >Email</span
+            >
+            <span class="font-medium">{{ report.candidate.email || 'N/A' }}</span>
           </div>
-          <div class="info-item">
-            <span class="label">Role:</span>
-            <span>{{ report.candidate.role_id }}</span>
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
+              >Role</span
+            >
+            <span class="font-medium">{{ report.candidate.role_id }}</span>
           </div>
-          <div class="info-item">
-            <span class="label">Interview Date:</span>
-            <span>{{ formatDate(report.candidate.interview_date) }}</span>
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
+              >Interview Date</span
+            >
+            <span class="font-medium">{{ formatDate(report.candidate.interview_date) }}</span>
           </div>
-          <div class="info-item">
-            <span class="label">Session ID:</span>
-            <span class="session-id">{{ report.candidate.session_id }}</span>
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
+              >Session ID</span
+            >
+            <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded max-w-max">{{
+              report.candidate.session_id
+            }}</span>
           </div>
         </div>
       </div>
 
       <!-- Score Overview -->
-      <div v-if="report.aggregated_score" class="score-section">
-        <h2>Score Overview</h2>
-        <div class="score-overview">
-          <div class="score-circle">
+      <div v-if="report.aggregated_score" class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6">
+        <h2 class="text-xl font-semibold mb-6 text-minimal-text-primary">
+          Score Overview
+        </h2>
+        <div class="flex flex-col md:flex-row gap-8 items-center">
+          <div class="flex flex-col items-center gap-4">
             <ScoreCard :score="report.aggregated_score.total_score" :size="200" />
             <div
-              class="recommendation-badge"
+              class="px-6 py-2 rounded-full font-bold text-lg text-white"
               :class="getRecommendationClass(report.aggregated_score.overall_recommendation)"
             >
               {{ report.aggregated_score.overall_recommendation }}
             </div>
           </div>
-          <div class="score-details">
-            <div class="score-item">
-              <div class="score-label">Communication</div>
-              <div class="score-value">
+          <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
+              <div class="text-sm text-gray-600 mb-1">Communication</div>
+              <div class="text-2xl font-bold text-gray-900">
                 {{ report.aggregated_score.communication_avg }} / 10
               </div>
             </div>
-            <div class="score-item">
-              <div class="score-label">Relevance</div>
-              <div class="score-value">
+            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
+              <div class="text-sm text-gray-600 mb-1">Relevance</div>
+              <div class="text-2xl font-bold text-gray-900">
                 {{ report.aggregated_score.relevance_avg }} / 10
               </div>
             </div>
-            <div class="score-item">
-              <div class="score-label">Quality</div>
-              <div class="score-value">
-                {{ report.aggregated_score.quality_avg }} / 10
+            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
+              <div class="text-sm text-gray-600 mb-1">Logical Thinking</div>
+              <div class="text-2xl font-bold text-gray-900">
+                {{ report.aggregated_score.logical_thinking_avg }} / 10
               </div>
             </div>
-            <div class="score-item">
-              <div class="score-label">Pass Rate</div>
-              <div class="score-value">
+            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
+              <div class="text-sm text-gray-600 mb-1">Pass Rate</div>
+              <div class="text-2xl font-bold text-gray-900">
                 {{ report.aggregated_score.pass_rate }}%
               </div>
             </div>
-            <div class="score-item">
-              <div class="score-label">Questions Answered</div>
-              <div class="score-value">
-                {{ report.aggregated_score.questions_answered }} /
+             <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
+              <div class="text-sm text-gray-600 mb-1">Questions Answered</div>
+              <div class="text-2xl font-bold text-gray-900">
+                 {{ report.aggregated_score.questions_answered }} /
                 {{ report.aggregated_score.total_questions }}
               </div>
             </div>
@@ -85,90 +119,103 @@
       </div>
 
       <!-- Charts -->
-      <div class="charts-section">
-        <div class="chart-card">
-          <h3>Skills Breakdown</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
+          <h3 class="text-lg font-semibold mb-4 text-center">Skills Breakdown</h3>
           <ScoreRadarChart
             v-if="report.aggregated_score"
             :communication-avg="report.aggregated_score.communication_avg"
             :relevance-avg="report.aggregated_score.relevance_avg"
-            :quality-avg="report.aggregated_score.quality_avg"
+            :logical-thinking-avg="report.aggregated_score.logical_thinking_avg"
           />
         </div>
-        <div class="chart-card">
-          <h3>Question Scores</h3>
+        <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
+          <h3 class="text-lg font-semibold mb-4 text-center">Question Scores</h3>
           <ScoreBarChart :questions="report.questions" />
         </div>
       </div>
 
       <!-- Question Details -->
-      <div class="questions-section">
-        <h2>Question-by-Question Analysis</h2>
+      <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
+        <h2 class="text-xl font-semibold mb-6 text-minimal-text-primary">
+          Question-by-Question Analysis
+        </h2>
         <div
           v-for="(question, idx) in report.questions"
           :key="question.id"
-          class="question-card"
+          class="border border-gray-200 rounded-lg mb-4 overflow-hidden"
         >
-          <div class="question-header" @click="toggleQuestion(idx)">
-            <div class="question-title">
-              <span class="question-number">Q{{ idx + 1 }}</span>
-              <span class="question-text">{{ question.question }}</span>
+          <div
+            class="p-4 bg-gray-50 cursor-pointer flex justify-between items-center hover:bg-gray-100 transition-colors"
+            @click="toggleQuestion(idx)"
+          >
+            <div class="flex gap-4 flex-1 items-center">
+              <span class="font-bold text-minimal-info">Q{{ idx + 1 }}</span>
+              <span class="text-gray-800 font-medium">{{ question.question }}</span>
             </div>
-            <div class="question-scores">
-              <span class="score-pill" :class="getScoreClass(question.total_score)">
+            <div class="flex gap-4 items-center">
+              <span class="px-3 py-1 rounded-full text-sm font-semibold" :class="getScoreClass(question.total_score)">
                 {{ question.total_score }}/10
               </span>
-              <span class="pass-badge" :class="question.pass_prediction ? 'pass' : 'fail'">
+              <span
+                class="px-3 py-1 rounded-full text-sm font-semibold"
+                :class="question.pass_prediction ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+              >
                 {{ question.pass_prediction ? '✓ Pass' : '✗ Fail' }}
               </span>
-              <span class="expand-icon">{{ expandedQuestions[idx] ? '▲' : '▼' }}</span>
+              <span class="text-gray-400">{{ expandedQuestions[idx] ? '▲' : '▼' }}</span>
             </div>
           </div>
 
-          <div v-if="expandedQuestions[idx]" class="question-details">
+          <div v-if="expandedQuestions[idx]" class="p-6 bg-white border-t border-gray-200">
             <!-- Individual Scores -->
-            <div class="individual-scores">
-              <div class="score-badge">
-                <span class="badge-label">Communication</span>
-                <span class="badge-value">{{ question.communication_score }}/10</span>
+            <div class="flex flex-wrap gap-4 mb-6">
+              <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
+                <span class="text-xs text-gray-500 block mb-1">Communication</span>
+                <span class="font-bold text-gray-900">{{ question.communication_score }}/10</span>
               </div>
-              <div class="score-badge">
-                <span class="badge-label">Relevance</span>
-                <span class="badge-value">{{ question.relevance_score }}/10</span>
+              <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
+                <span class="text-xs text-gray-500 block mb-1">Relevance</span>
+                <span class="font-bold text-gray-900">{{ question.relevance_score }}/10</span>
               </div>
-              <div class="score-badge">
-                <span class="badge-label">Quality</span>
-                <span class="badge-value">{{ question.quality_score }}/10</span>
+              <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
+                <span class="text-xs text-gray-500 block mb-1">Logical Thinking</span>
+                <span class="font-bold text-gray-900">{{ question.logical_thinking_score || question.quality_score }}/10</span>
               </div>
             </div>
 
             <!-- Transcript -->
-            <div v-if="question.transcript" class="transcript-section">
-              <h4>Candidate's Answer:</h4>
-              <p class="transcript">{{ question.transcript }}</p>
+            <div v-if="question.transcript" class="mb-6">
+              <h4 class="text-sm font-bold text-gray-700 mb-2">Candidate's Answer:</h4>
+              <p class="bg-gray-50 p-4 rounded-lg text-gray-700 leading-relaxed">
+                {{ question.transcript }}
+              </p>
             </div>
 
-            <div v-if="question.feedback" class="feedback-section">
-              <div v-if="question.feedback.strengths" class="feedback-item strengths">
-                <h4 class="flex items-center gap-2">
-                  <FireIcon class="icon-feedback" />
+            <!-- Feedback -->
+            <div v-if="question.feedback" class="space-y-4">
+              <div v-if="question.feedback.strengths" class="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
+                <h4 class="flex items-center gap-2 font-bold text-green-800 mb-1">
+                  <FireIcon class="w-4 h-4" />
                   Strengths:
                 </h4>
-                <p>{{ question.feedback.strengths }}</p>
+                <p class="text-green-900">{{ question.feedback.strengths }}</p>
               </div>
-              <div v-if="question.feedback.weaknesses" class="feedback-item weaknesses">
-                <h4 class="flex items-center gap-2">
-                  <ExclamationTriangleIcon class="icon-feedback" />
+              
+              <div v-if="question.feedback.weaknesses" class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                <h4 class="flex items-center gap-2 font-bold text-red-800 mb-1">
+                   <ExclamationTriangleIcon class="w-4 h-4" />
                   Areas for Improvement:
                 </h4>
-                <p>{{ question.feedback.weaknesses }}</p>
+                <p class="text-red-900">{{ question.feedback.weaknesses }}</p>
               </div>
-              <div v-if="question.feedback.summary" class="feedback-item summary">
-                <h4 class="flex items-center gap-2">
-                  <DocumentTextIcon class="icon-feedback" />
+
+               <div v-if="question.feedback.summary" class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                <h4 class="flex items-center gap-2 font-bold text-blue-800 mb-1">
+                  <DocumentTextIcon class="w-4 h-4" />
                   Summary:
                 </h4>
-                <p>{{ question.feedback.summary }}</p>
+                <p class="text-blue-900">{{ question.feedback.summary }}</p>
               </div>
             </div>
           </div>
@@ -185,6 +232,9 @@ import {
   ExclamationTriangleIcon,
   DocumentTextIcon
 } from '@heroicons/vue/24/solid';
+import ScoreCard from '@/components/ScoreCard.vue';
+import ScoreRadarChart from '@/components/ScoreRadarChart.vue';
+import ScoreBarChart from '@/components/ScoreBarChart.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -230,383 +280,16 @@ const formatDate = (dateStr: string) => {
 };
 
 const getScoreClass = (score: number) => {
-  if (score >= 8) return 'excellent';
-  if (score >= 6) return 'good';
-  if (score >= 4) return 'fair';
-  return 'poor';
+  if (score >= 8) return 'bg-green-500 text-white';
+  if (score >= 6) return 'bg-blue-500 text-white';
+  if (score >= 4) return 'bg-amber-500 text-white';
+  return 'bg-red-500 text-white';
 };
 
 const getRecommendationClass = (rec: string) => {
-  if (rec === 'Strong Pass') return 'strong-pass';
-  if (rec === 'Pass') return 'pass';
-  if (rec === 'Review') return 'review';
-  return 'fail';
+  if (rec === 'Strong Pass') return 'bg-green-500';
+  if (rec === 'Pass') return 'bg-blue-500';
+  if (rec === 'Review') return 'bg-amber-500';
+  return 'bg-red-500';
 };
 </script>
-
-<style scoped>
-.report-detail-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-}
-
-.btn-back,
-.btn-download {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-back {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.btn-back:hover {
-  background: #e5e7eb;
-}
-
-.btn-download {
-  background: #667eea;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-download:hover {
-  background: #5568d3;
-}
-
-.icon-inline {
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-.icon-feedback {
-  width: 1rem;
-  height: 1rem;
-}
-
-.candidate-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-}
-
-h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #1a1a1a;
-}
-
-.candidate-info {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
-.info-item {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.label {
-  font-weight: 600;
-  color: #666;
-}
-
-.session-id {
-  font-family: monospace;
-  background: #f3f4f6;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-}
-
-.score-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-}
-
-h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  color: #1a1a1a;
-}
-
-.score-overview {
-  display: flex;
-  gap: 3rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.score-circle {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.recommendation-badge {
-  padding: 0.6rem 1.5rem;
-  border-radius: 25px;
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.recommendation-badge.strong-pass {
-  background: #10b981;
-  color: white;
-}
-
-.recommendation-badge.pass {
-  background: #3b82f6;
-  color: white;
-}
-
-.recommendation-badge.review {
-  background: #f59e0b;
-  color: white;
-}
-
-.recommendation-badge.fail {
-  background: #ef4444;
-  color: white;
-}
-
-.score-details {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.score-item {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-.score-label {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 0.5rem;
-}
-
-.score-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1a1a1a;
-}
-
-.charts-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.chart-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-h3 {
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
-  color: #1a1a1a;
-  text-align: center;
-}
-
-.questions-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.question-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  overflow: hidden;
-}
-
-.question-header {
-  padding: 1.5rem;
-  background: #f9fafb;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background 0.2s;
-}
-
-.question-header:hover {
-  background: #f3f4f6;
-}
-
-.question-title {
-  display: flex;
-  gap: 1rem;
-  flex: 1;
-}
-
-.question-number {
-  font-weight: bold;
-  color: #667eea;
-}
-
-.question-scores {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.score-pill {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.score-pill.excellent {
-  background: #10b981;
-  color: white;
-}
-
-.score-pill.good {
-  background: #3b82f6;
-  color: white;
-}
-
-.score-pill.fair {
-  background: #f59e0b;
-  color: white;
-}
-
-.score-pill.poor {
-  background: #ef4444;
-  color: white;
-}
-
-.pass-badge {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.pass-badge.pass {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.pass-badge.fail {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.question-details {
-  padding: 1.5rem;
-  background: white;
-}
-
-.individual-scores {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.score-badge {
-  background: #f3f4f6;
-  padding: 0.8rem 1.2rem;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.badge-label {
-  font-size: 0.85rem;
-  color: #666;
-  margin-bottom: 0.3rem;
-}
-
-.badge-value {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #1a1a1a;
-}
-
-.transcript-section,
-.feedback-section {
-  margin-top: 1.5rem;
-}
-
-h4 {
-  font-size: 1rem;
-  margin-bottom: 0.8rem;
-  color: #374151;
-}
-
-.transcript {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 6px;
-  line-height: 1.6;
-  color: #374151;
-}
-
-.feedback-item {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.feedback-item.strengths {
-  background: #d1fae5;
-  border-left: 4px solid #10b981;
-}
-
-.feedback-item.weaknesses {
-  background: #fee2e2;
-  border-left: 4px solid #ef4444;
-}
-
-.feedback-item.summary {
-  background: #dbeafe;
-  border-left: 4px solid #3b82f6;
-}
-
-.loading,
-.error {
-  text-align: center;
-  padding: 3rem;
-  font-size: 1.1rem;
-}
-
-.error {
-  color: #ef4444;
-}
-</style>

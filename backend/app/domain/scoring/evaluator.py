@@ -19,7 +19,7 @@ class ScoresSchema(BaseModel):
 
     communication: float = Field(ge=1.0, le=10.0)
     relevance: float = Field(ge=1.0, le=10.0)
-    quality: float = Field(ge=1.0, le=10.0)
+    logical_thinking: float = Field(ge=1.0, le=10.0)
     total: float = Field(ge=1.0, le=10.0)
 
 
@@ -34,6 +34,7 @@ class FeedbackSchema(BaseModel):
 class InterviewEvaluationResponseSchema(BaseModel):
     """Complete interview evaluation response schema for Gemini API."""
 
+    reasoning: str
     scores: ScoresSchema
     feedback: FeedbackSchema
     pass_prediction: bool
@@ -42,7 +43,8 @@ class InterviewEvaluationResponseSchema(BaseModel):
 def evaluate_candidate(
     api_key: str,
     question: str,
-    transcript: str | None
+    transcript: str | None,
+    role: str
 ) -> Evaluation:
     """
     Evaluate a candidate's transcript based on a given question.
@@ -51,6 +53,7 @@ def evaluate_candidate(
         api_key (str): Google API Key
         question (str): Question to evaluate the transcript against
         transcript (str | None): Transcript to evaluate
+        role (str): The job role/title being interviewed for
 
     Returns:
         Evaluation: Domain model with scores, feedback, and pass prediction
@@ -86,7 +89,8 @@ def evaluate_candidate(
     client = genai.Client(api_key=api_key)
 
     # Prepare Prompt
-    final_prompt = SYSTEM_PROMPT.format(question=question, answer=transcript)
+    final_prompt = SYSTEM_PROMPT.format(
+        role=role, question=question, answer=transcript)
 
     # LLM
     try:
@@ -106,7 +110,7 @@ def evaluate_candidate(
             (
                 api_response.scores.communication +
                 api_response.scores.relevance +
-                api_response.scores.quality
+                api_response.scores.logical_thinking
             ) / 3,
             1
         )
@@ -120,13 +124,14 @@ def evaluate_candidate(
             scores=Score(
                 communication=api_response.scores.communication,
                 relevance=api_response.scores.relevance,
-                quality=api_response.scores.quality,
+                logical_thinking=api_response.scores.logical_thinking,
                 total=api_response.scores.total
             ),
             feedback=Feedback(
                 strengths=api_response.feedback.strengths,
                 weaknesses=api_response.feedback.weaknesses,
-                summary=api_response.feedback.summary
+                summary=api_response.feedback.summary,
+                reasoning=api_response.reasoning
             ),
             pass_prediction=api_response.pass_prediction
         )

@@ -1,0 +1,32 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "types": ["vitest/globals", "node"],
+    "baseUrl": "..",
+    "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./*"],
+      "~/composables": ["./composables"],
+      "~/composables/*": ["./composables/*"],
+      "@/composables": ["./composables"],
+      "@/composables/*": ["./composables/*"],
+      "~/types": ["./types"],
+      "~/types/*": ["./types/*"],
+      "@/types": ["./types"],
+      "@/types/*": ["./types/*"],
+      "~/services": ["./services"],
+      "~/services/*": ["./services/*"],
+      "@/services": ["./services"],
+      "@/services/*": ["./services/*"]
+    },
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
+}

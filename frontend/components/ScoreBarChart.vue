@@ -92,11 +92,11 @@ onMounted(() => {
             tooltip: {
               callbacks: {
                 label: function(context) {
-                  return `Score: ${context.parsed.y.toFixed(1)} / 10`;
+                  return `Score: ${context.parsed.y?.toFixed(1) ?? 'N/A'} / 10`;
                 },
                 afterLabel: function(context) {
                   const question = props.questions[context.dataIndex];
-                  return question.question.substring(0, 50) + '...';
+                  return question?.question?.substring(0, 50) + '...';
                 }
               }
             }

@@ -1,56 +1,126 @@
-import { describe, it, expect } from 'vitest'
-import { useInterview } from '~/composables/useInterview'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { Ref } from 'vue'
+
+// Create state store for useState mock
+const stateStore = new Map<string, any>()
+
+// Mock useState from Nuxt
+const mockUseState = <T>(key: string, init: () => T): Ref<T> => {
+  if (!stateStore.has(key)) {
+    stateStore.set(key, init())
+  }
+  const state = {
+    get value() {
+      return stateStore.get(key)
+    },
+    set value(val: T) {
+      stateStore.set(key, val)
+    }
+  }
+  return state as Ref<T>
+}
+
+// Mock the useApi composable
+const mockGet = vi.fn()
+const mockPost = vi.fn()
+const mockUploadFile = vi.fn()
+
+const mockUseApi = () => ({
+  get: mockGet,
+  post: mockPost,
+  uploadFile: mockUploadFile
+})
+
+// Setup mocks before importing the composable
+vi.stubGlobal('useState', mockUseState)
+vi.stubGlobal('useApi', mockUseApi)
+
+// Now import the composable
+import { useInterview } from '../../../composables/useInterview'
 
 describe('useInterview', () => {
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks()
+    // Reset state store
+    stateStore.clear()
+  })
+
   it('should initialize with default state', () => {
-    const {
-      currentQuestionIndex,
-      currentQuestion,
-      allQuestions
-    } = useInterview()
+    const interview = useInterview()
     
-    expect(currentQuestionIndex.value).toBe(0)
-    expect(currentQuestion.value).toBeNull()
-    expect(allQuestions.value).toEqual([])
+    expect(interview.candidateName.value).toBe('')
+    expect(interview.selectedRole.value).toBeNull()
+    expect(interview.currentQuestionIndex.value).toBe(0)
+    expect(interview.currentQuestion.value).toBe('')
+    expect(interview.sessionId.value).toBe('')
+    expect(interview.analysisResult.value).toBeNull()
   })
 
-  it('should load questions when setQuestions is called', () => {
-    const { setQuestions, allQuestions, currentQuestion } = useInterview()
+  it('should set candidate name', () => {
+    const interview = useInterview()
     
-    const mockQuestions = [
-      'Question 1',
-      'Question 2',
-      'Question 3'
-    ]
+    interview.setCandidateName('John Doe')
     
-    setQuestions(mockQuestions)
-    
-    expect(allQuestions.value).toEqual(mockQuestions)
-    expect(currentQuestion.value).toBe('Question 1')
+    expect(interview.candidateName.value).toBe('John Doe')
   })
 
-  it('should navigate to the next question', () => {
-    const { setQuestions, nextQuestion, currentQuestion, currentQuestionIndex } = useInterview()
+  it('should set selected role and generate session ID', () => {
+    const interview = useInterview()
     
-    const mockQuestions = ['Q1', 'Q2', 'Q3']
-    setQuestions(mockQuestions)
+    const role = { id: 'role123', name: 'Software Engineer' }
+    interview.setSelectedRole(role)
     
-    nextQuestion()
-    
-    expect(currentQuestionIndex.value).toBe(1)
-    expect(currentQuestion.value).toBe('Q2')
+    expect(interview.selectedRole.value).toEqual(role)
+    expect(interview.sessionId.value).toMatch(/^session_\d+_[a-z0-9]+$/)
+    expect(interview.currentQuestionIndex.value).toBe(0)
   })
 
-  it('should not go beyond the last question', () => {
-    const { setQuestions, nextQuestion, currentQuestion, currentQuestionIndex } = useInterview()
+  it('should reset interview state', () => {
+    const interview = useInterview()
     
-    const mockQuestions = ['Q1', 'Q2']
-    setQuestions(mockQuestions)
+    // Set some state
+    interview.setCandidateName('John Doe')
+    interview.setSelectedRole({ id: 'role123', name: 'Developer' })
     
-    nextQuestion() // Index 1
-    nextQuestion() // Try to go to index 2 (doesn't exist)
+    // Reset
+    interview.resetInterview()
     
-    expect(currentQuestionIndex.value).toBe(1)
-    expect(currentQuestion.value).toBe('Q2')
+    expect(interview.selectedRole.value).toBeNull()
+    expect(interview.currentQuestionIndex.value).toBe(0)
+    expect(interview.currentQuestion.value).toBe('')
+    expect(interview.sessionId.value).toBe('')
+    expect(interview.analysisResult.value).toBeNull()
+  })
+
+  it('should fetch question from API', async () => {
+    const interview = useInterview()
+    const mockQuestion = { status: 'continue', question: 'What is your experience?' }
+    mockGet.mockResolvedValue(mockQuestion)
+    
+    const result = await interview.getQuestion('role123', 0)
+    
+    expect(mockGet).toHaveBeenCalledWith('/interview/question/role123/0')
+    expect(result).toEqual(mockQuestion)
+    expect(interview.currentQuestion.value).toBe('What is your experience?')
+    expect(interview.currentQuestionIndex.value).toBe(0)
+  })
+
+  it('should complete interview', async () => {
+    const interview = useInterview()
+    interview.setSelectedRole({ id: 'role123', name: 'Developer' })
+    
+    const mockResponse = {
+      message: 'Interview completed',
+      session_id: interview.sessionId.value,
+      recommendation: 'Recommended',
+      total_score: 85
+    }
+    mockPost.mockResolvedValue(mockResponse)
+    
+    const result = await interview.completeInterview()
+    
+    expect(mockPost).toHaveBeenCalledWith(`/interview/complete/${interview.sessionId.value}`)
+    expect(result).toEqual(mockResponse)
   })
 })

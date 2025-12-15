@@ -27,7 +27,7 @@ ChartJS.register(
 const props = defineProps<{
   communicationAvg: number;
   relevanceAvg: number;
-  qualityAvg: number;
+  logicalThinkingAvg: number;
 }>();
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -40,14 +40,14 @@ onMounted(() => {
       chart = new ChartJS(ctx, {
         type: 'radar',
         data: {
-          labels: ['Communication', 'Relevance', 'Quality'],
+          labels: ['Communication', 'Relevance', 'Logical Thinking'],
           datasets: [
             {
               label: 'Scores',
               data: [
                 props.communicationAvg,
                 props.relevanceAvg,
-                props.qualityAvg
+                props.logicalThinkingAvg
               ],
               backgroundColor: 'rgba(102, 126, 234, 0.2)',
               borderColor: 'rgba(102, 126, 234, 1)',
@@ -99,9 +99,9 @@ onUnmounted(() => {
 });
 
 watch(
-  () => [props.communicationAvg, props.relevanceAvg, props.qualityAvg],
+  () => [props.communicationAvg, props.relevanceAvg, props.logicalThinkingAvg],
   (newValues) => {
-    if (chart) {
+    if (chart && chart.data && chart.data.datasets && chart.data.datasets[0]) {
       chart.data.datasets[0].data = newValues;
       chart.update();
     }

@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # API Keys (Required - no default for security)
     google_api_key: str
 
+    # Database Configuration
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/ai_interview"
+
     # Storage Configuration
     questions_file_path: str = os.path.join(
         os.path.dirname(__file__), "questions_db.json")

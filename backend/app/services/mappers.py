@@ -20,24 +20,25 @@ class InterviewMapper:
 
     @staticmethod
     def to_orm_question_result(
-        candidate_id: int,
+        session_id: str,
         question: str,
         transcript: str,
         evaluation: Evaluation
     ) -> QuestionResult:
         """Convert Domain Evaluation to ORM QuestionResult."""
         return QuestionResult(
-            candidate_id=candidate_id,
+            session_id=session_id,
             question=question,
             transcript=transcript,
             communication_score=evaluation.scores.communication,
             relevance_score=evaluation.scores.relevance,
-            quality_score=evaluation.scores.quality,
+            logical_thinking_score=evaluation.scores.logical_thinking,
             total_score=evaluation.scores.total,
             feedback={
                 "strengths": evaluation.feedback.strengths,
                 "weaknesses": evaluation.feedback.weaknesses,
-                "summary": evaluation.feedback.summary
+                "summary": evaluation.feedback.summary,
+                "reasoning": evaluation.feedback.reasoning
             },
             pass_prediction=evaluation.pass_prediction
         )
@@ -52,13 +53,14 @@ class InterviewMapper:
                 scores=Score(
                     communication=orm_qr.communication_score,
                     relevance=orm_qr.relevance_score,
-                    quality=orm_qr.quality_score,
+                    logical_thinking=orm_qr.logical_thinking_score,
                     total=orm_qr.total_score
                 ),
                 feedback=Feedback(
                     strengths=orm_qr.feedback.get("strengths", ""),
                     weaknesses=orm_qr.feedback.get("weaknesses", ""),
-                    summary=orm_qr.feedback.get("summary", "")
+                    summary=orm_qr.feedback.get("summary", ""),
+                    reasoning=orm_qr.feedback.get("reasoning", "")
                 ),
                 pass_prediction=orm_qr.pass_prediction
             )
@@ -74,7 +76,7 @@ class InterviewMapper:
                 "scores": {
                     "communication": qr.communication_score,
                     "relevance": qr.relevance_score,
-                    "quality": qr.quality_score,
+                    "logical_thinking": qr.logical_thinking_score,
                     "total": qr.total_score
                 },
                 "feedback": qr.feedback,

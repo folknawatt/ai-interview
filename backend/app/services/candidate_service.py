@@ -1,11 +1,9 @@
 """
 Candidate Service.
 
-Encapsulates business logic for candidate management, including:
-- Candidate retrieval and creation
-- Session management
-- Interview completion tracking
+Encapsulates business logic for candidate management.
 """
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.database.models import Candidate
@@ -18,96 +16,46 @@ class CandidateService:
     @staticmethod
     def get_or_create(
         session: Session,
-        session_id: str,
         name: str,
-        email: str,
-        role_id: str
+        email: Optional[str]
     ) -> Candidate:
         """
         Get existing candidate or create new one.
 
         Args:
             session: Database session
-            session_id: Unique session identifier
             name: Candidate name
-            email: Candidate email
-            role_id: Job role identifier
+            email: Candidate email (optional)
 
         Returns:
             Candidate object
         """
-        candidate = (
-            session.query(Candidate)
-            .filter(Candidate.session_id == session_id)
-            .first()
-        )
-
-        if not candidate:
-            candidate = Candidate(
-                session_id=session_id,
-                name=name,
-                email=email,
-                role_id=role_id,
-                completed=False
+        # If email is provided, use it for deduplication
+        if email:
+            candidate = (
+                session.query(Candidate)
+                .filter(Candidate.email == email)
+                .first()
             )
-            session.add(candidate)
-            session.commit()
-            session.refresh(candidate)
+            if candidate:
+                return candidate
 
-        return candidate
-
-    @staticmethod
-    def mark_completed(session: Session, session_id: str) -> Candidate:
-        """
-        Mark interview as completed for a candidate.
-
-        Args:
-            session: Database session
-            session_id: Unique session identifier
-
-        Returns:
-            Updated candidate object
-
-        Raises:
-            NotFoundError: If candidate not found
-        """
-        candidate = (
-            session.query(Candidate)
-            .filter(Candidate.session_id == session_id)
-            .first()
+        # Create new candidate
+        candidate = Candidate(
+            name=name,
+            email=email
         )
-
-        if not candidate:
-            raise NotFoundError("Candidate session not found")
-
-        candidate.completed = True
+        session.add(candidate)
         session.commit()
         session.refresh(candidate)
 
         return candidate
 
     @staticmethod
-    def get_by_session_id(session: Session, session_id: str) -> Candidate:
-        """
-        Retrieve candidate by session ID.
-
-        Args:
-            session: Database session
-            session_id: Unique session identifier
-
-        Returns:
-            Candidate object
-
-        Raises:
-            NotFoundError: If candidate not found
-        """
-        candidate = (
-            session.query(Candidate)
-            .filter(Candidate.session_id == session_id)
-            .first()
-        )
-
+    def get_by_id(session: Session, candidate_id: int) -> Candidate:
+        """Retrieve candidate by ID."""
+        candidate = session.query(Candidate).filter(
+            Candidate.id == candidate_id).first()
         if not candidate:
-            raise NotFoundError("Candidate session not found")
-
+            raise NotFoundError(f"Candidate {candidate_id} not found")
         return candidate

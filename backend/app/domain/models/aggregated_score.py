@@ -18,7 +18,7 @@ class AggregatedScore:
         total_score: Average total score across all questions (1-10)
         communication_avg: Average communication score (1-10)
         relevance_avg: Average relevance score (1-10)
-        quality_avg: Average quality score (1-10)
+        logical_thinking_avg: Average logical thinking score (1-10)
         pass_rate: Percentage of questions with pass prediction (0-100)
         overall_recommendation: Overall hiring recommendation
             (Strong Pass, Pass, Review, Fail)
@@ -29,7 +29,7 @@ class AggregatedScore:
     total_score: float
     communication_avg: float
     relevance_avg: float
-    quality_avg: float
+    logical_thinking_avg: float
     pass_rate: float
     overall_recommendation: str
     questions_answered: int
@@ -41,8 +41,9 @@ class AggregatedScore:
         for field_name in [
             'total_score',
             'communication_avg',
+            'communication_avg',
             'relevance_avg',
-            'quality_avg'
+            'logical_thinking_avg'
         ]:
             value = getattr(self, field_name)
             if not 0.0 <= value <= 10.0:

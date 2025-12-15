@@ -4,6 +4,7 @@ from .hr_service import HRService
 from .candidate_service import CandidateService
 from .question_service import QuestionService
 from .report_service import ReportService
+from .media_service import MediaService
 
 __all__ = [
     "InterviewService",
@@ -11,4 +12,5 @@ __all__ = [
     "CandidateService",
     "QuestionService",
     "ReportService",
+    "MediaService",
 ]

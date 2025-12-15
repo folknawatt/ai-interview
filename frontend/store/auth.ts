@@ -1,6 +1,7 @@
+import { computed } from 'vue'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { refreshToken } from '~/services/auth'
+import { refreshToken } from '../services/auth'
 
 export const useAuth = defineStore('auth', () => {
     const tokenAuth = useStorage('token', '')
