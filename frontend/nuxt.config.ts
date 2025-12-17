@@ -6,6 +6,14 @@ export default defineNuxtConfig({
     devtools: { enabled: true },
     modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
     
+    // PostCSS configuration (migrated from postcss.config.js)
+    postcss: {
+        plugins: {
+            tailwindcss: {},
+            autoprefixer: {},
+        },
+    },
+
     // Path aliases for cleaner imports
     alias: {
         '@': fileURLToPath(new URL('./', import.meta.url)),

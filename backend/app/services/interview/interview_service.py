@@ -9,7 +9,7 @@ Encapsulates business logic for candidate interviews, including:
 import asyncio
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -202,7 +202,7 @@ class InterviewService:
 
         # Mark session as completed
         interview_session.status = InterviewStatus.COMPLETED
-        interview_session.completed_at = datetime.utcnow()
+        interview_session.completed_at = datetime.now(timezone.utc)
         session.add(interview_session)  # Ensure it's in session
         session.commit()
 
@@ -311,3 +311,6 @@ class InterviewService:
             # Ensure session_id is set (new_score might not have it if created in aggregator)
             new_score.session_id = session_id
             session.add(new_score)
+
+        # CRITICAL: Commit to persist aggregated score to database
+        session.commit()

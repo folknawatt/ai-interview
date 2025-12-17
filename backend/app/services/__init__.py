@@ -1,16 +1,24 @@
-"""Services package - Business logic layer."""
-from .interview.interview_service import InterviewService
-from .hr.hr_service import HRService
-from .interview.candidate_service import CandidateService
-from .interview.question_service import QuestionService
-from .interview.report_service import ReportService
-from .core.media_service import MediaService
+"""
+Service layer exports.
+
+All business logic services are exported from this module
+for easy importing throughout the application.
+"""
+from app.services.hr.hr_service import HRService
+from app.services.core.tts_service import TTSService
+from app.services.interview.interview_service import InterviewService
+from app.services.interview.question_service import QuestionService
+from app.services.interview.candidate_service import CandidateService
+from app.services.interview.report_service import ReportService
+from app.services.core.media_service import MediaService
+
 
 __all__ = [
-    "InterviewService",
     "HRService",
-    "CandidateService",
+    "TTSService",
+    "InterviewService",
     "QuestionService",
+    "CandidateService",
     "ReportService",
     "MediaService",
 ]

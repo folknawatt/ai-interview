@@ -9,7 +9,8 @@ import os
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 from app.schemas import TTSRequest
-from app.adapters.tts.gemini_tts import generate_tts, TTSError
+from app.adapters.tts.factory import TTSProviderFactory
+from app.adapters.tts.exceptions import TTSError, TTSConfigurationError
 from app.exceptions import BadRequestError, NotFoundError
 from app.dependencies import get_api_key
 
@@ -38,17 +39,24 @@ async def generate_tts_endpoint(
         HTTPException: If TTS generation fails
     """
     try:
-        audio_path = await generate_tts(
-            text=request.text,
-            provider=request.provider,
+        # Create provider using factory
+        # Note: request.provider should be "gemini" or "edge"
+        provider = TTSProviderFactory.create_provider(
+            request.provider,
             api_key=api_key
         )
+
+        # Generate audio (synchronous call)
+        audio_path = provider.generate_audio(
+            text=request.text
+        )
+
         return {
             "success": True,
             "audio_path": audio_path,
             "filename": os.path.basename(audio_path)
         }
-    except TTSError as e:
+    except (TTSError, TTSConfigurationError) as e:
         raise TTSError(f"TTS generation failed: {e}") from e
 
 

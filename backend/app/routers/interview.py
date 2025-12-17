@@ -14,7 +14,12 @@ from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.dependencies import get_api_key
 from app.services import InterviewService, QuestionService
+from app.services.core.tts_service import TTSService
 from app.exceptions import NotFoundError
+from app.config.logging_config import get_logger
+
+
+logger = get_logger(__name__)
 
 router = APIRouter(
     prefix="/interview",
@@ -23,11 +28,19 @@ router = APIRouter(
 
 
 @router.get("/question/{role_id}/{index}")
-def get_interview_question(role_id: str, index: int) -> Dict[str, Any]:
-    """Get interview question by role and index."""
+async def get_interview_question(role_id: str, index: int) -> Dict[str, Any]:
+    """Get interview question by role and index with TTS audio."""
     result = QuestionService.get_next_question(role_id, index)
     if not result:
         raise NotFoundError(f"Role '{role_id}' not found")
+
+    # Generate TTS audio for the question if status is "continue"
+    if result.get("status") == "continue" and "question" in result:
+        result["audio_path"] = TTSService.generate_question_audio(
+            text=result["question"],
+            question_id=result["question_id"]
+        )
+
     return result
 
 

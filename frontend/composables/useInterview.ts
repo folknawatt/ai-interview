@@ -13,6 +13,7 @@ export const useInterview = () => {
   const currentQuestionIndex = useState<number>('currentQuestionIndex', () => 0);
   const currentQuestionId = useState<number>('currentQuestionId', () => -1);
   const currentQuestion = useState<string>('currentQuestion', () => '');
+  const currentAudioPath = useState<string | null>('currentAudioPath', () => null);
   const sessionId = useState<string>('sessionId', () => '');
   const analysisResult = useState<AnalysisResponse | null>('analysisResult', () => null);
 
@@ -48,6 +49,7 @@ export const useInterview = () => {
         currentQuestion.value = response.question;
         currentQuestionId.value = response.question_id || -1;
         currentQuestionIndex.value = index;
+        currentAudioPath.value = response.audio_path || null;
         return response;
       }
       
@@ -55,6 +57,16 @@ export const useInterview = () => {
     } catch (error) {
       console.error('Error fetching question:', error);
       throw error;
+    }
+  };
+
+  /**
+   * Play audio for current question
+   */
+  const playAudio = async () => {
+    if (currentAudioPath.value) {
+      const audio = new Audio(currentAudioPath.value);
+      await audio.play(); // Return promise for error handling
     }
   };
 
@@ -132,6 +144,7 @@ export const useInterview = () => {
     selectedRole,
     currentQuestionIndex,
     currentQuestion,
+    currentAudioPath,
     sessionId,
     analysisResult,
     
@@ -141,6 +154,7 @@ export const useInterview = () => {
     setSelectedRole,
     setAnalysisResult,
     getQuestion,
+    playAudio,
     uploadAnswer,
     getSummary,
     completeInterview,

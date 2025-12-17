@@ -2,12 +2,14 @@
 FastAPI backend for AI Interview System.
 """
 import logging
+from pathlib import Path
 from typing import Dict
 from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config.settings import settings
 from app.exceptions import AppException, convert_exception
@@ -72,6 +74,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Create audio directory if it doesn't exist
+AUDIO_DIR = Path("audio")
+AUDIO_DIR.mkdir(exist_ok=True)
+
+# Mount static files for audio
+app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")
 
 # Include routers
 app.include_router(hr.router)

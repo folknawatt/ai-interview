@@ -67,6 +67,7 @@ export interface Question {
   question?: string;
   question_id?: number;
   total?: number;
+  audio_path?: string | null;
 }
 
 export interface Evaluation {

@@ -10,7 +10,7 @@ This module defines the database schema for storing interview data:
 - AggregatedScore: Computed aggregate scores and recommendations
 """
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Any, Dict
 from sqlmodel import Field, Relationship, SQLModel, JSON
 from sqlalchemy import Text
@@ -32,7 +32,8 @@ class JobRole(SQLModel, table=True):
 
     id: str = Field(primary_key=True, index=True, max_length=100)
     title: str = Field(max_length=255, nullable=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc))
 
     # Relationships
     questions: List["Question"] = Relationship(
@@ -56,7 +57,8 @@ class Question(SQLModel, table=True):
     )
     content: str = Field(sa_type=Text, nullable=False)
     order: int = Field(default=0, nullable=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc))
 
     # Relationships
     role: "JobRole" = Relationship(back_populates="questions")
@@ -75,7 +77,12 @@ class Candidate(SQLModel, table=True):
     email: Optional[str] = Field(
         default=None, max_length=255, nullable=True, index=True)
     created_at: datetime = Field(
-        default_factory=datetime.utcnow, nullable=False)
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False
+    )
 
     # Relationships
     sessions: List["InterviewSession"] = Relationship(
@@ -110,7 +117,7 @@ class InterviewSession(SQLModel, table=True):
     status: InterviewStatus = Field(
         default=InterviewStatus.STARTED, nullable=False)
     started_at: datetime = Field(
-        default_factory=datetime.utcnow, nullable=False)
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
     completed_at: Optional[datetime] = Field(default=None, nullable=True)
 
     # Relationships
@@ -158,6 +165,15 @@ class QuestionResult(SQLModel, table=True):
     # Feedback stored as JSON
     feedback: Dict[str, Any] = Field(default={}, sa_type=JSON)
     pass_prediction: bool = Field(nullable=False)
+
+    # Timestamps
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False
+    )
 
     # Relationship
     session: "InterviewSession" = Relationship(

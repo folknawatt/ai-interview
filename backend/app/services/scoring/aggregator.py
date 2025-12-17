@@ -26,7 +26,7 @@ def calculate_aggregated_score(
     """
     if not all_question_results:
         return AggregatedScore(
-            # total_score=0.0,
+            average_score=0.0,
             communication_avg=0.0,
             relevance_avg=0.0,
             logical_thinking_avg=0.0,

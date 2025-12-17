@@ -5,8 +5,7 @@ This module provides application-wide settings using Pydantic for
 environment variable validation and type safety.
 """
 import os
-from typing import List
-from pydantic import Field, AliasChoices
+from typing import List, Optional
 from pydantic_settings import BaseSettings
 
 
@@ -18,12 +17,24 @@ class Settings(BaseSettings):
     it uses the default values specified here.
     """
 
-    # API Keys (Required - no default for security)
-    google_api_key: str = Field(validation_alias=AliasChoices(
-        "google_api_key", "GEMINI_API_KEY", "GOOGLE_API_KEY"))
+    # Server Configuration
+    server_host: str = "0.0.0.0"
+    server_port: int = 8000
+    server_url: str = "http://localhost:8000"
+
+    # API Configuration
+    google_api_key: Optional[str] = None
 
     # Database Configuration
     database_url: str = "postgresql://postgres:postgres@localhost:5432/ai_interview"
+
+    # TTS Configuration
+    tts_provider: str = "gemini"  # TTS provider to use: "gemini" or "edge"
+    tts_max_retries: int = 2
+    tts_initial_delay: int = 1
+    tts_audio_dir: str = "audio"
+    tts_gemini_voice: str = "kore"  # Gemini voice name
+    tts_edge_voice: str = "th-TH-PremwadeeNeural"  # Edge voice name
 
     # Storage Configuration
     questions_file_path: str = os.path.join(
