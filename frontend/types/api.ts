@@ -1,41 +1,71 @@
 // API Response Types
 
-import type { AxiosPromise } from 'axios'
-
-export type Response<T> = {
-    error?: {
-        code: never
-        message: string
-    }
-    data?: {
-        title: string
-        description: string
-    } & T
+/**
+ * Generic API error structure
+ */
+export interface ApiError {
+  code: string
+  message: string
+  details?: Record<string, any>
 }
 
-export type ApiResponse<T> = AxiosPromise<
-    Response<
-        T extends unknown[]
-            ? {
-                  items: T
-              }
-            : { item: T }
-    >
->
+/**
+ * Generic API response wrapper
+ */
+export interface ApiResponse<T> {
+  data?: T
+  error?: ApiError
+  message?: string
+}
+
+/**
+ * Paginated response wrapper
+ */
+export interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
 
 export interface LoginResponse {
-    accessToken: string
-    refreshToken: string
+  accessToken: string
+  refreshToken: string
+  user?: User
+}
+
+/**
+ * User and authentication types
+ */
+export interface User {
+  id: string
+  email: string
+  name: string
+  role: UserRole
+  createdAt: string
+}
+
+export enum UserRole {
+  HR = 'hr',
+  ADMIN = 'admin',
+  INTERVIEWER = 'interviewer'
+}
+
+export interface HRUser extends User {
+  department?: string
+  permissions: string[]
 }
 
 export interface Role {
   id: string;
-  name: string;
+  title: string;
 }
 
 export interface Question {
   status: 'continue' | 'finished';
   question?: string;
+  question_id?: number;
   total?: number;
 }
 
@@ -43,13 +73,14 @@ export interface Evaluation {
   scores: {
     communication: number;
     relevance: number;
-    quality: number;
+    logical_thinking: number;
     total: number;
   };
   feedback: {
     strengths: string;
     weaknesses: string;
     summary: string;
+    reasoning?: string;
   };
   pass_prediction: boolean;
 }
@@ -61,10 +92,10 @@ export interface AnalysisResponse {
 }
 
 export interface AggregatedScore {
-  total_score: number;
+  average_score: number;
   communication_avg: number;
   relevance_avg: number;
-  quality_avg: number;
+  logical_thinking_avg: number;
   pass_rate: number;
   overall_recommendation: string;
   questions_answered: number;

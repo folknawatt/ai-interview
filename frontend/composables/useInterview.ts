@@ -8,13 +8,20 @@ export const useInterview = () => {
 
   // State management
   const candidateName = useState<string>('candidateName', () => '');
+  const candidateEmail = useState<string>('candidateEmail', () => '');
   const selectedRole = useState<{ id: string; name: string } | null>('selectedRole', () => null);
   const currentQuestionIndex = useState<number>('currentQuestionIndex', () => 0);
+  const currentQuestionId = useState<number>('currentQuestionId', () => -1);
   const currentQuestion = useState<string>('currentQuestion', () => '');
   const sessionId = useState<string>('sessionId', () => '');
   const analysisResult = useState<AnalysisResponse | null>('analysisResult', () => null);
 
   // Setters
+  const setCandidateInfo = (name: string, email: string) => {
+    candidateName.value = name;
+    candidateEmail.value = email;
+  };
+  
   const setCandidateName = (name: string) => {
     candidateName.value = name;
   };
@@ -39,6 +46,7 @@ export const useInterview = () => {
       
       if (response.status === 'continue' && response.question) {
         currentQuestion.value = response.question;
+        currentQuestionId.value = response.question_id || -1;
         currentQuestionIndex.value = index;
         return response;
       }
@@ -58,9 +66,11 @@ export const useInterview = () => {
       const formData = new FormData();
       formData.append('file', videoBlob, 'interview_answer.webm');
       formData.append('question', question);
+      formData.append('question_id', currentQuestionId.value.toString());
       formData.append('session_id', sessionId.value);
       formData.append('role_id', selectedRole.value?.id || '');
       formData.append('candidate_name', candidateName.value || 'Anonymous');
+      formData.append('candidate_email', candidateEmail.value || '');
 
       const response = await uploadFile<AnalysisResponse>('/interview/upload-answer', formData);
       
@@ -111,11 +121,14 @@ export const useInterview = () => {
     currentQuestion.value = '';
     sessionId.value = '';
     analysisResult.value = null;
+    candidateName.value = '';
+    candidateEmail.value = '';
   };
 
   return {
     // State
     candidateName,
+    candidateEmail,
     selectedRole,
     currentQuestionIndex,
     currentQuestion,
@@ -124,6 +137,7 @@ export const useInterview = () => {
     
     // Methods
     setCandidateName,
+    setCandidateInfo,
     setSelectedRole,
     setAnalysisResult,
     getQuestion,

@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'url'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
@@ -6,13 +8,17 @@ export default defineNuxtConfig({
     
     // Path aliases for cleaner imports
     alias: {
-        '@': '/<rootDir>',
-        '~': '/<rootDir>',
-        '@components': '/<rootDir>/components',
-        '@composables': '/<rootDir>/composables',
-        '@services': '/<rootDir>/services',
-        '@types': '/<rootDir>/types',
-        '@store': '/<rootDir>/store',
+        '@': fileURLToPath(new URL('./', import.meta.url)),
+        '~': fileURLToPath(new URL('./', import.meta.url)),
+        '@components': fileURLToPath(new URL('./components', import.meta.url)),
+        '@composables': fileURLToPath(new URL('./composables', import.meta.url)),
+        '@services': fileURLToPath(new URL('./services', import.meta.url)),
+        '@types': fileURLToPath(new URL('./types', import.meta.url)),
+        '@store': fileURLToPath(new URL('./store', import.meta.url)),
+    },
+
+    imports: {
+        dirs: ['store']
     },
     
     runtimeConfig: {

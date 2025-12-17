@@ -37,8 +37,8 @@ class QuestionResultResponse(BaseModel):
     transcript: str | None
     communication_score: float
     relevance_score: float
-    quality_score: float
-    total_score: float
+    logical_thinking_score: float
+    average_score: float
     feedback: dict
     pass_prediction: bool
 
@@ -51,10 +51,10 @@ class QuestionResultResponse(BaseModel):
 class AggregatedScoreResponse(BaseModel):
     """Aggregated score response."""
 
-    total_score: float
+    average_score: float
     communication_avg: float
     relevance_avg: float
-    quality_avg: float
+    logical_thinking_avg: float
     pass_rate: float
     overall_recommendation: str
     questions_answered: int
@@ -81,5 +81,5 @@ class ReportListItem(BaseModel):
     name: str
     role_id: str
     interview_date: str
-    total_score: float | None
+    average_score: float | None
     overall_recommendation: str | None

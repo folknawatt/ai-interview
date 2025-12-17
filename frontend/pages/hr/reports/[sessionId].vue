@@ -74,7 +74,7 @@
         </h2>
         <div class="flex flex-col md:flex-row gap-8 items-center">
           <div class="flex flex-col items-center gap-4">
-            <ScoreCard :score="report.aggregated_score.total_score" :size="200" />
+            <ScoreCard :score="report.aggregated_score.average_score" :size="200" />
             <div
               class="px-6 py-2 rounded-full font-bold text-lg text-white"
               :class="getRecommendationClass(report.aggregated_score.overall_recommendation)"
@@ -154,8 +154,8 @@
               <span class="text-gray-800 font-medium">{{ question.question }}</span>
             </div>
             <div class="flex gap-4 items-center">
-              <span class="px-3 py-1 rounded-full text-sm font-semibold" :class="getScoreClass(question.total_score)">
-                {{ question.total_score }}/10
+              <span class="px-3 py-1 rounded-full text-sm font-semibold" :class="getScoreClass(question.average_score)">
+                {{ question.average_score }}/10
               </span>
               <span
                 class="px-3 py-1 rounded-full text-sm font-semibold"
@@ -180,7 +180,7 @@
               </div>
               <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
                 <span class="text-xs text-gray-500 block mb-1">Logical Thinking</span>
-                <span class="font-bold text-gray-900">{{ question.logical_thinking_score || question.quality_score }}/10</span>
+                <span class="font-bold text-gray-900">{{ question.logical_thinking_score }}/10</span>
               </div>
             </div>
 
@@ -232,9 +232,9 @@ import {
   ExclamationTriangleIcon,
   DocumentTextIcon
 } from '@heroicons/vue/24/solid';
-import ScoreCard from '@/components/ScoreCard.vue';
-import ScoreRadarChart from '@/components/ScoreRadarChart.vue';
-import ScoreBarChart from '@/components/ScoreBarChart.vue';
+import ScoreCard from '../../../components/charts/ScoreCard.vue';
+import ScoreRadarChart from '../../../components/charts/ScoreRadarChart.vue';
+import ScoreBarChart from '../../../components/charts/ScoreBarChart.vue';
 
 const route = useRoute();
 const router = useRouter();

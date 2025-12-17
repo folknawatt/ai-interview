@@ -6,6 +6,7 @@ environment variable validation and type safety.
 """
 import os
 from typing import List
+from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings
 
 
@@ -18,7 +19,8 @@ class Settings(BaseSettings):
     """
 
     # API Keys (Required - no default for security)
-    google_api_key: str
+    google_api_key: str = Field(validation_alias=AliasChoices(
+        "google_api_key", "GEMINI_API_KEY", "GOOGLE_API_KEY"))
 
     # Database Configuration
     database_url: str = "postgresql://postgres:postgres@localhost:5432/ai_interview"

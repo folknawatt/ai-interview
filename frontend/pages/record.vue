@@ -19,8 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import Recorder from '@/components/Recorder.vue'
-import { useMediaRecorder } from '@/composables/useMediaRecorder'
+import Recorder from '../components/interview/Recorder.vue'
+import { useMediaRecorder } from '../composables/useMediaRecorder'
 
 const {
   currentQuestion,

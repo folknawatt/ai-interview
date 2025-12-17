@@ -1,5 +1,5 @@
 """
-SQLAlchemy ORM models for AI Interview persistent storage.
+SQLModel models for AI Interview persistent storage.
 
 This module defines the database schema for storing interview data:
 - JobRole: Available job positions
@@ -11,13 +11,9 @@ This module defines the database schema for storing interview data:
 """
 import enum
 from datetime import datetime
-from sqlalchemy import (
-    Column, Integer, String, Float, Boolean, DateTime, JSON, ForeignKey, Text,
-    Enum
-)
-from sqlalchemy.orm import relationship
-
-from .db import Base
+from typing import List, Optional, Any, Dict
+from sqlmodel import Field, Relationship, SQLModel, JSON
+from sqlalchemy import Text
 
 
 class InterviewStatus(str, enum.Enum):
@@ -28,203 +24,176 @@ class InterviewStatus(str, enum.Enum):
     FAILED = "failed"
 
 
-class JobRole(Base):
+class JobRole(SQLModel, table=True):
     """
     Job Role definition.
-
-    Attributes:
-        id: Unique identifier (e.g., 'software-engineer')
-        title: Human readable title
     """
     __tablename__ = "job_roles"
 
-    id = Column(String(100), primary_key=True, index=True)
-    title = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: str = Field(primary_key=True, index=True, max_length=100)
+    title: str = Field(max_length=255, nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
-    questions = relationship(
-        "Question", back_populates="role", cascade="all, delete-orphan")
-    sessions = relationship("InterviewSession", back_populates="role")
+    questions: List["Question"] = Relationship(
+        back_populates="role", cascade_delete=True
+    )
+    sessions: List["InterviewSession"] = Relationship(back_populates="role")
 
 
-class Question(Base):
+class Question(SQLModel, table=True):
     """
     Interview Question.
-
-    Attributes:
-        id: Primary key
-        role_id: Foreign key to JobRole
-        content: The question text
-        order: Sequence order
     """
     __tablename__ = "questions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    role_id = Column(String(100), ForeignKey(
-        "job_roles.id"), nullable=False, index=True)
-    content = Column(Text, nullable=False)
-    order = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    role_id: str = Field(
+        foreign_key="job_roles.id",
+        nullable=False,
+        index=True,
+        max_length=100
+    )
+    content: str = Field(sa_type=Text, nullable=False)
+    order: int = Field(default=0, nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
-    role = relationship("JobRole", back_populates="questions")
-    results = relationship("QuestionResult", back_populates="question_def")
+    role: "JobRole" = Relationship(back_populates="questions")
+    results: List["QuestionResult"] = Relationship(
+        back_populates="question_def")
 
 
-class Candidate(Base):
+class Candidate(SQLModel, table=True):
     """
     Candidate profile.
-
-    Attributes:
-        id: Primary key
-        name: Candidate's full name
-        email: Candidate's email (optional)
-        created_at: Timestamp when candidate was first seen
     """
     __tablename__ = "candidates"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    name: str = Field(max_length=255, nullable=False)
+    email: Optional[str] = Field(
+        default=None, max_length=255, nullable=True, index=True)
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, nullable=False)
 
     # Relationships
-    sessions = relationship(
-        "InterviewSession",
+    sessions: List["InterviewSession"] = Relationship(
         back_populates="candidate",
-        cascade="all, delete-orphan"
+        cascade_delete=True
     )
 
 
-class InterviewSession(Base):
+class InterviewSession(SQLModel, table=True):
     """
     Specific interview instance.
-
-    Attributes:
-        session_id: Unique UUID for the session (PK)
-        candidate_id: FK to Candidate
-        role_id: FK to JobRole
-        status: Current status (started, completed, etc)
     """
     __tablename__ = "interview_sessions"
 
-    session_id = Column(String(100), primary_key=True, index=True)
-    candidate_id = Column(Integer, ForeignKey(
-        "candidates.id"), nullable=False, index=True)
-    role_id = Column(String(100), ForeignKey(
-        "job_roles.id"), nullable=False, index=True)
+    session_id: str = Field(
+        primary_key=True,
+        index=True,
+        max_length=100
+    )
+    candidate_id: int = Field(
+        foreign_key="candidates.id",
+        nullable=False,
+        index=True
+    )
+    role_id: str = Field(
+        foreign_key="job_roles.id",
+        nullable=False,
+        index=True,
+        max_length=100
+    )
 
-    status = Column(Enum(InterviewStatus),
-                    default=InterviewStatus.STARTED, nullable=False)
-    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    completed_at = Column(DateTime, nullable=True)
+    status: InterviewStatus = Field(
+        default=InterviewStatus.STARTED, nullable=False)
+    started_at: datetime = Field(
+        default_factory=datetime.utcnow, nullable=False)
+    completed_at: Optional[datetime] = Field(default=None, nullable=True)
 
     # Relationships
-    candidate = relationship("Candidate", back_populates="sessions")
-    role = relationship("JobRole", back_populates="sessions")
+    candidate: "Candidate" = Relationship(back_populates="sessions")
+    role: "JobRole" = Relationship(back_populates="sessions")
 
-    question_results = relationship(
-        "QuestionResult",
+    question_results: List["QuestionResult"] = Relationship(
         back_populates="session",
-        cascade="all, delete-orphan"
+        cascade_delete=True
     )
-    aggregated_score = relationship(
-        "AggregatedScore",
+    aggregated_score: Optional["AggregatedScore"] = Relationship(
         back_populates="session",
-        uselist=False,
-        cascade="all, delete-orphan"
+        sa_relationship_kwargs={
+            "uselist": False,
+            "cascade": "all, delete-orphan"
+        }
     )
 
 
-class QuestionResult(Base):
+class QuestionResult(SQLModel, table=True):
     """
     QuestionResult table storing individual question evaluations.
-
-    Attributes:
-        id: Primary key
-        session_id: Foreign key to interview session
-        question_id: Foreign key to question definition (optional, for linkage)
-        question_text: Snapshot of question text (for historical integrity)
-        transcript: Transcribed answer from candidate
-        communication_score: Score for communication skills (1-10)
-        relevance_score: Score for answer relevance (1-10)
-        logical_thinking_score: Score for logical thinking (1-10)
-        total_score: Total score for this question (1-10)
-        feedback: JSON object containing strengths, weaknesses, summary
-        pass_prediction: AI prediction whether this answer passes
     """
     __tablename__ = "question_results"
 
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(
-        String(100),
-        ForeignKey("interview_sessions.session_id"),
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    session_id: str = Field(
+        foreign_key="interview_sessions.session_id",
         nullable=False,
-        index=True
+        index=True,
+        max_length=100
     )
-    question_id = Column(Integer, ForeignKey("questions.id"), nullable=True)
+    question_id: Optional[int] = Field(
+        default=None, foreign_key="questions.id", nullable=True)
 
-    question = Column(Text, nullable=False)  # Snapshot of text
-    transcript = Column(Text, nullable=True)
+    question: str = Field(sa_type=Text, nullable=False)  # Snapshot of text
+    transcript: Optional[str] = Field(
+        default=None, sa_type=Text, nullable=True)
 
-    # Scores (1-10 scale) - Float for decimal precision
-    communication_score = Column(Float, nullable=False)
-    relevance_score = Column(Float, nullable=False)
-    logical_thinking_score = Column(Float, nullable=False)
-    total_score = Column(Float, nullable=False)
+    # Scores (1-10 scale)
+    communication_score: float = Field(nullable=False)
+    relevance_score: float = Field(nullable=False)
+    logical_thinking_score: float = Field(nullable=False)
 
-    # Feedback stored as JSON:
-    # {"strengths": "...", "weaknesses": "...", "summary": "..."}
-    feedback = Column(JSON, nullable=False)
-    pass_prediction = Column(Boolean, nullable=False)
+    # Feedback stored as JSON
+    feedback: Dict[str, Any] = Field(default={}, sa_type=JSON)
+    pass_prediction: bool = Field(nullable=False)
 
     # Relationship
-    session = relationship(
-        "InterviewSession", back_populates="question_results")
-    question_def = relationship("Question", back_populates="results")
+    session: "InterviewSession" = Relationship(
+        back_populates="question_results")
+    question_def: Optional["Question"] = Relationship(back_populates="results")
 
 
-class AggregatedScore(Base):
+class AggregatedScore(SQLModel, table=True):
     """
     AggregatedScore table storing computed aggregate metrics per session.
-
-    Attributes:
-        id: Primary key
-        session_id: Foreign key to interview session (unique)
-        total_score: Average total score across all questions
-        communication_avg: Average communication score
-        relevance_avg: Average relevance score
-        logical_thinking_avg: Average logical thinking score
-        pass_rate: Percentage of questions with pass prediction
-        overall_recommendation: Computed recommendation (Strong Pass/Pass/Review/Fail)
-        questions_answered: Number of questions answered
-        total_questions: Total number of questions for this role
     """
     __tablename__ = "aggregated_scores"
 
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(
-        String(100),
-        ForeignKey("interview_sessions.session_id"),
-        unique=True,
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    session_id: str = Field(
+        foreign_key="interview_sessions.session_id",
+        sa_column_kwargs={"unique": True},
         nullable=False,
-        index=True
+        index=True,
+        max_length=100
     )
 
     # Aggregated metrics
-    total_score = Column(Float, nullable=False)
-    communication_avg = Column(Float, nullable=False)
-    relevance_avg = Column(Float, nullable=False)
-    logical_thinking_avg = Column(Float, nullable=False)
-    pass_rate = Column(Float, nullable=False)  # Percentage (0-100)
+    average_score: float = Field(nullable=False)
+    communication_avg: float = Field(nullable=False)
+    relevance_avg: float = Field(nullable=False)
+    logical_thinking_avg: float = Field(nullable=False)
+    pass_rate: float = Field(nullable=False)  # Percentage (0-100)
+
     # "Strong Pass", "Pass", "Review", "Fail"
-    overall_recommendation = Column(String(50), nullable=False)
+    overall_recommendation: str = Field(max_length=50, nullable=False)
 
     # Question counts
-    questions_answered = Column(Integer, nullable=False)
-    total_questions = Column(Integer, nullable=False)
+    questions_answered: int = Field(nullable=False)
+    total_questions: int = Field(nullable=False)
 
     # Relationship
-    session = relationship(
-        "InterviewSession", back_populates="aggregated_score")
+    session: "InterviewSession" = Relationship(
+        back_populates="aggregated_score")

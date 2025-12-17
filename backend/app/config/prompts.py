@@ -46,8 +46,7 @@ Provide output in RAW JSON format only. No markdown code blocks (```json).
   "scores": {{
     "communication": <float 0.0-10.0>,
     "relevance": <float 0.0-10.0>,
-    "logical_thinking": <float 0.0-10.0>,
-    "total_average": <float 0.0-10.0>
+    "logical_thinking": <float 0.0-10.0>
   }},
   "feedback": {{
     "strengths": "<จุดแข็ง (Thai) เน้นพฤติกรรมที่ทำได้ดี>",

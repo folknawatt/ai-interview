@@ -163,10 +163,11 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
 
         score_data = [
             ['Overall Recommendation:', agg.overall_recommendation],
-            ['Total Score:', f"{agg.total_score:.2f} / 10"],
+            ['Average Score:', f"{agg.average_score:.2f} / 10"],
             ['Communication Score:', f"{agg.communication_avg:.2f} / 10"],
             ['Relevance Score:', f"{agg.relevance_avg:.2f} / 10"],
-            ['Quality Score:', f"{agg.quality_avg:.2f} / 10"],
+            ['Logical Thinking Score:',
+                f"{agg.logical_thinking_avg:.2f} / 10"],
             ['Pass Rate:', f"{agg.pass_rate:.1f}%"],
             [
                 'Questions Answered:',
@@ -216,12 +217,12 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
 
         # Scores table
         q_scores_data = [
-            ['Communication', 'Relevance', 'Quality', 'Total', 'Pass'],
+            ['Communication', 'Relevance', 'Logical Thinking', 'Average', 'Pass'],
             [
                 f"{q.communication_score}/10",
                 f"{q.relevance_score}/10",
-                f"{q.quality_score}/10",
-                f"{q.total_score}/10",
+                f"{q.logical_thinking_score}/10",
+                f"{q.average_score}/10",
                 "PASS" if q.pass_prediction else "FAIL"
             ]
         ]

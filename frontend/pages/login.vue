@@ -26,9 +26,22 @@
           />
         </div>
 
+        <div>
+           <label class="block text-left text-sm font-medium mb-2 text-minimal-text-primary"
+            >อีเมล (Email)</label
+          >
+          <input
+            v-model="email"
+            type="email"
+            placeholder="example@email.com"
+            required
+            class="w-full px-4 py-3 bg-white border-2 border-minimal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-minimal-info focus:border-transparent text-minimal-text-primary placeholder-minimal-text-muted transition-all"
+          />
+        </div>
+
         <button
           type="submit"
-          :disabled="!name.trim()"
+          :disabled="!name.trim() || !email.trim()"
           class="w-full px-6 py-3 text-lg font-semibold text-white bg-minimal-info rounded-lg hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-minimal-info focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           เริ่มการสัมภาษณ์ (Start Interview)
@@ -41,13 +54,14 @@
 <script setup lang="ts">
 import { HandRaisedIcon } from '@heroicons/vue/24/solid';
 
-const { setCandidateName } = useInterview();
+const { setCandidateInfo } = useInterview();
 const router = useRouter();
 const name = ref("");
+const email = ref("");
 
 const handleSubmit = () => {
-  if (name.value.trim()) {
-    setCandidateName(name.value);
+  if (name.value.trim() && email.value.trim()) {
+    setCandidateInfo(name.value, email.value);
     router.push("/role-selection");
   }
 };

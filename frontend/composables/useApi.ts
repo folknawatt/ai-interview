@@ -5,7 +5,48 @@
 
 export const useApi = () => {
   const config = useRuntimeConfig()
-  const apiBase = config.public.apiBase || 'http://localhost:8000'
+  const apiBase = config.public.apiBaseUrl || 'http://localhost:8000'
+
+  /**
+   * Centralized error handling helper
+   */
+  const handleError = (error: any, endpoint: string) => {
+    console.error(`API Error [${endpoint}]:`, error)
+    
+    // Log detailed error structure for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.dir({
+        data: error.data,
+        message: error.message,
+        statusCode: error.statusCode,
+        statusMessage: error.statusMessage,
+      }, { depth: null })
+    }
+
+    let errorMessage = 'API request failed'
+
+    if (error.data) {
+      if (typeof error.data === 'string') {
+        errorMessage = error.data
+      } else if (error.data.detail) {
+        errorMessage = typeof error.data.detail === 'string' 
+          ? error.data.detail 
+          : JSON.stringify(error.data.detail)
+      } else if (error.data.message) {
+        errorMessage = typeof error.data.message === 'string'
+          ? error.data.message
+          : JSON.stringify(error.data.message)
+      } else {
+        errorMessage = JSON.stringify(error.data)
+      }
+    } else if (error.message) {
+      errorMessage = error.message
+    } else if (error.statusMessage) {
+      errorMessage = error.statusMessage
+    }
+
+    throw new Error(errorMessage)
+  }
 
   /**
    * Generic API call wrapper
@@ -19,90 +60,17 @@ export const useApi = () => {
     } = {}
   ): Promise<T> => {
     try {
-      const url = `${apiBase}${endpoint}`
-
-      const response = (await $fetch(url, {
+      return await $fetch<T>(`${apiBase}${endpoint}`, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
           ...options.headers,
         },
-      })) as T
-
-      return response
-    } catch (error: any) {
-      console.error(`API Error [${endpoint}]:`, error)
-      console.error('Error details:', {
-        data: error.data,
-        message: error.message,
-        statusCode: error.statusCode,
-        statusMessage: error.statusMessage,
       })
-
-      // Handle different error types and ensure we always get a string message
-      let errorMessage = 'API request failed'
-
-      if (error.data) {
-        // Extract message from various possible formats
-        if (typeof error.data === 'string') {
-          errorMessage = error.data
-        } else if (error.data.detail) {
-          errorMessage =
-            typeof error.data.detail === 'string'
-              ? error.data.detail
-              : JSON.stringify(error.data.detail)
-        } else if (error.data.message) {
-          errorMessage =
-            typeof error.data.message === 'string'
-              ? error.data.message
-              : JSON.stringify(error.data.message)
-        } else {
-          errorMessage = JSON.stringify(error.data)
-        }
-      } else if (error.message && typeof error.message === 'string') {
-        errorMessage = error.message
-      } else if (error.statusMessage) {
-        errorMessage = error.statusMessage
-      }
-
-      throw new Error(errorMessage)
+    } catch (error: any) {
+      handleError(error, endpoint)
+      throw error // Unreachable due to handleError throwing, but keeps TS happy
     }
-  }
-
-  /**
-   * GET request
-   */
-  const get = <T>(endpoint: string) => {
-    return apiCall<T>(endpoint, { method: 'GET' as const })
-  }
-
-  /**
-   * POST request
-   */
-  const post = <T>(endpoint: string, body?: any) => {
-    return apiCall<T>(endpoint, {
-      method: 'POST' as const,
-      body,
-    })
-  }
-
-  /**
-   * PUT request
-   */
-  const put = <T>(endpoint: string, body?: any) => {
-    return apiCall<T>(endpoint, {
-      method: 'PUT' as const,
-      body,
-    })
-  }
-
-  /**
-   * DELETE request
-   */
-  const del = <T>(endpoint: string) => {
-    return apiCall<T>(endpoint, {
-      method: 'DELETE' as const,
-    })
   }
 
   /**
@@ -110,26 +78,22 @@ export const useApi = () => {
    */
   const uploadFile = async <T>(endpoint: string, formData: FormData): Promise<T> => {
     try {
-      const url = `${apiBase}${endpoint}`
-
-      // Don't set Content-Type header for file uploads - browser will set it with boundary
-      const response = (await $fetch(url, {
+      return await $fetch<T>(`${apiBase}${endpoint}`, {
         method: 'POST',
         body: formData,
-      })) as T
-
-      return response
+        // Content-Type is handled automatically by browser for FormData
+      })
     } catch (error: any) {
-      console.error(`Upload Error [${endpoint}]:`, error)
-      throw new Error(error.data?.detail || error.message || 'Upload failed')
+      handleError(error, endpoint)
+      throw error
     }
   }
 
   return {
-    get,
-    post,
-    put,
-    del,
+    get: <T>(endpoint: string) => apiCall<T>(endpoint, { method: 'GET' }),
+    post: <T>(endpoint: string, body?: any) => apiCall<T>(endpoint, { method: 'POST', body }),
+    put: <T>(endpoint: string, body?: any) => apiCall<T>(endpoint, { method: 'PUT', body }),
+    del: <T>(endpoint: string) => apiCall<T>(endpoint, { method: 'DELETE' }),
     uploadFile,
     apiBase,
   }

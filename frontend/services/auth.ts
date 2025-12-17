@@ -1,13 +1,42 @@
-import axios from 'axios'
-import type { ApiResponse, LoginResponse } from '../types/api'
-import { useRuntimeConfig } from '#app'
+/**
+ * Authentication Service
+ * Handles all authentication-related API calls
+ */
 
-export const refreshToken = (token: string): ApiResponse<LoginResponse> => {
-    const {
-        public: { apiBaseUrl },
-    } = useRuntimeConfig()
+import type { LoginResponse, User } from '@/types'
 
-    return axios.post(`${apiBaseUrl}/auth/refresh-token`, {
-        refreshToken: token,
+export const authService = {
+  /**
+   * Login with email and password
+   */
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const { post } = useApi()
+    return await post<LoginResponse>('/auth/login', { email, password })
+  },
+
+  /**
+   * Logout current user
+   */
+  async logout(): Promise<void> {
+    const { post } = useApi()
+    await post('/auth/logout')
+  },
+
+  /**
+   * Refresh authentication token
+   */
+  async refreshToken(token: string): Promise<LoginResponse> {
+    const { post } = useApi()
+    return await post<LoginResponse>('/auth/refresh-token', {
+      refreshToken: token
     })
+  },
+
+  /**
+   * Get current user information
+   */
+  async getCurrentUser(): Promise<User> {
+    const { get } = useApi()
+    return await get<User>('/auth/me')
+  }
 }

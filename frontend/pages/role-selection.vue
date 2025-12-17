@@ -40,7 +40,7 @@
           <div class="flex justify-center mb-4">
             <BriefcaseIcon class="w-14 h-14 text-minimal-info" />
           </div>
-          <h3 class="text-2xl font-bold mb-2 text-minimal-text-primary">{{ role.name }}</h3>
+          <h3 class="text-2xl font-bold mb-2 text-minimal-text-primary">{{ role.title }}</h3>
           <p class="text-minimal-text-secondary text-sm">Click to start interview</p>
         </button>
       </div>
@@ -81,11 +81,13 @@ import {
   DocumentTextIcon
 } from '@heroicons/vue/24/solid';
 
+import type { Role } from '@/types';
+
 const { getRoles } = useHR();
 const { setSelectedRole } = useInterview();
 const router = useRouter();
 
-const roles = ref<any[]>([]);
+const roles = ref<Role[]>([]);
 const loading = ref(true);
 const error = ref('');
 

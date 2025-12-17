@@ -4,7 +4,7 @@ Integration tests for interview flow.
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from app.services.interview_service import InterviewService
-from app.domain.models import Evaluation, Score, Feedback
+from app.schemas.interview import InterviewEvaluationResponse, Scores, Feedback
 
 
 @patch("app.services.interview_service.extract_audio")
@@ -27,9 +27,11 @@ def test_upload_answer_flow(
     # Setup mocks
     mock_extract.return_value = "dummy_audio.wav"
     mock_transcribe.return_value = "This is a test answer."
-    mock_evaluate.return_value = Evaluation(
-        scores=Score(communication=8.0, relevance=9.0, quality=8.5, total=8.5),
+    mock_evaluate.return_value = InterviewEvaluationResponse(
+        scores=Scores(communication=8.0, relevance=9.0,
+                      logical_thinking=8.5, total=8.5),
         feedback=Feedback(strengths="Good", weaknesses="None", summary="Okay"),
+        reasoning="Good reasoning",
         pass_prediction=True
     )
 

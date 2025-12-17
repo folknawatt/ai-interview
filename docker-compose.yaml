@@ -1,0 +1,187 @@
+#===============================================================================
+# AI Interview System - Docker Compose Configuration
+# Optimized for production deployment with best practices
+#===============================================================================
+
+services:
+    # #-----------------------------------------------------------------------------
+    # # Backend API Service
+    # #-----------------------------------------------------------------------------
+    # backend:
+    #     build:
+    #         context: .
+    #         dockerfile: Dockerfile
+    #         args:
+    #             PYTHON_BASE: 3.11-slim
+
+    #     image: ai-interview-backend:latest
+    #     container_name: ai-interview-backend
+
+    #     restart: unless-stopped
+
+    #     ports:
+    #         - "8000:8000"
+
+    #     environment:
+    #         # Database connection
+    #         - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ai_interview}
+
+    #         # Application settings (override via .env file)
+    #         - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    #         - TYPHOON_API_KEY=${TYPHOON_API_KEY:-}
+    #         - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+
+    #     env_file:
+    #         - ./backend/.env
+
+    #     depends_on:
+    #         db:
+    #             condition: service_healthy
+
+    #     healthcheck:
+    #         test:
+    #             [
+    #                 "CMD-SHELL",
+    #                 'python -c ''import urllib.request; urllib.request.urlopen("http://localhost:8000").read()'' || exit 1',
+    #             ]
+    #         interval: 30s
+    #         timeout: 10s
+    #         retries: 3
+    #         start_period: 40s
+
+    #     networks:
+    #         - ai-interview-network
+
+    #     # Resource limits
+    #     deploy:
+    #         resources:
+    #             limits:
+    #                 cpus: "2"
+    #                 memory: 2G
+    #             reservations:
+    #                 cpus: "0.5"
+    #                 memory: 512M
+
+    #     # Logging configuration
+    #     logging:
+    #         driver: "json-file"
+    #         options:
+    #             max-size: "10m"
+    #             max-file: "3"
+
+    #-----------------------------------------------------------------------------
+    # PostgreSQL Database
+    #-----------------------------------------------------------------------------
+    db:
+        image: postgres:16-alpine
+        container_name: ai-interview-db
+
+        restart: unless-stopped
+
+        ports:
+            - "5432:5432"
+
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER:-postgres}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+            - POSTGRES_DB=${POSTGRES_DB:-ai_interview}
+            - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+            # Performance tuning
+            - POSTGRES_MAX_CONNECTIONS=100
+            - POSTGRES_SHARED_BUFFERS=256MB
+
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            # Optional: Custom initialization scripts
+            # - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ai_interview}",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+        networks:
+            - ai-interview-network
+
+        # Resource limits
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 1G
+                reservations:
+                    cpus: "0.25"
+                    memory: 256M
+
+        # Logging configuration
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+        # Security: Run as non-root
+        user: postgres
+
+    #-----------------------------------------------------------------------------
+    # Optional: PgAdmin for database management (dev/staging only)
+    #-----------------------------------------------------------------------------
+    pgadmin:
+        image: dpage/pgadmin4:latest
+        container_name: ai-interview-pgadmin
+
+        restart: unless-stopped
+
+        ports:
+            - "5050:80"
+
+        environment:
+            - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
+            - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+            - PGADMIN_CONFIG_SERVER_MODE=False
+            - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+
+        volumes:
+            - pgadmin_data:/var/lib/pgadmin
+
+        depends_on:
+            - db
+
+        networks:
+            - ai-interview-network
+
+        # Only run in development
+        profiles:
+            - dev
+
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "5m"
+                max-file: "2"
+
+#===============================================================================
+# Volumes
+#===============================================================================
+volumes:
+    postgres_data:
+        driver: local
+        name: ai-interview-postgres-data
+
+    pgadmin_data:
+        driver: local
+        name: ai-interview-pgadmin-data
+
+#===============================================================================
+# Networks
+#===============================================================================
+networks:
+    ai-interview-network:
+        driver: bridge
+        name: ai-interview-network

@@ -53,15 +53,10 @@ class Scores(BaseModel):
         le=10.0,
         description="Relevance score 1-10"
     )
-    quality: float = Field(
+    logical_thinking: float = Field(
         ge=1.0,
         le=10.0,
-        description="Quality score 1-10"
-    )
-    total: float = Field(
-        ge=1.0,
-        le=10.0,
-        description="Total average score 1-10"
+        description="Logical thinking score 1-10"
     )
 
 

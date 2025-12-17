@@ -13,26 +13,17 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "aiofiles>=23.2.0",
-    "av>=13.0.0",
     "edge-tts>=6.0.0",
     "fastapi>=0.100.0",
-    "faster-whisper>=1.0.0",
-    "ffmpeg-python>=0.2.0",
     "google-genai>=1.0.0",
-    "moviepy>=1.0.0",
-    "openai-whisper>=20231117",
-    "pandas>=2.0.0",
     "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
     "python-multipart>=0.0.9",
-    "streamlit>=1.30.0",
-    "streamlit-webrtc>=0.47.0",
     "typhoon-asr>=0.1.1",
     "uvicorn>=0.20.0",
-    "numpy==1.26.4",
-    "sqlalchemy>=2.0.0",
+    "sqlmodel>=0.0.14",
     "reportlab>=4.0.0",
-    "psycopg2>=2.9.11",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [project.optional-dependencies]
@@ -48,20 +39,7 @@ dev = [
     "pre-commit>=4.0.0",
 ]
 
-# Machine Learning dependencies (optional for deployments without ML features)
-# Note: For CUDA support, install torch from PyTorch's index:
-# uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
-ml = [
-    "torch>=2.0.0",
-    "torchvision>=0.15.0",
-    "faster-whisper>=1.2.1",
-]
 
-# Streaming dependencies (optional)
-streaming = [
-    "streamlit>=1.51.0",
-    "streamlit-webrtc>=0.64.0",
-]
 
 # ===================================
 # Testing Configuration (Pytest)
@@ -162,9 +140,7 @@ strict_equality = true
 
 [[tool.mypy.overrides]]
 module = [
-    "moviepy.*",
-    "streamlit.*",
-    "av.*",
+
     "edge_tts.*",
 ]
 ignore_missing_imports = true
@@ -194,3 +170,9 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "@abstractmethod",
 ]
+
+# ===================================
+# UV Configuration
+# ===================================
+[tool.uv]
+link-mode = "copy"

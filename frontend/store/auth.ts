@@ -1,54 +1,76 @@
-import { computed } from 'vue'
-import { useStorage } from '@vueuse/core'
+/**
+ * Authentication Store
+ * Manages user authentication state and tokens using Cookies for SSR support
+ */
+
 import { defineStore } from 'pinia'
-import { refreshToken } from '../services/auth'
+import type { User } from '@/types'
 
 export const useAuth = defineStore('auth', () => {
-    const tokenAuth = useStorage('token', '')
-    const refreshTokenAuth = useStorage('refresh-token', '')
+  // State - using useCookie for SSR support
+  const tokenAuth = useCookie<string | null>('auth_token', {
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    sameSite: 'lax'
+  })
+  
+  const refreshTokenAuth = useCookie<string | null>('auth_refresh_token', {
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    sameSite: 'lax'
+  })
+  
+  const userData = useCookie<User | null>('auth_user', {
+    maxAge: 60 * 60 * 24 * 7,
+    sameSite: 'lax'
+  })
 
-    const signInAuth = (token: string, refreshToken: string) => {
-        tokenAuth.value = token
-        refreshTokenAuth.value = refreshToken
+  // Getters
+  const isLogin = computed(() => !!tokenAuth.value)
+  
+  const bearerToken = computed(() => {
+    return tokenAuth.value ? `Bearer ${tokenAuth.value}` : ''
+  })
+
+  const currentUser = computed(() => userData.value)
+  const userRole = computed(() => userData.value?.role)
+
+  const hasRole = (role: string) => {
+    return userData.value?.role === role
+  }
+
+  // Actions
+  const signInAuth = (token: string, refreshToken: string, user?: User) => {
+    tokenAuth.value = token
+    refreshTokenAuth.value = refreshToken
+    if (user) {
+      userData.value = user
     }
+  }
 
-    const clearToken = () => {
-        tokenAuth.value = ''
-        refreshTokenAuth.value = ''
-    }
+  const setUser = (user: User) => {
+    userData.value = user
+  }
 
-    const bearerToken = computed(() => {
-        if (!tokenAuth.value) {
-            return ''
-        }
-        return `Bearer ${tokenAuth.value}`
-    })
+  const clearToken = () => {
+    tokenAuth.value = null
+    refreshTokenAuth.value = null
+    userData.value = null
+  }
 
-    const isLogin = computed(() => {
-        return tokenAuth.value !== '' && refreshTokenAuth.value !== ''
-    })
-
-    const handleRefreshToken = async () => {
-        const res = await refreshToken(refreshTokenAuth.value)
-
-        if (res.data.error) {
-            return
-        }
-        if (res.data.data?.item.accessToken) {
-            signInAuth(
-                res.data.data.item.accessToken,
-                res.data.data.item.refreshToken
-            )
-        }
-    }
-
-    return {
-        tokenAuth,
-        refreshTokenAuth,
-        signInAuth,
-        clearToken,
-        bearerToken,
-        isLogin,
-        handleRefreshToken,
-    }
+  return {
+    // State
+    tokenAuth,
+    refreshTokenAuth,
+    currentUser,
+    userRole,
+    
+    // Getters
+    isLogin,
+    bearerToken,
+    hasRole,
+    
+    // Actions
+    signInAuth,
+    setUser,
+    clearToken
+  }
 })

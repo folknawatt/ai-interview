@@ -35,6 +35,7 @@ def get_interview_question(role_id: str, index: int) -> Dict[str, Any]:
 async def upload_and_analyze(
     file: UploadFile = File(...),
     question: str = Form(...),
+    question_id: int = Form(...),
     session_id: str = Form(...),
     role_id: str = Form(...),
     candidate_name: str = Form(...),
@@ -51,7 +52,7 @@ async def upload_and_analyze(
     }
     # Exceptions are handled by global exception handler in main.py
     return await InterviewService.process_answer(
-        session, api_key, file, question, candidate_data
+        session, api_key, file, question_id, question, candidate_data
     )
 
 

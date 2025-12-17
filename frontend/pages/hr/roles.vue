@@ -41,7 +41,7 @@
           class="bg-minimal-card p-6 rounded-xl border-2 border-minimal-border hover:border-minimal-info transition-colors"
         >
           <div class="flex items-start justify-between mb-4">
-            <h3 class="text-xl font-bold">{{ role.name }}</h3>
+            <h3 class="text-xl font-bold">{{ role.title }}</h3>
             <span class="px-2 py-1 bg-sky-50 text-minimal-info border border-sky-200 rounded text-sm">
               {{ role.questionCount }} questions
             </span>
@@ -102,7 +102,7 @@
         <div class="bg-minimal-card p-8 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4 border border-minimal-border">
           <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
             <PencilSquareIcon class="w-7 h-7 text-amber-500" />
-            Edit Questions: {{ editingRole.name }}
+            Edit Questions: {{ editingRole.title }}
           </h2>
           
           <div class="space-y-4 mb-6">
@@ -159,7 +159,7 @@
             Confirm Delete
           </h2>
           <p class="text-minimal-text-secondary mb-6">
-            Are you sure you want to delete <strong class="text-minimal-text-primary">{{ deletingRole.name }}</strong>?
+            Are you sure you want to delete <strong class="text-minimal-text-primary">{{ deletingRole.title }}</strong>?
             This action cannot be undone.
           </p>
           
@@ -314,7 +314,7 @@ const confirmDelete = async () => {
   saving.value = true;
   try {
     await deleteRole(deletingRole.value.id);
-    showToastMessage(`✅ Deleted ${deletingRole.value.name}`);
+    showToastMessage(`✅ Deleted ${deletingRole.value.title}`);
     deletingRole.value = null;
     await loadRoles(); // Reload data
   } catch (error) {

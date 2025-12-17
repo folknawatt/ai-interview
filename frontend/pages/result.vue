@@ -29,24 +29,30 @@
         <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
           <h2 class="text-xl font-semibold mb-4">คะแนนประเมิน (Scores)</h2>
           <div class="grid grid-cols-2 gap-4">
-             <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center">
-               <div class="text-sm text-minimal-text-secondary mb-2">Communication</div>
-               <ScoreCard :score="Number(result.scores.communication)" :size="80" />
-             </div>
-             <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center">
-               <div class="text-sm text-minimal-text-secondary mb-2">Relevance</div>
-               <ScoreCard :score="Number(result.scores.relevance)" :size="80" />
-             </div>
-             <div class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center">
-               <div class="text-sm text-minimal-text-secondary mb-2">Logical Thinking</div>
-               <ScoreCard :score="Number(result.scores.logical_thinking)" :size="80" />
-             </div>
-             <div class="bg-emerald-50 p-4 rounded border-2 border-minimal-success text-center flex flex-col items-center">
-               <div class="text-sm text-minimal-text-secondary mb-2">Total Score</div>
-                <div class="text-3xl font-bold text-minimal-success">
-                 {{ result.scores.total }}/30
-               </div>
-             </div>
+            <div
+              class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center"
+            >
+              <div class="text-sm text-minimal-text-secondary mb-2">Communication</div>
+              <ScoreCard :score="Number(result.scores.communication)" :size="80" />
+            </div>
+            <div
+              class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center"
+            >
+              <div class="text-sm text-minimal-text-secondary mb-2">Relevance</div>
+              <ScoreCard :score="Number(result.scores.relevance)" :size="80" />
+            </div>
+            <div
+              class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center"
+            >
+              <div class="text-sm text-minimal-text-secondary mb-2">Logical Thinking</div>
+              <ScoreCard :score="Number(result.scores.logical_thinking)" :size="80" />
+            </div>
+            <div
+              class="bg-sky-50 p-4 rounded border border-sky-200 text-center flex flex-col items-center"
+            >
+              <div class="text-sm text-minimal-text-secondary mb-2">Average Score</div>
+              <ScoreCard :score="Number(result.scores.total)" :maxScore="10" :size="80" />
+            </div>
           </div>
         </div>
 
@@ -70,12 +76,11 @@
         </div>
 
         <!-- Feedback -->
-        <FeedbackSection 
+        <FeedbackSection
           :strengths="result.feedback.strengths"
           :weaknesses="result.feedback.weaknesses"
           :summary="result.feedback.summary"
         />
-
       </div>
 
       <!-- Action Buttons -->
@@ -98,13 +103,9 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ChartBarIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-} from '@heroicons/vue/24/solid'
-import ScoreCard from '@/components/ScoreCard.vue'
-import FeedbackSection from '@/components/FeedbackSection.vue'
+import { ChartBarIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
+import ScoreCard from '../components/charts/ScoreCard.vue'
+import FeedbackSection from '../components/interview/FeedbackSection.vue'
 
 const { sessionId, getSummary, resetInterview } = useInterview()
 const router = useRouter()
@@ -161,19 +162,19 @@ const result = computed(() => {
       communication: agg.communication_avg.toFixed(1),
       relevance: agg.relevance_avg.toFixed(1),
       logical_thinking: agg.logical_thinking_avg.toFixed(1),
-      total: agg.total_score.toFixed(1),
+      total: agg.average_score.toFixed(1),
     },
     pass_prediction: isPassed,
     feedback: {
       strengths: extractFeedback('strengths'),
 
-      summary: `ผลการประเมินโดยรวม: ${agg.overall_recommendation} (คะแนนเฉลี่ย ${agg.total_score.toFixed(1)}/10)`,
+      summary: `ผลการประเมินโดยรวม: ${agg.overall_recommendation} (คะแนนเฉลี่ย ${agg.average_score.toFixed(1)}/10)`,
       // Merge reasoning into weaknesses
       weaknesses: [
         ...extractFeedback('weaknesses'),
-        ...extractFeedback('reasoning').map(r => `(เพิ่ม) การลำดับความคิด: ${r}`)
+        ...extractFeedback('reasoning').map(r => `(เพิ่ม) การลำดับความคิด: ${r}`),
       ],
-      reasonings: [] // Clear this so it doesn't show up elsewhere if verified
+      reasonings: [], // Clear this so it doesn't show up elsewhere if verified
     },
   }
 })

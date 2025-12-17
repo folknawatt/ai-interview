@@ -3,12 +3,11 @@ Pytest configuration and fixtures.
 """
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlmodel import create_engine, Session, SQLModel
 from sqlalchemy.pool import StaticPool
 
 from app.main import app
-from app.database.db import Base, get_db
+from app.database.db import get_db
 
 # Use in-memory SQLite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -19,9 +18,6 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 
-TestingSessionLocal = sessionmaker(
-    autocommit=False, autoflush=False, bind=engine)
-
 
 @pytest.fixture(scope="function")
 def db_session():
@@ -29,14 +25,12 @@ def db_session():
     Create a fresh database session for each test.
     """
     # Create tables
-    Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        # Drop tables
-        Base.metadata.drop_all(bind=engine)
+    SQLModel.metadata.create_all(bind=engine)
+    with Session(engine) as session:
+        yield session
+
+    # Drop tables
+    SQLModel.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")

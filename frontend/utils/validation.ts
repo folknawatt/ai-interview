@@ -1,0 +1,175 @@
+/**
+ * Validation helper functions
+ */
+
+/**
+ * Validate email address
+ * @param email - Email to validate
+ * @returns True if valid email format
+ */
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+/**
+ * Validate session ID format
+ * @param id - Session ID to validate
+ * @returns True if valid session ID format
+ */
+export function isValidSessionId(id: string): boolean {
+  // Session IDs should match format: session_timestamp_randomstring
+  const sessionIdRegex = /^session_\d+_[a-z0-9]+$/
+  return sessionIdRegex.test(id)
+}
+
+/**
+ * Validate question list
+ * @param questions - Array of questions to validate
+ * @param minQuestions - Minimum number of questions required
+ * @param maxQuestions - Maximum number of questions allowed
+ * @returns Validation result with error message if invalid
+ */
+export function validateQuestionList(
+  questions: string[],
+  minQuestions = 3,
+  maxQuestions = 15
+): { isValid: boolean; error?: string } {
+  if (!Array.isArray(questions)) {
+    return { isValid: false, error: 'Questions must be an array' }
+  }
+
+  if (questions.length < minQuestions) {
+    return {
+      isValid: false,
+      error: `At least ${minQuestions} questions are required`
+    }
+  }
+
+  if (questions.length > maxQuestions) {
+    return {
+      isValid: false,
+      error: `Maximum ${maxQuestions} questions allowed`
+    }
+  }
+
+  // Check for empty questions
+  const emptyQuestions = questions.filter(q => !q || q.trim().length === 0)
+  if (emptyQuestions.length > 0) {
+    return { isValid: false, error: 'Questions cannot be empty' }
+  }
+
+  // Check for duplicate questions
+  const uniqueQuestions = new Set(questions.map(q => q.trim().toLowerCase()))
+  if (uniqueQuestions.size !== questions.length) {
+    return { isValid: false, error: 'Duplicate questions are not allowed' }
+  }
+
+  return { isValid: true }
+}
+
+/**
+ * Validate score value
+ * @param score - Score to validate
+ * @param min - Minimum score (default: 0)
+ * @param max - Maximum score (default: 100)
+ * @returns True if score is within valid range
+ */
+export function isValidScore(score: number, min = 0, max = 100): boolean {
+  return typeof score === 'number' && !isNaN(score) && score >= min && score <= max
+}
+
+/**
+ * Validate URL format
+ * @param url - URL to validate
+ * @returns True if valid URL format
+ */
+export function isValidUrl(url: string): boolean {
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Validate phone number (basic validation)
+ * @param phone - Phone number to validate
+ * @returns True if valid phone format
+ */
+export function isValidPhone(phone: string): boolean {
+  // Basic phone validation - digits and common separators
+  const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/
+  return phoneRegex.test(phone)
+}
+
+/**
+ * Validate required fields in an object
+ * @param obj - Object to validate
+ * @param requiredFields - Array of required field names
+ * @returns Validation result with missing fields if invalid
+ */
+export function validateRequiredFields<T extends Record<string, any>>(
+  obj: T,
+  requiredFields: (keyof T)[]
+): { isValid: boolean; missingFields?: string[] } {
+  const missingFields: string[] = []
+
+  for (const field of requiredFields) {
+    if (obj[field] === undefined || obj[field] === null || obj[field] === '') {
+      missingFields.push(String(field))
+    }
+  }
+
+  return {
+    isValid: missingFields.length === 0,
+    ...(missingFields.length > 0 && { missingFields })
+  }
+}
+
+/**
+ * Validate password strength
+ * @param password - Password to validate
+ * @param minLength - Minimum length (default: 8)
+ * @returns Validation result with strength and feedback
+ */
+export function validatePassword(
+  password: string,
+  minLength = 8
+): {
+  isValid: boolean
+  strength: 'weak' | 'medium' | 'strong'
+  feedback: string[]
+} {
+  const feedback: string[] = []
+  let strength: 'weak' | 'medium' | 'strong' = 'weak'
+
+  if (password.length < minLength) {
+    feedback.push(`Password must be at least ${minLength} characters long`)
+  }
+
+  const hasUpperCase = /[A-Z]/.test(password)
+  const hasLowerCase = /[a-z]/.test(password)
+  const hasNumbers = /\d/.test(password)
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+
+  if (!hasUpperCase) feedback.push('Include at least one uppercase letter')
+  if (!hasLowerCase) feedback.push('Include at least one lowercase letter')
+  if (!hasNumbers) feedback.push('Include at least one number')
+  if (!hasSpecialChar) feedback.push('Include at least one special character')
+
+  const criteriaCount = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar].filter(Boolean).length
+
+  if (password.length >= minLength && criteriaCount >= 4) {
+    strength = 'strong'
+  } else if (password.length >= minLength && criteriaCount >= 2) {
+    strength = 'medium'
+  }
+
+  return {
+    isValid: feedback.length === 0,
+    strength,
+    feedback
+  }
+}

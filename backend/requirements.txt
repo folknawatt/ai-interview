@@ -11,6 +11,8 @@ pydub>=0.25.1
 edge-tts>=6.1.0
 
 # New dependencies for scoring system
-sqlalchemy>=2.0.0
+sqlmodel>=0.0.22
 reportlab>=4.0.0
-psycopg2>=2.9.11
+psycopg2-binary>=2.9.11
+typhoon-asr>=0.1.0
+pyarrow>=15.0.0
