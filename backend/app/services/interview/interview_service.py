@@ -100,9 +100,8 @@ class InterviewService:
 
             # Evaluate Candidate Answer
             # Run CPU-bound/network-bound synchronous evaluation in a thread
-            loop = asyncio.get_event_loop()
-            evaluation = await loop.run_in_executor(
-                None, evaluate_candidate, api_key, question, transcript, role_title
+            evaluation = await asyncio.to_thread(
+                evaluate_candidate, api_key, question, transcript, role_title
             )
 
             # Cleanup Video File (Audio is handled by MediaService)

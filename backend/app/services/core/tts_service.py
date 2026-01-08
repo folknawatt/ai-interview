@@ -3,9 +3,9 @@ TTS Service for audio generation.
 
 Handles text-to-speech generation with retry logic and error handling.
 """
-import os
 import shutil
 import time
+from pathlib import Path
 from typing import Optional
 
 from app.adapters.tts.factory import TTSProviderFactory
@@ -56,11 +56,11 @@ class TTSService:
                 audio_path = provider.generate_audio(text=text)
 
                 # Copy to audio directory for frontend access
-                audio_dir = os.path.join(os.getcwd(), settings.tts_audio_dir)
-                os.makedirs(audio_dir, exist_ok=True)
+                audio_dir = Path.cwd() / settings.tts_audio_dir
+                audio_dir.mkdir(parents=True, exist_ok=True)
 
                 filename = f"question_{question_id}.wav"
-                dest_path = os.path.join(audio_dir, filename)
+                dest_path = audio_dir / filename
                 shutil.copy2(audio_path, dest_path)
 
                 # Return absolute URL for frontend

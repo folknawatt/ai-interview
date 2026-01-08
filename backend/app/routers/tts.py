@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from app.schemas import TTSRequest
 from app.adapters.tts.factory import TTSProviderFactory
 from app.adapters.tts.exceptions import TTSError, TTSConfigurationError
-from app.exceptions import BadRequestError, NotFoundError
+from app.exceptions import BadRequestError, NotFoundError, ServiceUnavailableError
 from app.dependencies import get_api_key
 
 router = APIRouter(
@@ -57,7 +57,7 @@ async def generate_tts_endpoint(
             "filename": os.path.basename(audio_path)
         }
     except (TTSError, TTSConfigurationError) as e:
-        raise TTSError(f"TTS generation failed: {e}") from e
+        raise ServiceUnavailableError(f"TTS generation failed: {e}") from e
 
 
 @router.get("/audio/{filename}")
@@ -74,8 +74,8 @@ async def get_tts_file(filename: str) -> FileResponse:
     Raises:
         HTTPException: If filename is invalid or file not found
     """
-    # Basic path security validation
-    if ".." in filename or "/" in filename:
+    # Basic path security validation (check both Unix and Windows path separators)
+    if ".." in filename or "/" in filename or "\\" in filename:
         raise BadRequestError("Invalid filename")
 
     possible_path = os.path.abspath(filename)

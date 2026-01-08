@@ -3,16 +3,15 @@ Integration tests for interview flow.
 """
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
-from app.services.interview_service import InterviewService
-from app.schemas.interview import InterviewEvaluationResponse, Scores, Feedback
+from app.schemas import InterviewEvaluationResponse, Scores, Feedback
 
 
-@patch("app.services.interview_service.extract_audio")
-@patch("app.services.interview_service.transcribe_audio")
-@patch("app.services.interview_service.evaluate_candidate")
-@patch("app.services.candidate_service.CandidateService.get_or_create")
-@patch("app.services.storage_service.StorageService.save_upload")
-@patch("app.services.storage_service.StorageService.cleanup")
+@patch("app.adapters.ai.typhoon_asr.extract_audio")
+@patch("app.adapters.ai.typhoon_asr.transcribe_audio")
+@patch("app.services.scoring.evaluator.evaluate_candidate")
+@patch("app.services.interview.candidate_service.CandidateService.get_or_create")
+@patch("app.services.core.storage_service.StorageService.save_upload")
+@patch("app.services.core.storage_service.StorageService.cleanup")
 def test_upload_answer_flow(
     mock_cleanup,
     mock_save_upload,

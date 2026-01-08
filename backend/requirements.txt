@@ -15,4 +15,4 @@ sqlmodel>=0.0.22
 reportlab>=4.0.0
 psycopg2-binary>=2.9.11
 typhoon-asr>=0.1.0
-pyarrow>=15.0.0
+pyarrow==19.0.0

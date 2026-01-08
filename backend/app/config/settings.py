@@ -49,10 +49,6 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     gemini_temperature: float = 0.2
 
-    # Server Configuration
-    server_host: str = "0.0.0.0"
-    server_port: int = 8000
-
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins from comma-separated string."""

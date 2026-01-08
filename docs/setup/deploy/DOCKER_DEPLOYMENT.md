@@ -42,6 +42,43 @@ docker-compose logs -f backend
 - **Database:** localhost:5432
 - **PgAdmin** (dev only): http://localhost:5050
 
+- **PgAdmin** (dev only): http://localhost:5050
+
+---
+
+## 🏗️ Production Architecture
+
+Concept of how this system scales in a production environment (e.g., Docker Swarm or Kubernetes).
+
+```mermaid
+graph TB
+    Internet((Internet))
+
+    subgraph "Load Balancer Layer"
+        Nginx[Nginx / Traefik]
+    end
+
+    subgraph "Application Cluster"
+        Backend1[Backend Replica 1]
+        Backend2[Backend Replica 2]
+        Backend3[Backend Replica N]
+    end
+
+    subgraph "Persistence Layer"
+        DB_Primary[(Postgres Primary)]
+        DB_Replica[(Postgres Replica)]
+        Volume[Docker Volume / S3]
+    end
+
+    Internet -->|HTTPS| Nginx
+    Nginx -->|Round Robin| Backend1
+    Nginx -->|Round Robin| Backend2
+    Nginx -->|Round Robin| Backend3
+    Backend1 & Backend2 & Backend3 --> DB_Primary
+    DB_Primary -.->|Replication| DB_Replica
+    Backend1 & Backend2 & Backend3 -->|Media| Volume
+```
+
 ---
 
 ## 📋 Available Commands
@@ -200,7 +237,52 @@ docker system df
 
 ---
 
+---
+
+## 🛡️ Disaster Recovery & Backup
+
+### Database Backup Strategy
+
+1. **Automated Daily Backups**:
+
+   ```bash
+   # Add to crontab
+   0 3 * * * docker-compose exec -T db pg_dump -U postgres ai_interview > /backups/db_$(date +\%Y\%m\%d).sql
+   ```
+
+2. **Offsite Storage**: Sync `/backups` to S3/Cloud Storage.
+3. **Point-in-Time Recovery (PITR)**: Enable WAL archiving in Postgres for enterprise needs.
+
+---
+
 ## 🐛 Troubleshooting
+
+### Troubleshooting Flowchart
+
+```mermaid
+flowchart TD
+    Start[Issue Detected] --> CheckLogs{Check Logs?}
+    CheckLogs -->|Backend| B_Logs[docker-compose logs backend]
+    CheckLogs -->|DB| D_Logs[docker-compose logs db]
+
+    B_Logs --> ErrType{Error Type?}
+    ErrType -->|Connection| DB_Check[Check DB Connection]
+    ErrType -->|Missing Lib| Rebuild[Rebuild Image]
+    ErrType -->|Code| FixCode[Fix Application Code]
+
+    DB_Check --> DB_Up{DB Up?}
+    DB_Up -->|No| RestartDB[Restart DB Container]
+    DB_Up -->|Yes| NetCheck[Check Network/Env Vars]
+
+    Rebuild --> Up[docker-compose up -d --build]
+    RestartDB --> Up
+    FixCode --> Up
+    NetCheck --> Up
+
+    Up --> Verify[Verify Fix]
+```
+
+### Common Issues
 
 ### Backend Won't Start
 

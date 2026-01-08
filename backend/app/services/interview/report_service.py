@@ -52,14 +52,14 @@ class ReportService:
         # SQLModel select tuple:
         statement = (
             select(
-                Candidate.session_id,
+                InterviewSession.session_id,
                 Candidate.name,
-                Candidate.role_id,
-
+                InterviewSession.role_id,
+                InterviewSession.started_at,
                 AggregatedScore.average_score,
                 AggregatedScore.overall_recommendation
             )
-            .join(InterviewSession, Candidate.id == InterviewSession.candidate_id)
+            .join(Candidate, InterviewSession.candidate_id == Candidate.id)
             .outerjoin(AggregatedScore, InterviewSession.session_id == AggregatedScore.session_id)
         )
 
@@ -87,7 +87,6 @@ class ReportService:
                 role_id=r[2],
                 interview_date=r[3].isoformat() if hasattr(r[3], 'isoformat') else str(
                     r[3]),
-
                 average_score=r[4] if r[4] is not None else 0.0,
                 overall_recommendation=r[5] if r[5] else "Pending"
             )

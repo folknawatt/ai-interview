@@ -18,21 +18,19 @@ API endpoint documentation and examples
 
 - [API Overview](./api/README.md)
 
-### [Setup](./setup/)
+### Setup
 
-Installation and configuration guides
+Installation and configuration guides are available in the root documentation.
 
-- [Local Development Setup](./setup/local-development.md)
-- [Environment Variables](./setup/environment-variables.md)
-- [Deployment Guide](./setup/deployment.md)
+- [Main Setup Guide](../../README.md#🚀-quick-start)
+- [Docker Deployment](./setup/deploy/DOCKER_DEPLOYMENT.md)
 
 ### [Guides](./guides/)
 
 Development guides and best practices
 
-- [Contributing Guide](../CONTRIBUTING.md)
-- [Code Style Guide](./guides/code-style.md)
-- [Testing Guide](./guides/testing.md)
+- [Contributing Guide](../../CONTRIBUTING.md)
+- [Docker Deployment](./setup/deploy/DOCKER_DEPLOYMENT.md)
 
 ## 🚀 Quick Links
 

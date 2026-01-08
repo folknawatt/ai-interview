@@ -1,16 +1,12 @@
-# syntax=docker/dockerfile:1
-
 #===============================================================================
-# Stage 1: Build Stage - Install dependencies with UV
+# Stage 1: Builder - เน้นความเร็วในการติดตั้งและ Caching
 #===============================================================================
 FROM python:3.11-slim AS builder
 
-# Copy uv binary from the official image (Best practice)
+# Copy UV binary (Reusing official image is faster/safer)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# Set build-time environment variables
-# UV_LINK_MODE=copy is crucial for multi-stage builds to ensure files 
-# are physically copied to the venv, not just hardlinked/symlinked.
+# Environment Variables for Build
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
@@ -19,42 +15,33 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /build
 
-# Install build dependencies
-# We still need build-essential/libpq-dev for compiling C extensions if wheels aren't available
+# Install system dependencies (Git is often needed for installing deps from source)
+# Use standard Debian mirrors for reliability
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file
+# Copy requirements first to leverage Docker Layer Caching
 COPY backend/requirements.txt .
 
-# Create virtual environment and install dependencies using UV
-# --mount=type=cache creates a cache for uv to speed up subsequent builds
-# We add a build arg to optionally install CPU-only versions of torch/nvidia libs
+# Install Python Dependencies via UV
 ARG INSTALL_TYPE=cpu
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv venv /opt/venv && \
-    if [ "$INSTALL_TYPE" = "cpu" ]; then \
-    uv pip install --no-cache -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu; \
-    else \
-    uv pip install --no-cache -r requirements.txt; \
-    fi
+RUN uv venv /opt/venv && \ 
+    uv pip install -r requirements.txt;
 
 #===============================================================================
-# Stage 2: Runtime Stage - Minimal production image
+# Stage 2: Runtime - เน้นขนาดเล็กและความปลอดภัย
 #===============================================================================
 FROM python:3.11-slim
 
-# Create non-root user
+# Create a non-root user (Security Best Practice)
 RUN groupadd -r appuser && useradd -r -g appuser -d /home/appuser -m appuser
 
-# Set filesystem permissions
-RUN mkdir -p /home/appuser && chown -R appuser:appuser /home/appuser
-
-# Install only runtime dependencies
+# Install Runtime Libraries
+# Clean up apt lists in the same layer to save space
+# ติดตั้ง Runtime Dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -64,8 +51,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Set runtime environment variables
-# Note: We include the venv path in PATH so we don't need to activate it explicitly
+# Set Runtime ENV
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
@@ -73,27 +59,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
+# COPY --chown is atomic (Doesn't double the layer size)
+COPY --from=builder --chown=appuser:appuser /opt/venv /opt/venv
+COPY --chown=appuser:appuser backend/ /app/backend/
 
-# Copy application code
-COPY backend/ /app/backend/
-
-# Change ownership
-RUN chown -R appuser:appuser /app
-
-# Switch to non-root user
+# Switch context to non-root
 USER appuser
 
-# Expose port
+# Port & Healthcheck
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000').read()" || exit 1
 
-# Set working directory to backend
 WORKDIR /app/backend
 
-# Run application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
