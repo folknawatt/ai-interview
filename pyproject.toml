@@ -28,6 +28,7 @@ dependencies = [
     "ml-dtypes>=0.5.4",
     "pymupdf>=1.26.7",
     "psycopg2>=2.9.11",
+    "tenacity>=8.2.0",
 ]
 
 [project.optional-dependencies]

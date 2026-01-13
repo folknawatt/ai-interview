@@ -1,11 +1,23 @@
 
+import logging
 from typing import Optional, Type, TypeVar
 from google import genai
 from google.genai import types
 from pydantic import BaseModel
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from app.config.settings import settings
 
+logger = logging.getLogger(__name__)
+
 T = TypeVar('T', bound=BaseModel)
+
+
+def is_retryable_error(exception: Exception) -> bool:
+    """Check if the exception is a retryable API error (503, 429, etc.)."""
+    error_str = str(exception).lower()
+    retryable_codes = ['503', '429', 'overloaded',
+                       'unavailable', 'resource_exhausted']
+    return any(code in error_str for code in retryable_codes)
 
 
 class GeminiClient:
@@ -23,6 +35,16 @@ class GeminiClient:
             raise ValueError("GOOGLE_API_KEY is not set in settings.")
         self.client = genai.Client(api_key=self._api_key)
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type(Exception),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Gemini API call failed, retrying in {retry_state.next_action.sleep} seconds... "
+            f"(attempt {retry_state.attempt_number}/3)"
+        ),
+        reraise=True
+    )
     def generate_content(
         self,
         prompt: str,
@@ -56,6 +78,16 @@ class GeminiClient:
         except Exception as e:
             raise RuntimeError(f"Gemini API call failed: {str(e)}") from e
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type(Exception),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Gemini API call failed, retrying in {retry_state.next_action.sleep} seconds... "
+            f"(attempt {retry_state.attempt_number}/3)"
+        ),
+        reraise=True
+    )
     def generate_structured(
         self,
         prompt: str,
