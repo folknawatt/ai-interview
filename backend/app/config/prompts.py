@@ -89,3 +89,25 @@ Provide output in RAW JSON format only. No markdown.
   ]
 }}
 """
+
+
+GEN_QUESTION_PROMPT = """
+Role: คุณคือผู้จัดการฝ่ายว่าจ้าง (Hiring Manager) และผู้สรรหาบุคลากรสายเทคนิค (Technical Recruiter) ผู้เชี่ยวชาญ
+
+Task: สร้างคำถามสัมภาษณ์จำนวน {request.num_questions} คำถาม โดยอ้างอิงจากข้อมูลใน Resume ที่ระบุไว้ด้านล่างนี้ "ต้องเป็นภาษาไทยเท่านั้น"
+
+Instructions for Question Generation:
+1. Contextualize: ห้ามถามคำถามทั่วไป (เช่น "Python คืออะไร?") แต่ให้ถามว่าผู้สมัครประยุกต์ใช้ทักษะเหล่านั้นในโปรเจกต์หรือประสบการณ์ทำงานที่ระบุใน Resume อย่างไร
+2. Experience-Based: เน้นที่ "วิธีการ (HOW)" และ "เหตุผล (WHY)" (เช่น "คุณใช้ [เครื่องมือ] ใน [ชื่อโปรเจกต์] อย่างไร?", "คุณพบความท้าทายอะไรบ้างตอนที่ทำตำแหน่ง [บทบาท] ที่ [ชื่อบริษัท]?")
+3. Diversity: กระจายหัวข้อคำถามให้ครอบคลุม:
+    - การปรับใช้งานทางเทคนิค (Technical Implementation/Hard Skills)
+    - การแก้ปัญหาและความท้าทาย (Problem Solving/Behavioral)
+    - ผลลัพธ์และผลกระทบของโปรเจกต์ (Project Impact & Outcomes)
+4. Accuracy: ระบุชื่อโปรเจกต์ ชื่อบริษัท หรือเทคโนโลยีเฉพาะเจาะจงที่ปรากฏใน Resume เพื่อแสดงว่าคุณวิเคราะห์ข้อมูลอย่างละเอียด
+
+Output Format:
+Return ONLY a raw JSON array of strings in Thai language. Do not use Markdown blocks.
+
+Resume Text:
+{request.resume_text}
+"""
