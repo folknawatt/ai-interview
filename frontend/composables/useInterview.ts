@@ -95,6 +95,29 @@ export const useInterview = () => {
   };
 
   /**
+   * Upload resume PDF and generate questions
+   */
+  const uploadResume = async (file: File, roleId: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('role_id', roleId);
+
+      // Expect back: { role_id: "new_id", base_role_id: "old_id", questions: [...] }
+      const response = await uploadFile<{
+         role_id: string; 
+         base_role_id: string; 
+         questions: string[]
+      }>('/interview/upload-pdf', formData);
+      
+      return response;
+    } catch (error) {
+      console.error('Error uploading resume:', error);
+      throw error;
+    }
+  };
+
+  /**
    * Get interview summary
    */
   const getSummary = async () => {
@@ -156,6 +179,7 @@ export const useInterview = () => {
     getQuestion,
     playAudio,
     uploadAnswer,
+    uploadResume,
     getSummary,
     completeInterview,
     resetInterview,
