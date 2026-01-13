@@ -5,9 +5,9 @@ This module provides application-wide settings using Pydantic for
 environment variable validation and type safety.
 """
 import os
+from pathlib import Path
 from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pathlib import Path
 from dotenv import load_dotenv
 
 # Robustly find and load .env file
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://postgres:postgres@localhost:5433/ai_interview"
 
     # TTS Configuration
-    tts_provider: str = "gemini"  # TTS provider to use: "gemini" or "edge"
+    tts_provider: str = "edge"  # TTS provider to use: "gemini" or "edge"
     tts_max_retries: int = 2
     tts_initial_delay: int = 1
     tts_audio_dir: str = "audio"
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
 
     # Gemini AI Configuration
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     gemini_temperature: float = 0.2
 
     @property
