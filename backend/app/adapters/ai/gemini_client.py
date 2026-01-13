@@ -40,8 +40,9 @@ class GeminiClient:
         wait=wait_exponential(multiplier=1, min=1, max=10),
         retry=retry_if_exception_type(Exception),
         before_sleep=lambda retry_state: logger.warning(
-            f"Gemini API call failed, retrying in {retry_state.next_action.sleep} seconds... "
-            f"(attempt {retry_state.attempt_number}/3)"
+            "Gemini API call failed, retrying in %s seconds... (attempt %d/3)",
+            retry_state.next_action.sleep,
+            retry_state.attempt_number
         ),
         reraise=True
     )
@@ -83,8 +84,9 @@ class GeminiClient:
         wait=wait_exponential(multiplier=1, min=1, max=10),
         retry=retry_if_exception_type(Exception),
         before_sleep=lambda retry_state: logger.warning(
-            f"Gemini API call failed, retrying in {retry_state.next_action.sleep} seconds... "
-            f"(attempt {retry_state.attempt_number}/3)"
+            "Gemini API call failed, retrying in %s seconds... (attempt %d/3)",
+            retry_state.next_action.sleep,
+            retry_state.attempt_number
         ),
         reraise=True
     )
