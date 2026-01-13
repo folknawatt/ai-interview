@@ -3,15 +3,16 @@ Media Service.
 
 Handles media processing tasks such as audio extraction and transcription.
 """
-import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
+from app.config.logging_config import get_logger
+
 from app.adapters.ai.typhoon_asr import extract_audio, transcribe_audio
 from app.services.core.storage_service import StorageService
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class MediaService:

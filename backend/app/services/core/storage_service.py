@@ -7,6 +7,10 @@ from typing import List, Union
 import aiofiles
 from fastapi import UploadFile
 
+from app.config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 class StorageService:
     """Service for abstracting file storage operations."""
@@ -47,6 +51,4 @@ class StorageService:
                     if path.exists():
                         os.remove(path)
             except OSError as e:
-                # Log error but don't stop cleanup of other files
-                # ideally use a logger here
-                print(f"Error cleaning up file {file_path}: {e}")
+                logger.error("Error cleaning up file %s: %s", file_path, e)

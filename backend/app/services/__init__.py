@@ -11,7 +11,7 @@ from app.services.interview.question_service import QuestionService
 from app.services.interview.candidate_service import CandidateService
 from app.services.interview.report_service import ReportService
 from app.services.core.media_service import MediaService
-
+from app.services.interview.resume_service import ResumeService
 
 __all__ = [
     "HRService",
@@ -21,4 +21,5 @@ __all__ = [
     "CandidateService",
     "ReportService",
     "MediaService",
+    "ResumeService",
 ]

@@ -5,10 +5,8 @@ This module provides functionality to evaluate candidate interview answers using
 Google's Gemini AI model. It scores candidates on communication, relevance, and
 quality, providing structured feedback and pass/fail predictions.
 """
-from google import genai
-
+from app.adapters.ai.gemini_client import GeminiClient
 from app.config.prompts import SYSTEM_PROMPT
-from app.config.settings import settings
 from app.schemas.interview import InterviewEvaluationResponse
 
 
@@ -57,35 +55,15 @@ def evaluate_candidate(
                 f"Transcript appears to be an error message: {transcript[:100]}"
             )
 
-    # Setup Google Gemini
-    client = genai.Client(api_key=api_key)
+    # Use centralized GeminiClient
+    client = GeminiClient(api_key=api_key)
 
     # Prepare Prompt
     formatted_prompt = SYSTEM_PROMPT.format(
         role=role, question=question, answer=transcript)
 
-    # LLM
-    try:
-        llm_generation_response = client.models.generate_content(
-            model=settings.gemini_model,
-            contents=formatted_prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": InterviewEvaluationResponse,
-                "temperature": settings.gemini_temperature,
-            })
-
-        parsed_evaluation = llm_generation_response.parsed
-
-        return parsed_evaluation
-
-    except ValueError as e:
-        # Handle validation or parsing errors
-        raise ValueError(f"Failed to parse API response: {str(e)}") from e
-    except ConnectionError as e:
-        # Handle network/connection errors
-        raise ConnectionError(
-            f"Failed to connect to Gemini API: {str(e)}") from e
-    except RuntimeError as e:
-        # Handle API-specific runtime errors
-        raise RuntimeError(f"Gemini API error: {str(e)}") from e
+    # Generate structured response
+    return client.generate_structured(
+        prompt=formatted_prompt,
+        response_schema=InterviewEvaluationResponse
+    )

@@ -6,11 +6,11 @@ This module provides:
 - Automatic exception-to-HTTP-status mapping
 - Clean separation of business logic from error handling
 """
-import logging
 from typing import Optional
 
+from app.config.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AppException(Exception):

@@ -1,14 +1,6 @@
-"""
-Question Service.
 
-Encapsulates business logic for question management, including:
-- Question retrieval for roles
-- Next question sequencing
-- Role validation
-"""
 from typing import Dict, Any, List, Optional
-
-from app.database.repositories import get_question_repository
+from app.services.core.role_service import RoleService
 from app.exceptions import NotFoundError
 
 
@@ -29,12 +21,7 @@ class QuestionService:
         Raises:
             NotFoundError: If role not found
         """
-        repo = get_question_repository()
-        role_data = repo.get_by_id(role_id)
-
-        if not role_data:
-            raise NotFoundError(f"Role '{role_id}' not found")
-
+        role_data = RoleService.get_role_by_id(role_id)
         return role_data.get("questions", [])
 
     @staticmethod
@@ -52,10 +39,9 @@ class QuestionService:
         Returns:
             Dictionary with status and question info, or None if role not found
         """
-        repo = get_question_repository()
-        role_data = repo.get_by_id(role_id)
-
-        if not role_data:
+        try:
+            role_data = RoleService.get_role_by_id(role_id)
+        except NotFoundError:
             return None
 
         questions = role_data["questions"]
@@ -80,8 +66,7 @@ class QuestionService:
         Returns:
             True if role exists, False otherwise
         """
-        repo = get_question_repository()
-        return repo.exists(role_id)
+        return RoleService.exists(role_id)
 
     @staticmethod
     def get_total_questions(role_id: str) -> int:
@@ -97,12 +82,7 @@ class QuestionService:
         Raises:
             NotFoundError: If role not found
         """
-        repo = get_question_repository()
-        role_data = repo.get_by_id(role_id)
-
-        if not role_data:
-            raise NotFoundError(f"Role '{role_id}' not found")
-
+        role_data = RoleService.get_role_by_id(role_id)
         return len(role_data.get("questions", []))
 
     @staticmethod
@@ -116,9 +96,4 @@ class QuestionService:
         Returns:
             Role title string, or role_id if not found
         """
-        repo = get_question_repository()
-        role_data = repo.get_by_id(role_id)
-
-        if role_data and "title" in role_data:
-            return role_data["title"]
-        return role_id
+        return RoleService.get_role_title(role_id)

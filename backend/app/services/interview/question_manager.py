@@ -4,11 +4,10 @@ Module for generating interview questions using Google Gemini API.
 This module provides functionality to generate role-specific interview
 questions based on job descriptions using Google's Gemini generative AI model.
 """
-from google import genai
 from pydantic import BaseModel
 
+from app.adapters.ai.gemini_client import GeminiClient
 from app.config.prompts import QUESTION_PROMPT
-from app.config.settings import settings
 
 
 class Response(BaseModel):
@@ -36,8 +35,8 @@ def gen_questions(
         ConnectionError: If connection to Gemini API fails
         RuntimeError: If Gemini API returns an error
     """
-    # Setup Google Gemini
-    client = genai.Client(api_key=gemini_api_key)
+    # Use centralized GeminiClient
+    client = GeminiClient(api_key=gemini_api_key)
 
     # Prepare Prompt
     final_prompt = QUESTION_PROMPT.format(
@@ -45,24 +44,8 @@ def gen_questions(
         job_description=description
     )
 
-    # LLM
-    try:
-        response = client.models.generate_content(
-            model=settings.gemini_model,
-            contents=final_prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": Response,
-                "temperature": settings.gemini_temperature,
-            })
-        return response.parsed
-    except ValueError as e:
-        # Handle validation or parsing errors
-        raise ValueError(f"Failed to parse API response: {str(e)}") from e
-    except ConnectionError as e:
-        # Handle network/connection errors
-        raise ConnectionError(
-            f"Failed to connect to Gemini API: {str(e)}") from e
-    except RuntimeError as e:
-        # Handle API-specific runtime errors
-        raise RuntimeError(f"Gemini API error: {str(e)}") from e
+    # Generate structured response
+    return client.generate_structured(
+        prompt=final_prompt,
+        response_schema=Response
+    )

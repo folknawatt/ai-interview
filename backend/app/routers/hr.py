@@ -8,10 +8,8 @@ Provides endpoints for HR users to:
 - Update questions for existing roles
 - Delete roles
 """
-from typing import Dict, Any, List
-
+from typing import Dict, Any
 from fastapi import APIRouter, Depends
-
 from app.schemas import JDInput, SaveQuestionsRequest, UpdateQuestionsRequest
 from app.services import HRService
 from app.dependencies import get_api_key
@@ -43,7 +41,7 @@ async def save_questions_api(data: SaveQuestionsRequest) -> Dict[str, str]:
 
 
 @router.get("/roles")
-def get_roles() -> List[Dict[str, str]]:
+def get_roles() -> list[Dict[str, str]]:
     """Get all job roles."""
     return HRService.get_all_roles()
 

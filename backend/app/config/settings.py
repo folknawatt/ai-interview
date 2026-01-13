@@ -7,6 +7,23 @@ environment variable validation and type safety.
 import os
 from typing import List, Optional
 from pydantic_settings import BaseSettings
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Robustly find and load .env file
+env_path = Path(".env")
+if not env_path.exists():
+    # Attempt to find it in backend directory if running from root
+    env_path = Path("backend/.env")
+
+if not env_path.exists():
+    # Attempt to find it relative to this file (backend/app/config/settings.py)
+    env_path = Path(__file__).resolve().parents[2] / ".env"
+
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+else:
+    load_dotenv()
 
 
 class Settings(BaseSettings):
@@ -23,10 +40,10 @@ class Settings(BaseSettings):
     server_url: str = "http://localhost:8000"
 
     # API Configuration
-    google_api_key: Optional[str] = None
+    google_api_key: Optional[str] = os.getenv("GOOGLE_API_KEY")
 
     # Database Configuration
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/ai_interview"
+    database_url: str = "postgresql://postgres:postgres@localhost:5433/ai_interview"
 
     # TTS Configuration
     tts_provider: str = "gemini"  # TTS provider to use: "gemini" or "edge"

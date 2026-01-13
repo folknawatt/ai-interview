@@ -7,7 +7,6 @@ Encapsulates business logic for candidate interviews, including:
 - Scoring and Summaries
 """
 import asyncio
-import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +15,7 @@ from typing import Any, Dict, Optional
 from fastapi import UploadFile
 from sqlmodel import Session, select
 
+from app.config.logging_config import get_logger
 from app.config.settings import settings
 from app.database.models import (
     AggregatedScore,
@@ -37,7 +37,7 @@ from app.services.core.media_service import MediaService
 from app.services.interview.question_service import QuestionService
 from app.services.core.storage_service import StorageService
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 TEMP_DIR = Path(settings.temp_storage_dir)
 

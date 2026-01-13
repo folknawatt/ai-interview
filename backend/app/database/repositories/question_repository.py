@@ -218,6 +218,118 @@ class QuestionRepository:
                     f"Database update failed: {e}"
                 ) from e
 
+    def append_questions(
+        self, role_id: str, questions: List[str]
+    ) -> None:
+        """
+        Append new questions to an existing role (keeps existing questions).
+
+        Args:
+            role_id (str): The ID of the role to append questions to.
+            questions (List[str]): List of new question content strings to add.
+
+        Raises:
+            ValueError: If the role does not exist.
+        """
+        with Session(self.engine) as session:
+            try:
+                role = session.exec(select(JobRole).where(
+                    JobRole.id == role_id)).first()
+                if not role:
+                    raise ValueError(f"Role '{role_id}' not found")
+
+                # Get the current max order to continue from
+                existing_questions = session.exec(
+                    select(Question)
+                    .where(Question.role_id == role_id)
+                    .order_by(Question.order.desc())
+                ).first()
+
+                start_order = 0
+                if existing_questions:
+                    start_order = existing_questions.order + 1
+
+                # Append new questions after existing ones
+                for idx, q_text in enumerate(questions):
+                    q = Question(
+                        role_id=role_id,
+                        content=q_text,
+                        order=start_order + idx
+                    )
+                    session.add(q)
+
+                session.commit()
+                logger.info(
+                    "Appended %s questions to role %s",
+                    len(questions),
+                    role_id
+                )
+            except ValueError:
+                session.rollback()
+                raise
+            except Exception as e:
+                session.rollback()
+                logger.error(
+                    "Failed to append questions for role %s: %s",
+                    role_id,
+                    e
+                )
+                raise RuntimeError(
+                    f"Database append failed: {e}"
+                ) from e
+
+    def duplicate_role(self, base_role_id: str, new_role_id: str, new_title: str) -> None:
+        """
+        Duplicate an existing role and all its questions.
+
+        Args:
+            base_role_id: ID of the role to copy from.
+            new_role_id: ID for the new role.
+            new_title: Title for the new role.
+
+        Raises:
+            ValueError: If base role doesn't exist or new role ID already exists.
+        """
+        with Session(self.engine) as session:
+            try:
+                # Validate base role exists
+                base_role = session.exec(select(JobRole).where(
+                    JobRole.id == base_role_id)).first()
+                if not base_role:
+                    raise ValueError(f"Base Role '{base_role_id}' not found")
+
+                # Validate new role ID doesn't exist
+                existing = session.exec(select(JobRole).where(
+                    JobRole.id == new_role_id)).first()
+                if existing:
+                    raise ValueError(f"Role ID '{new_role_id}' already exists")
+
+                # Create new Role
+                new_role = JobRole(id=new_role_id, title=new_title)
+                session.add(new_role)
+                session.flush()
+
+                # Copy Questions
+                questions = session.exec(select(Question).where(
+                    Question.role_id == base_role_id).order_by(Question.order)).all()
+
+                for q in questions:
+                    new_q = Question(
+                        role_id=new_role_id,
+                        content=q.content,
+                        order=q.order
+                    )
+                    session.add(new_q)
+
+                session.commit()
+                logger.info("Duplicated role %s to %s",
+                            base_role_id, new_role_id)
+
+            except Exception as e:
+                session.rollback()
+                logger.error("Failed to duplicate role: %s", e)
+                raise RuntimeError(f"Database duplication failed: {e}") from e
+
 
 # Singleton instance
 _QUESTION_REPOSITORY = QuestionRepository()
