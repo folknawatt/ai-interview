@@ -9,6 +9,7 @@ python-dotenv>=1.0.0
 speechrecognition>=3.10.0
 pydub>=0.25.1
 edge-tts>=6.1.0
+ml-dtypes>=0.5.4
 
 # New dependencies for scoring system
 sqlmodel>=0.0.22
