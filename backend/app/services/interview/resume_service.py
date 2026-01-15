@@ -1,17 +1,12 @@
+"""Resume processing service for PDF upload and question generation."""
 from app.config.prompts import GEN_QUESTION_PROMPT
 from app.adapters.ai.gemini_client import GeminiClient
 from app.adapters.pdf.pdf_extraction import extract_text_from_pdf
 
 
-class RequestMock:
-    """Helper to match the prompt format expectation {request.field}"""
-
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-
 class ResumeService:
+    """Service for processing resumes and generating interview questions."""
+
     def __init__(self):
         self.ai_client = GeminiClient()
 
@@ -29,13 +24,11 @@ class ResumeService:
         # 1. Extract Text
         resume_text = extract_text_from_pdf(pdf_bytes)
 
-        # 2. Prepare Prompt
-        # The prompt template uses {request.num_questions} and {request.resume_text}
-        mock_request = RequestMock(
+        # 2. Prepare Prompt with simple format placeholders
+        formatted_prompt = GEN_QUESTION_PROMPT.format(
             num_questions=num_questions,
             resume_text=resume_text
         )
-        formatted_prompt = GEN_QUESTION_PROMPT.format(request=mock_request)
 
         # 3. Generate Content
         generated_json = self.ai_client.generate_content(formatted_prompt)
