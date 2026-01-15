@@ -171,22 +171,12 @@ class HRService:
         """
         repo = get_question_repository()
 
-        # Use RoleService to check existence and get title
-        try:
-            role_title = RoleService.get_role_title(role_id)
-        except NotFoundError:
-            # If role logic changes to raise error on title lookup
-            pass
-
+        # Check existence first
         if not repo.exists(role_id):
             raise NotFoundError(f"Role '{role_id}' not found")
 
-        # Get title one last time if it was just an ID
-        if role_title == role_id:
-            # Try to get better title if exists but RoleService returned ID
-            role_data = repo.get_by_id(role_id)
-            if role_data:
-                role_title = role_data.get("title", role_id)
+        # Get title for success message (fallback to role_id if not found)
+        role_title = RoleService.get_role_title(role_id)
 
         repo.delete(role_id)
 
