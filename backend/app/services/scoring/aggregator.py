@@ -84,14 +84,14 @@ def generate_recommendation(avg_score: float, pass_rate: float) -> str:
     Generate overall recommendation based on average score AND pass rate.
 
     Args:
-        avg_score: Average total score (0-10 scale)
+        avg_score: Average total score (1-5 scale)
         pass_rate: Percentage of passed questions (0-100)
 
     Returns:
         Recommendation string: "Strong Pass", "Pass", "Review", or "Fail"
     """
-    # Convert 0-10 scale to percentage for comparison
-    score_percentage = (avg_score / 10) * 100
+    # Convert 1-5 scale to percentage for comparison
+    score_percentage = (avg_score / 5) * 100
 
     # Both metrics must meet threshold for Strong Pass/Pass
     if score_percentage >= 80 and pass_rate >= 80:

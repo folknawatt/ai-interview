@@ -157,7 +157,7 @@ class QuestionResult(SQLModel, table=True):
     transcript: Optional[str] = Field(
         default=None, sa_type=Text, nullable=True)
 
-    # Scores (1-10 scale)
+    # Scores (1-5 scale)
     communication_score: float = Field(nullable=False)
     relevance_score: float = Field(nullable=False)
     logical_thinking_score: float = Field(nullable=False)

@@ -41,22 +41,22 @@ class AnalysisRequest(BaseModel):
 
 
 class Scores(BaseModel):
-    """Score model with validation for 1-10 range."""
+    """Score model with validation for 1-5 range."""
 
     communication: float = Field(
         ge=1.0,
-        le=10.0,
-        description="Communication score 1-10"
+        le=5.0,
+        description="Communication score 1-5"
     )
     relevance: float = Field(
         ge=1.0,
-        le=10.0,
-        description="Relevance score 1-10"
+        le=5.0,
+        description="Relevance score 1-5"
     )
     logical_thinking: float = Field(
         ge=1.0,
-        le=10.0,
-        description="Logical thinking score 1-10"
+        le=5.0,
+        description="Logical thinking score 1-5"
     )
 
 
