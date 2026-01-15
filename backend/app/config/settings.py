@@ -6,7 +6,7 @@ environment variable validation and type safety.
 """
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     server_url: str = "http://localhost:8000"
 
     # API Configuration
-    google_api_key: Optional[str] = os.getenv("GOOGLE_API_KEY")
+    google_api_key: str
 
     # Database Configuration
     database_url: str = "postgresql://postgres:postgres@localhost:5433/ai_interview"
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
 
     # Gemini AI Configuration
-    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    gemini_model: str = "gemini-2.5-flash"
     gemini_temperature: float = 0.2
 
     @property
