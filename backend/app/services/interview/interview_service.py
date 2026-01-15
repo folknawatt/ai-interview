@@ -113,7 +113,6 @@ class InterviewService:
             session.commit()
             session.refresh(question_result)
 
-            cleanup_needed = True  # Ensure cleanup after success
             return InterviewMapper.to_dict(question_result)
 
         except ValueError as e:

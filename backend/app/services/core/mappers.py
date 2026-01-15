@@ -34,7 +34,7 @@ class InterviewMapper:
                 "strengths": evaluation.feedback.strengths,
                 "weaknesses": evaluation.feedback.weaknesses,
                 "summary": evaluation.feedback.summary,
-                "reasoning": hasattr(evaluation, 'reasoning') and evaluation.reasoning or ""
+                "reasoning": getattr(evaluation, 'reasoning', "")
             },
             pass_prediction=evaluation.pass_prediction
         )
