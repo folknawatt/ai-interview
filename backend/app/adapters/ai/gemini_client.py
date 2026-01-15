@@ -1,6 +1,7 @@
 
 import logging
-from typing import Optional, Type, TypeVar
+from functools import wraps
+from typing import Callable, Optional, Type, TypeVar
 from google import genai
 from google.genai import types
 from pydantic import BaseModel
@@ -12,12 +13,23 @@ logger = logging.getLogger(__name__)
 T = TypeVar('T', bound=BaseModel)
 
 
-def is_retryable_error(exception: Exception) -> bool:
-    """Check if the exception is a retryable API error (503, 429, etc.)."""
-    error_str = str(exception).lower()
-    retryable_codes = ['503', '429', 'overloaded',
-                       'unavailable', 'resource_exhausted']
-    return any(code in error_str for code in retryable_codes)
+def _gemini_retry(func: Callable) -> Callable:
+    """Shared retry decorator for Gemini API calls with exponential backoff."""
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type(Exception),
+        before_sleep=lambda retry_state: logger.warning(
+            "Gemini API call failed, retrying in %s seconds... (attempt %d/3)",
+            retry_state.next_action.sleep,
+            retry_state.attempt_number
+        ),
+        reraise=True
+    )
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
 
 
 class GeminiClient:
@@ -35,17 +47,7 @@ class GeminiClient:
             raise ValueError("GOOGLE_API_KEY is not set in settings.")
         self.client = genai.Client(api_key=self._api_key)
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type(Exception),
-        before_sleep=lambda retry_state: logger.warning(
-            "Gemini API call failed, retrying in %s seconds... (attempt %d/3)",
-            retry_state.next_action.sleep,
-            retry_state.attempt_number
-        ),
-        reraise=True
-    )
+    @_gemini_retry
     def generate_content(
         self,
         prompt: str,
@@ -79,17 +81,7 @@ class GeminiClient:
         except Exception as e:
             raise RuntimeError(f"Gemini API call failed: {str(e)}") from e
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type(Exception),
-        before_sleep=lambda retry_state: logger.warning(
-            "Gemini API call failed, retrying in %s seconds... (attempt %d/3)",
-            retry_state.next_action.sleep,
-            retry_state.attempt_number
-        ),
-        reraise=True
-    )
+    @_gemini_retry
     def generate_structured(
         self,
         prompt: str,
