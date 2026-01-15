@@ -81,6 +81,7 @@ class InterviewService:
         )
 
         file_location: Optional[Path] = None
+        cleanup_needed = True  # Flag to track if cleanup is needed
 
         try:
             # Save video file
@@ -104,10 +105,6 @@ class InterviewService:
                 evaluate_candidate, api_key, question, transcript, role_title
             )
 
-            # Cleanup Video File (Audio is handled by MediaService)
-            if file_location:
-                StorageService.cleanup([file_location])
-
             # Save result using Mapper
             question_result = InterviewMapper.to_orm_question_result(
                 session_id, question_id, question, transcript, evaluation
@@ -116,36 +113,33 @@ class InterviewService:
             session.commit()
             session.refresh(question_result)
 
+            cleanup_needed = True  # Ensure cleanup after success
             return InterviewMapper.to_dict(question_result)
 
         except ValueError as e:
             # Input error (empty transcript or bad format)
-            if file_location:
-                StorageService.cleanup([file_location])
             logger.warning("Validation error in process_answer: %s", e)
             raise ValidationError(str(e)) from e
 
         except ConnectionError as e:
             # External service unavailable
-            if file_location:
-                StorageService.cleanup([file_location])
             logger.error("Connection error in process_answer: %s", e)
             raise ServiceUnavailableError(
                 "AI Service temporarily unavailable") from e
 
         except RuntimeError as e:
             # External service error
-            if file_location:
-                StorageService.cleanup([file_location])
             logger.error("Runtime error in process_answer: %s", e)
             raise BadGatewayError("AI Service returned an error") from e
 
         except Exception as e:
-            # Cleanup files before re-raising
-            if file_location:
-                StorageService.cleanup([file_location])
             logger.error("Error processing answer: %s", e)
             raise
+
+        finally:
+            # Centralized cleanup - always runs regardless of success/failure
+            if cleanup_needed and file_location:
+                StorageService.cleanup([file_location])
 
     @classmethod
     def complete_interview(cls, session: Session, session_id: str) -> Dict[str, Any]:
