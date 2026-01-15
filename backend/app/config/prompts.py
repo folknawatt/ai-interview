@@ -97,7 +97,7 @@ Provide output in RAW JSON format only. No markdown.
 GEN_QUESTION_PROMPT = """
 Role: คุณคือผู้จัดการฝ่ายว่าจ้าง (Hiring Manager) และผู้สรรหาบุคลากรสายเทคนิค (Technical Recruiter) ผู้เชี่ยวชาญ
 
-Task: สร้างคำถามสัมภาษณ์จำนวน {request.num_questions} คำถาม โดยอ้างอิงจากข้อมูลใน Resume ที่ระบุไว้ด้านล่างนี้ "ต้องเป็นภาษาไทยเท่านั้น"
+Task: สร้างคำถามสัมภาษณ์จำนวน {num_questions} คำถาม โดยอ้างอิงจากข้อมูลใน Resume ที่ระบุไว้ด้านล่างนี้ "ต้องเป็นภาษาไทยเท่านั้น"
 
 Instructions for Question Generation:
 1. Contextualize: ห้ามถามคำถามทั่วไป (เช่น "Python คืออะไร?") แต่ให้ถามว่าผู้สมัครประยุกต์ใช้ทักษะเหล่านั้นในโปรเจกต์หรือประสบการณ์ทำงานที่ระบุใน Resume อย่างไร
@@ -112,5 +112,5 @@ Output Format:
 Return ONLY a raw JSON array of strings in Thai language. Do not use Markdown blocks.
 
 Resume Text:
-{request.resume_text}
+{resume_text}
 """
