@@ -7,6 +7,7 @@ Provides endpoints for candidates to:
 - Get interview session summary and results
 """
 import json
+import uuid
 from typing import Dict, Any
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from sqlalchemy.orm import Session
@@ -50,7 +51,6 @@ async def upload_pdf(
     if not isinstance(questions_list, list):
         raise ValueError("AI Service did not return a list of questions")
 
-    import uuid
     # Create a unique candidate-specific Role based on the selected Role
     unique_suffix = str(uuid.uuid4())[:8]
     candidate_role_id = HRService.create_candidate_role(role_id, unique_suffix)
