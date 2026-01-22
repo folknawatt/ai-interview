@@ -1,8 +1,8 @@
 <template>
   <div
-    class="flex items-center justify-center min-h-screen bg-gray-900 text-white"
+    class="flex items-center justify-center min-h-screen bg-interview-bg text-interview-text-primary"
   >
-    <p>Redirecting...</p>
+    <p class="text-interview-text-secondary">Redirecting...</p>
   </div>
 </template>
 

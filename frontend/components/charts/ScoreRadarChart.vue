@@ -56,13 +56,13 @@ onMounted(() => {
           {
             label: 'Scores',
             data: [props.communicationAvg, props.relevanceAvg, props.logicalThinkingAvg],
-            backgroundColor: 'rgba(102, 126, 234, 0.2)',
-            borderColor: 'rgba(102, 126, 234, 1)',
+            backgroundColor: 'rgba(255, 196, 40, 0.2)',
+            borderColor: '#FFC428',
             borderWidth: 2,
-            pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+            pointBackgroundColor: '#FFC428',
             pointBorderColor: '#fff',
             pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(102, 126, 234, 1)',
+            pointHoverBorderColor: '#FFC428',
           },
         ],
       },
@@ -73,12 +73,24 @@ onMounted(() => {
           r: {
             angleLines: {
               display: true,
+              color: 'rgba(255, 255, 255, 0.1)',
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)',
+            },
+            pointLabels: {
+              color: '#a1a1aa',
+              font: {
+                size: 12,
+              },
+            },
+            ticks: {
+              stepSize: 1,
+              color: '#71717a',
+              backdropColor: 'transparent',
             },
             suggestedMin: 0,
             suggestedMax: 5,
-            ticks: {
-              stepSize: 1,
-            },
           },
         },
         plugins: {
@@ -86,6 +98,9 @@ onMounted(() => {
             display: false,
           },
           tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
             callbacks: {
               label: function (context) {
                 return context.parsed.r.toFixed(2) + ' / 5'

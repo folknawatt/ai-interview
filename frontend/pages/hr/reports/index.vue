@@ -1,15 +1,21 @@
 <template>
   <div class="reports-container">
     <div class="mb-6">
-      <NuxtLink to="/hr/dashboard" class="text-minimal-info hover:text-sky-600">
-        ← Back to Dashboard
+      <NuxtLink 
+        to="/hr/dashboard" 
+        class="inline-flex items-center gap-2 px-4 py-2 text-interview-text-secondary hover:text-interview-text-primary hover:bg-interview-surface rounded-xl transition-all duration-300 -ml-4"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Dashboard
       </NuxtLink>
     </div>
-    <h1>Interview Reports</h1>
+    <h1 class="reports-anim text-3xl font-bold mb-8 text-interview-text-primary" style="--delay: 0ms">Interview Reports</h1>
 
     <!-- Statistics Cards -->
     <div v-if="statistics" class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card reports-anim" style="--delay: 80ms">
         <div class="stat-icon">
           <UsersIcon class="icon-svg" />
         </div>
@@ -18,7 +24,7 @@
           <div class="stat-label">Total Candidates</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card reports-anim" style="--delay: 160ms">
         <div class="stat-icon">
           <ChartBarIcon class="icon-svg" />
         </div>
@@ -27,7 +33,7 @@
           <div class="stat-label">Average Score</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card reports-anim" style="--delay: 240ms">
         <div class="stat-icon">
           <CheckCircleIcon class="icon-svg" />
         </div>
@@ -39,7 +45,7 @@
     </div>
 
     <!-- Filter Panel -->
-    <div class="filter-panel">
+    <div class="filter-panel reports-anim" style="--delay: 320ms">
       <div class="filter-group">
         <label>Role:</label>
         <select v-model="filters.roleId">
@@ -86,7 +92,7 @@
     <div v-if="loading" class="loading">Loading reports...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="filteredReports.length === 0" class="empty">No reports found</div>
-    <table v-else class="reports-table">
+    <table v-else class="reports-table reports-anim" style="--delay: 400ms">
       <thead>
         <tr>
           <th @click="sort('name')">Name {{ getSortIcon('name') }}</th>
@@ -269,20 +275,27 @@ const formatDate = (dateStr: string) => {
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
 }
 
+// Unified color scheme:
+// Green (22c55e) = Excellent (Score >= 4/5, Strong Pass)
+// Blue (3b82f6) = Good (Score >= 3/5, Pass)
+// Amber (FFC428) = Fair (Score >= 2/5, Review)
+// Red (ef4444) = Poor (Score < 2/5, Fail)
+// Gray = Pending/Unknown
+
 const getScoreClass = (score: number | null) => {
   if (score === null) return 'score-pending'
-  if (score >= 8) return 'score-excellent'
-  if (score >= 6) return 'score-good'
-  if (score >= 4) return 'score-fair'
-  return 'score-poor'
+  if (score >= 4) return 'score-excellent'   // 4-5: Excellent (Green)
+  if (score >= 3) return 'score-good'        // 3-4: Good (Blue)
+  if (score >= 2) return 'score-fair'        // 2-3: Fair (Amber)
+  return 'score-poor'                        // 0-2: Poor (Red)
 }
 
 const getRecommendationClass = (rec: string | null) => {
   if (!rec) return 'rec-pending'
-  if (rec === 'Strong Pass') return 'rec-strong-pass'
-  if (rec === 'Pass') return 'rec-pass'
-  if (rec === 'Review') return 'rec-review'
-  return 'rec-fail'
+  if (rec === 'Strong Pass') return 'rec-strong-pass'  // Green
+  if (rec === 'Pass') return 'rec-pass'                // Blue
+  if (rec === 'Review') return 'rec-review'            // Amber
+  return 'rec-fail'                                    // Red
 }
 
 const viewReport = (sessionId: string) => {
@@ -300,15 +313,9 @@ const downloadReport = async (sessionId: string) => {
 
 <style scoped>
 .reports-container {
-  padding: 2rem;
+  padding: 0;
   max-width: 1400px;
   margin: 0 auto;
-}
-
-h1 {
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  color: #1a1a1a;
 }
 
 .stats-grid {
@@ -319,14 +326,14 @@ h1 {
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #FFB128 0%, #FF9500 100%);
+  color: #0a0a0f;
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 30px rgba(255, 177, 40, 0.2);
 }
 
 .stat-icon {
@@ -339,7 +346,7 @@ h1 {
 .icon-svg {
   width: 3rem;
   height: 3rem;
-  color: white;
+  color: #0a0a0f;
 }
 
 .icon-btn {
@@ -354,14 +361,15 @@ h1 {
 
 .stat-label {
   font-size: 0.9rem;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .filter-panel {
-  background: white;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
   padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
@@ -378,69 +386,85 @@ h1 {
 .filter-group label {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #555;
+  color: #a1a1aa;
 }
 
 .filter-group input,
 .filter-group select {
   padding: 0.6rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
   font-size: 0.95rem;
+  color: #ffffff;
+}
+
+.filter-group input::placeholder {
+  color: #71717a;
+}
+
+.filter-group select option {
+  background: #12121a;
+  color: #ffffff;
 }
 
 .btn-primary,
 .btn-secondary {
   padding: 0.6rem 1.5rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.75rem;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s;
 }
 
 .btn-primary {
-  background: #667eea;
-  color: white;
+  background: #FFB128;
+  color: #0a0a0f;
 }
 
 .btn-primary:hover {
-  background: #5568d3;
+  background: #FF9500;
 }
 
 .btn-secondary {
-  background: #e0e0e0;
-  color: #555;
+  background: rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary:hover {
-  background: #d0d0d0;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 .reports-table {
   width: 100%;
-  background: white;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .reports-table th {
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.08);
   padding: 1rem;
   text-align: left;
   font-weight: 600;
   cursor: pointer;
   user-select: none;
+  color: #ffffff;
 }
 
 .reports-table th:hover {
-  background: #e8e8e8;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .reports-table td {
   padding: 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  color: #a1a1aa;
 }
 
 .clickable-row {
@@ -449,20 +473,24 @@ h1 {
 }
 
 .clickable-row:hover {
-  background: #f9f9f9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.clickable-row:hover td {
+  color: #ffffff;
 }
 
 .score-badge,
 .recommendation-badge {
   padding: 0.4rem 0.8rem;
-  border-radius: 20px;
+  border-radius: 9999px;
   font-size: 0.85rem;
   font-weight: 600;
   display: inline-block;
 }
 
 .score-excellent {
-  background: #10b981;
+  background: #22c55e;
   color: white;
 }
 
@@ -472,8 +500,8 @@ h1 {
 }
 
 .score-fair {
-  background: #f59e0b;
-  color: white;
+  background: #FFC428;
+  color: #0a0a0f;
 }
 
 .score-poor {
@@ -482,12 +510,12 @@ h1 {
 }
 
 .score-pending {
-  background: #9ca3af;
-  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  color: #a1a1aa;
 }
 
 .rec-strong-pass {
-  background: #10b981;
+  background: #22c55e;
   color: white;
 }
 
@@ -497,8 +525,8 @@ h1 {
 }
 
 .rec-review {
-  background: #f59e0b;
-  color: white;
+  background: #FFC428;
+  color: #0a0a0f;
 }
 
 .rec-fail {
@@ -507,8 +535,8 @@ h1 {
 }
 
 .rec-pending {
-  background: #9ca3af;
-  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  color: #a1a1aa;
 }
 
 .btn-view,
@@ -518,11 +546,17 @@ h1 {
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0.5rem;
-  transition: transform 0.2s;
+  transition: all 0.2s;
+  color: #a1a1aa;
 }
 
-.btn-view:hover,
+.btn-view:hover {
+  color: #FFB128;
+  transform: scale(1.2);
+}
+
 .btn-download:hover {
+  color: #22c55e;
   transform: scale(1.2);
 }
 
@@ -532,10 +566,32 @@ h1 {
   text-align: center;
   padding: 3rem;
   font-size: 1.1rem;
-  color: #666;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .error {
   color: #ef4444;
+}
+
+/* Smooth staggered animation */
+.reports-anim {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  animation: reports-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+@keyframes reports-fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 </style>

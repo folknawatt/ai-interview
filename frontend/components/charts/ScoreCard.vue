@@ -25,7 +25,7 @@
       />
     </svg>
     <div class="score-content">
-      <div class="score-value">{{ score }}</div>
+      <div class="score-value" :style="{ color: scoreColor }">{{ score }}</div>
       <div class="score-max">/ {{ maxScore }}</div>
     </div>
   </div>
@@ -60,13 +60,14 @@ const strokeDashoffset = computed(() => {
 
 const scoreColor = computed(() => {
   const p = percentage.value
-  if (p >= 80) return '#10b981' // Green (>= 8/10 or 24/30)
+  if (p >= 80) return '#22c55e' // Green (>= 8/10 or 24/30)
   if (p >= 60) return '#3b82f6' // Blue
-  if (p >= 40) return '#f59e0b' // Orange
+  if (p >= 40) return '#FFC428' // Amber
   return '#ef4444' // Red
 })
 
-const bgColor = '#e5e7eb'
+// Dark theme background
+const bgColor = 'rgba(255, 255, 255, 0.1)'
 </script>
 
 <style scoped>
@@ -96,11 +97,10 @@ const bgColor = '#e5e7eb'
 .score-value {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #1a1a1a;
 }
 
 .score-max {
   font-size: 1.2rem;
-  color: #666;
+  color: #a1a1aa;
 }
 </style>

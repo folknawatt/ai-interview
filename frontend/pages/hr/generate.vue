@@ -1,48 +1,54 @@
 <template>
-  <div class="min-h-screen bg-minimal-bg text-minimal-text-primary p-8">
+  <div class="text-interview-text-primary p-8">
     <div class="max-w-4xl mx-auto">
       <div class="mb-6">
-        <NuxtLink to="/hr/dashboard" class="text-minimal-info hover:text-sky-600">
-          ← Back to Dashboard
+        <NuxtLink 
+          to="/hr/dashboard" 
+          class="inline-flex items-center gap-2 px-4 py-2 text-interview-text-secondary hover:text-interview-text-primary hover:bg-interview-surface rounded-xl transition-all duration-300 -ml-4"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Dashboard
         </NuxtLink>
       </div>
 
-      <h1 class="text-4xl font-bold mb-8 flex items-center gap-3">
-        <CpuChipIcon class="w-10 h-10 text-minimal-info" />
+      <h1 class="text-4xl font-bold mb-8 flex items-center gap-3 text-interview-text-primary">
+        <CpuChipIcon class="w-10 h-10 text-interview-primary" />
         AI Question Generator
       </h1>
 
       <!-- Step 1: Input Form -->
-      <div v-if="step === 1" class="bg-minimal-card p-8 rounded-xl border border-minimal-border">
-        <h2 class="text-2xl font-semibold mb-6">Step 1: Input Job Details</h2>
+      <div v-if="step === 1" class="bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border animate-fade-in-up">
+        <h2 class="text-2xl font-semibold mb-6 text-interview-text-primary">Step 1: Input Job Details</h2>
         
         <form @submit.prevent="generateQuestions">
           <div class="mb-6">
-            <label class="block text-sm font-medium mb-2">Role Title</label>
+            <label class="block text-sm font-medium mb-2 text-interview-text-secondary">Role Title</label>
             <input
               v-model="roleTitle"
               type="text"
               required
               placeholder="e.g., Frontend Developer, Sales Manager"
-              class="w-full px-4 py-3 bg-white border-2 border-minimal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-minimal-info text-minimal-text-primary"
+              class="w-full px-4 py-3 bg-interview-bg-secondary border border-interview-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:border-transparent text-interview-text-primary placeholder-interview-text-muted"
             />
           </div>
 
           <div class="mb-6">
-            <label class="block text-sm font-medium mb-2">Job Description</label>
+            <label class="block text-sm font-medium mb-2 text-interview-text-secondary">Job Description</label>
             <textarea
               v-model="jobDescription"
               required
               rows="8"
               placeholder="Paste the job description here..."
-              class="w-full px-4 py-3 bg-white border-2 border-minimal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-minimal-info text-minimal-text-primary"
+              class="w-full px-4 py-3 bg-interview-bg-secondary border border-interview-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:border-transparent text-interview-text-primary placeholder-interview-text-muted resize-none"
             ></textarea>
           </div>
 
           <button
             type="submit"
             :disabled="isGenerating"
-            class="w-full px-6 py-3 bg-minimal-info hover:bg-sky-600 text-white rounded-lg font-semibold transition-all disabled:bg-minimal-border disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2"
+            class="w-full px-6 py-3 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-amber flex items-center justify-center gap-2"
           >
             <SparklesIcon v-if="!isGenerating" class="w-5 h-5" />
             <ArrowPathIcon v-else class="w-5 h-5 animate-spin" />
@@ -52,20 +58,20 @@
       </div>
 
       <!-- Step 2: Review Questions -->
-      <div v-if="step === 2" class="bg-minimal-card p-8 rounded-xl border border-minimal-border">
-        <h2 class="text-2xl font-semibold mb-6">Step 2: Review & Edit Questions</h2>
+      <div v-if="step === 2" class="bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border animate-fade-in-up">
+        <h2 class="text-2xl font-semibold mb-6 text-interview-text-primary">Step 2: Review & Edit Questions</h2>
         
         <div class="space-y-4 mb-8">
           <div
             v-for="(question, index) in generatedQuestions"
             :key="index"
-            class="bg-sky-50 p-4 rounded-lg border border-sky-200"
+            class="bg-interview-bg-secondary p-4 rounded-xl border border-interview-surface-border"
           >
-            <label class="block text-sm font-medium mb-2 text-minimal-text-primary">Question {{ index + 1 }}</label>
+            <label class="block text-sm font-medium mb-2 text-interview-primary">Question {{ index + 1 }}</label>
             <textarea
               v-model="generatedQuestions[index]"
               rows="3"
-              class="w-full px-4 py-3 bg-white border-2 border-minimal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-minimal-info text-minimal-text-primary"
+              class="w-full px-4 py-3 bg-interview-surface border border-interview-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:border-transparent text-interview-text-primary resize-none"
             ></textarea>
           </div>
         </div>
@@ -73,14 +79,14 @@
         <div class="flex gap-4">
           <button
             @click="step = 1"
-            class="flex-1 px-6 py-3 bg-minimal-text-secondary hover:bg-minimal-text-primary text-white rounded-lg font-semibold transition-all"
+            class="flex-1 px-6 py-3 bg-interview-surface border border-interview-surface-border hover:bg-interview-surface-hover text-interview-text-secondary hover:text-interview-text-primary rounded-xl font-semibold transition-all duration-300"
           >
             ← Back
           </button>
           <button
             @click="saveQuestionsToDb"
             :disabled="isSaving"
-            class="flex-1 px-6 py-3 bg-minimal-success hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all disabled:bg-minimal-border disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2"
+            class="flex-1 px-6 py-3 bg-interview-success hover:bg-green-600 text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <DocumentCheckIcon v-if="!isSaving" class="w-5 h-5" />
             <ArrowPathIcon v-else class="w-5 h-5 animate-spin" />
@@ -90,23 +96,25 @@
       </div>
 
       <!-- Success Message -->
-      <div v-if="step === 3" class="bg-minimal-card p-8 rounded-xl text-center border border-minimal-border">
+      <div v-if="step === 3" class="bg-interview-surface backdrop-blur-xl p-8 rounded-2xl text-center border border-interview-surface-border animate-fade-in-up">
         <div class="flex justify-center mb-4">
-          <CheckCircleIcon class="w-20 h-20 text-minimal-success" />
+          <div class="p-4 bg-interview-success/20 rounded-full">
+            <CheckCircleIcon class="w-16 h-16 text-interview-success animate-float" />
+          </div>
         </div>
-        <h2 class="text-3xl font-bold mb-4">Questions Saved Successfully!</h2>
-        <p class="text-minimal-text-secondary mb-8">The questions for "{{ roleTitle }}" have been saved to the database.</p>
+        <h2 class="text-3xl font-bold mb-4 text-interview-text-primary">Questions Saved Successfully!</h2>
+        <p class="text-interview-text-secondary mb-8">The questions for "{{ roleTitle }}" have been saved to the database.</p>
         
         <div class="flex gap-4 justify-center">
           <button
             @click="resetForm"
-            class="px-6 py-3 bg-minimal-info hover:bg-sky-600 text-white rounded-lg font-semibold transition-all shadow-sm"
+            class="px-6 py-3 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl font-semibold transition-all duration-300 shadow-glow-amber"
           >
             Generate More Questions
           </button>
           <NuxtLink
             to="/hr/roles"
-            class="px-6 py-3 bg-minimal-success hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all inline-block shadow-sm"
+            class="px-6 py-3 bg-interview-success hover:bg-green-600 text-white rounded-xl font-semibold transition-all duration-300 inline-block"
           >
             View All Roles
           </NuxtLink>
@@ -114,9 +122,18 @@
       </div>
 
       <!-- Error Message -->
-      <div v-if="error" class="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-        <p class="text-red-600">{{ error }}</p>
-      </div>
+      <Transition
+        enter-active-class="transition-all duration-300"
+        enter-from-class="opacity-0 translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-300"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-2"
+      >
+        <div v-if="error" class="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
+          <p class="text-red-400">{{ error }}</p>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>

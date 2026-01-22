@@ -1,20 +1,25 @@
 <template>
   <div
-    class="min-h-screen bg-minimal-bg text-minimal-text-primary flex flex-col items-center justify-center p-4"
+    class="min-h-screen bg-interview-bg text-interview-text-primary flex flex-col items-center justify-center p-4 relative overflow-hidden"
   >
+    <!-- Background gradient effects -->
+    <div class="absolute inset-0 bg-gradient-to-br from-interview-bg via-interview-bg-secondary to-interview-bg-gradient"></div>
+    <div class="absolute top-1/4 -left-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-accent-sky/10 rounded-full blur-3xl"></div>
+
     <div
-      class="w-full max-w-2xl bg-minimal-card p-8 rounded-lg shadow-sm border border-minimal-border text-center"
+      class="relative w-full max-w-2xl bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border shadow-glass text-center animate-fade-in-up"
     >
       <div class="mb-6">
         <span
-          class="bg-sky-50 text-sky-600 text-xs font-medium px-2.5 py-0.5 rounded border border-sky-200"
+          class="bg-interview-primary/10 text-interview-primary text-xs font-medium px-3 py-1.5 rounded-full border border-interview-primary/30"
         >
           คำถามสัมภาษณ์
         </span>
       </div>
 
-      <h2 v-if="currentQuestion" class="text-2xl md:text-3xl font-bold mb-8 leading-relaxed">"{{ currentQuestion }}"</h2>
-      <div v-else class="text-2xl md:text-3xl font-bold mb-8 text-minimal-text-secondary">
+      <h2 v-if="currentQuestion" class="text-2xl md:text-3xl font-bold mb-8 leading-relaxed text-interview-text-primary">"{{ currentQuestion }}"</h2>
+      <div v-else class="text-2xl md:text-3xl font-bold mb-8 text-interview-text-secondary">
         <div class="flex items-center justify-center gap-2">
           <span>กำลังโหลดคำถาม</span>
           <span class="animate-pulse">•••</span>
@@ -25,7 +30,7 @@
       <div v-if="currentAudioPath" class="mb-4">
         <button
           @click="playAudio"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium text-minimal-text-secondary bg-minimal-bg border border-minimal-border hover:bg-minimal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-minimal-focus transition-all"
+          class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-interview-text-secondary bg-interview-surface border border-interview-surface-border hover:border-interview-primary/50 hover:bg-interview-surface-hover rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary transition-all duration-300"
           title="Play audio"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -35,15 +40,15 @@
         </button>
       </div>
 
-      <div class="flex flex-col items-center justify-center space-y-4">
-        <div class="text-minimal-text-secondary text-sm">เวลาเตรียมตัว (Preparation Time)</div>
-        <div class="text-6xl font-mono font-bold text-minimal-info">{{ timeLeft }}s</div>
+      <div class="flex flex-col items-center justify-center space-y-4 py-6">
+        <div class="text-interview-text-secondary text-sm">เวลาเตรียมตัว (Preparation Time)</div>
+        <div class="text-7xl font-mono font-bold text-interview-primary animate-glow-pulse">{{ timeLeft }}s</div>
       </div>
 
-      <div class="mt-10">
+      <div class="mt-8">
         <button
           @click="goToRecord"
-          class="inline-flex items-center px-6 py-3 text-lg font-semibold text-white bg-minimal-focus hover:bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-minimal-focus focus:ring-offset-2 transition-all shadow-sm"
+          class="inline-flex items-center px-8 py-4 text-lg font-semibold text-interview-bg bg-interview-primary hover:bg-interview-primary-hover rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 shadow-glow-amber hover:shadow-glow-amber-lg"
         >
           <svg
             class="w-6 h-6 mr-2"

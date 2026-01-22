@@ -1,7 +1,12 @@
 <template>
   <div
-    class="min-h-screen bg-minimal-bg text-minimal-text-primary flex flex-col items-center justify-center p-4"
+    class="min-h-screen bg-interview-bg text-interview-text-primary flex flex-col items-center justify-center p-4 relative overflow-hidden"
   >
+    <!-- Background gradient effects -->
+    <div class="absolute inset-0 bg-gradient-to-br from-interview-bg via-interview-bg-secondary to-interview-bg-gradient"></div>
+    <div class="absolute top-1/4 -left-32 w-96 h-96 bg-red-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"></div>
+
     <Recorder
       ref="recorderRef"
       :is-recording="isRecording"
@@ -14,6 +19,7 @@
       @stop="stopRecording"
       @submit="submitRecording"
       @reset="resetRecording"
+      class="relative z-10"
     />
   </div>
 </template>

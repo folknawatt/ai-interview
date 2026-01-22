@@ -1,14 +1,12 @@
 <template>
-  <div class="min-h-screen bg-minimal-bg text-minimal-text-primary p-8">
+  <div class="text-interview-text-primary p-8">
     <div v-if="loading" class="text-center py-12">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-b-2 border-minimal-info mx-auto mb-4"
-      ></div>
-      <p class="text-minimal-text-secondary">Loading report...</p>
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-interview-primary border-t-transparent mx-auto mb-4"></div>
+      <p class="text-interview-text-secondary">Loading report...</p>
     </div>
     <div
       v-else-if="error"
-      class="max-w-4xl mx-auto bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+      class="max-w-4xl mx-auto bg-red-500/20 border border-red-500/30 text-red-400 px-6 py-4 rounded-xl"
     >
       {{ error }}
     </div>
@@ -17,13 +15,16 @@
       <div class="flex justify-between items-center mb-8">
         <button
           @click="navigateTo('/hr/reports')"
-          class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+          class="inline-flex items-center gap-2 px-4 py-2 text-interview-text-secondary hover:text-interview-text-primary hover:bg-interview-surface rounded-xl transition-all duration-300"
         >
-          ← Back to Reports
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Reports
         </button>
         <button
           @click="handleDownloadPDF"
-          class="flex items-center gap-2 px-4 py-2 bg-minimal-info text-white rounded-lg hover:bg-sky-600 transition-colors font-semibold"
+          class="flex items-center gap-2 px-4 py-2 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl transition-all duration-300 font-semibold shadow-glow-amber"
         >
           <ArrowDownTrayIcon class="w-5 h-5" />
           Download PDF
@@ -31,32 +32,22 @@
       </div>
 
       <!-- Candidate Info -->
-      <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6">
-        <h1 class="text-2xl font-bold mb-4 text-minimal-text-primary">
+      <div class="report-card bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border mb-6" style="--delay: 0ms">
+        <h1 class="text-2xl font-bold mb-4 text-interview-text-primary">
           {{ report.candidate.name }}
         </h1>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="flex flex-col">
-            <span class="text-xs font-semibold uppercase text-minimal-text-secondary">Email</span>
-            <span class="font-medium">{{ report.candidate.email || 'N/A' }}</span>
+            <span class="text-xs font-semibold uppercase text-interview-text-muted">Email</span>
+            <span class="font-medium text-interview-text-primary">{{ report.candidate.email || 'N/A' }}</span>
           </div>
           <div class="flex flex-col">
-            <span class="text-xs font-semibold uppercase text-minimal-text-secondary">Role</span>
-            <span class="font-medium">{{ report.candidate.role_id }}</span>
+            <span class="text-xs font-semibold uppercase text-interview-text-muted">Role</span>
+            <span class="font-medium text-interview-text-primary">{{ report.candidate.role_id }}</span>
           </div>
           <div class="flex flex-col">
-            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
-              >Interview Date</span
-            >
-            <span class="font-medium">{{ formatDate(report.candidate.interview_date) }}</span>
-          </div>
-          <div class="flex flex-col">
-            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
-              >Session ID</span
-            >
-            <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded max-w-max">{{
-              report.candidate.session_id
-            }}</span>
+            <span class="text-xs font-semibold uppercase text-interview-text-muted">Interview Date</span>
+            <span class="font-medium text-interview-text-primary">{{ formatDate(report.candidate.interview_date) }}</span>
           </div>
         </div>
       </div>
@@ -64,47 +55,48 @@
       <!-- Score Overview -->
       <div
         v-if="report.aggregated_score"
-        class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6"
+        class="report-card bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border mb-6"
+        style="--delay: 80ms"
       >
-        <h2 class="text-xl font-semibold mb-6 text-minimal-text-primary">Score Overview</h2>
+        <h2 class="text-xl font-semibold mb-6 text-interview-text-primary">Score Overview</h2>
         <div class="flex flex-col md:flex-row gap-8 items-center">
           <div class="flex flex-col items-center gap-4">
             <ScoreCard :score="report.aggregated_score.average_score" :size="200" />
             <div
-              class="px-6 py-2 rounded-full font-bold text-lg text-white"
+              class="px-6 py-2 rounded-full font-bold text-lg"
               :class="getRecommendationClass(report.aggregated_score.overall_recommendation)"
             >
               {{ report.aggregated_score.overall_recommendation }}
             </div>
           </div>
           <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
-              <div class="text-sm text-gray-600 mb-1">Communication</div>
-              <div class="text-2xl font-bold text-gray-900">
+            <div class="bg-interview-bg-secondary p-4 rounded-xl border-l-4 border-interview-accent-sky">
+              <div class="text-sm text-interview-text-muted mb-1">Communication</div>
+              <div class="text-2xl font-bold text-interview-text-primary">
                 {{ report.aggregated_score.communication_avg }} / 5
               </div>
             </div>
-            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
-              <div class="text-sm text-gray-600 mb-1">Relevance</div>
-              <div class="text-2xl font-bold text-gray-900">
+            <div class="bg-interview-bg-secondary p-4 rounded-xl border-l-4 border-interview-accent-teal">
+              <div class="text-sm text-interview-text-muted mb-1">Relevance</div>
+              <div class="text-2xl font-bold text-interview-text-primary">
                 {{ report.aggregated_score.relevance_avg }} / 5
               </div>
             </div>
-            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
-              <div class="text-sm text-gray-600 mb-1">Logical Thinking</div>
-              <div class="text-2xl font-bold text-gray-900">
+            <div class="bg-interview-bg-secondary p-4 rounded-xl border-l-4 border-interview-accent-olive">
+              <div class="text-sm text-interview-text-muted mb-1">Logical Thinking</div>
+              <div class="text-2xl font-bold text-interview-text-primary">
                 {{ report.aggregated_score.logical_thinking_avg }} / 5
               </div>
             </div>
-            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
-              <div class="text-sm text-gray-600 mb-1">Pass Rate</div>
-              <div class="text-2xl font-bold text-gray-900">
+            <div class="bg-interview-bg-secondary p-4 rounded-xl border-l-4 border-interview-primary">
+              <div class="text-sm text-interview-text-muted mb-1">Pass Rate</div>
+              <div class="text-2xl font-bold text-interview-text-primary">
                 {{ report.aggregated_score.pass_rate }}%
               </div>
             </div>
-            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
-              <div class="text-sm text-gray-600 mb-1">Questions Answered</div>
-              <div class="text-2xl font-bold text-gray-900">
+            <div class="bg-interview-bg-secondary p-4 rounded-xl border-l-4 border-interview-accent-rose">
+              <div class="text-sm text-interview-text-muted mb-1">Questions Answered</div>
+              <div class="text-2xl font-bold text-interview-text-primary">
                 {{ report.aggregated_score.questions_answered }} /
                 {{ report.aggregated_score.total_questions }}
               </div>
@@ -115,8 +107,8 @@
 
       <!-- Charts -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
-          <h3 class="text-lg font-semibold mb-4 text-center">Skills Breakdown</h3>
+        <div class="report-card bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border" style="--delay: 160ms">
+          <h3 class="text-lg font-semibold mb-4 text-center text-interview-text-primary">Skills Breakdown</h3>
           <ScoreRadarChart
             v-if="report.aggregated_score"
             :communication-avg="report.aggregated_score.communication_avg"
@@ -124,29 +116,29 @@
             :logical-thinking-avg="report.aggregated_score.logical_thinking_avg"
           />
         </div>
-        <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
-          <h3 class="text-lg font-semibold mb-4 text-center">Question Scores</h3>
+        <div class="report-card bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border" style="--delay: 240ms">
+          <h3 class="text-lg font-semibold mb-4 text-center text-interview-text-primary">Question Scores</h3>
           <ScoreBarChart :questions="report.questions" />
         </div>
       </div>
 
       <!-- Question Details -->
-      <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border">
-        <h2 class="text-xl font-semibold mb-6 text-minimal-text-primary">
+      <div class="report-card bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border" style="--delay: 320ms">
+        <h2 class="text-xl font-semibold mb-6 text-interview-text-primary">
           Question-by-Question Analysis
         </h2>
         <div
           v-for="(question, idx) in report.questions"
           :key="question.id"
-          class="border border-gray-200 rounded-lg mb-4 overflow-hidden"
+          class="border border-interview-surface-border rounded-xl mb-4 overflow-hidden"
         >
           <div
-            class="p-4 bg-gray-50 cursor-pointer flex justify-between items-center hover:bg-gray-100 transition-colors"
+            class="p-4 bg-interview-surface cursor-pointer flex justify-between items-center hover:bg-interview-surface-hover transition-colors"
             @click="toggleQuestion(idx)"
           >
             <div class="flex gap-4 flex-1 items-center">
-              <span class="font-bold text-minimal-info">Q{{ idx + 1 }}</span>
-              <span class="text-gray-800 font-medium">{{ question.question }}</span>
+              <span class="font-bold text-interview-primary">Q{{ idx + 1 }}</span>
+              <span class="text-interview-text-primary font-medium">{{ question.question }}</span>
             </div>
             <div class="flex gap-4 items-center">
               <span
@@ -159,77 +151,86 @@
                 class="px-3 py-1 rounded-full text-sm font-semibold"
                 :class="
                   question.pass_prediction
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                    ? 'bg-interview-success/20 text-interview-success'
+                    : 'bg-red-500/20 text-red-400'
                 "
               >
                 {{ question.pass_prediction ? '✓ Pass' : '✗ Fail' }}
               </span>
-              <span class="text-gray-400">{{ expandedQuestions[idx] ? '▲' : '▼' }}</span>
+              <span class="text-interview-text-muted">{{ expandedQuestions[idx] ? '▲' : '▼' }}</span>
             </div>
           </div>
 
-          <div v-if="expandedQuestions[idx]" class="p-6 bg-white border-t border-gray-200">
-            <!-- Individual Scores -->
-            <div class="flex flex-wrap gap-4 mb-6">
-              <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
-                <span class="text-xs text-gray-500 block mb-1">Communication</span>
-                <span class="font-bold text-gray-900">{{ question.communication_score }}/5</span>
+          <Transition
+            enter-active-class="transition-all duration-300"
+            enter-from-class="opacity-0 max-h-0"
+            enter-to-class="opacity-100 max-h-screen"
+            leave-active-class="transition-all duration-300"
+            leave-from-class="opacity-100 max-h-screen"
+            leave-to-class="opacity-0 max-h-0"
+          >
+            <div v-if="expandedQuestions[idx]" class="p-6 bg-interview-bg-secondary border-t border-interview-surface-border">
+              <!-- Individual Scores -->
+              <div class="flex flex-wrap gap-4 mb-6">
+                <div class="bg-interview-surface px-4 py-3 rounded-xl text-center border border-interview-surface-border">
+                  <span class="text-xs text-interview-text-secondary block mb-1">Communication</span>
+                  <span class="font-bold text-interview-primary">{{ question.communication_score }}/5</span>
+                </div>
+                <div class="bg-interview-surface px-4 py-3 rounded-xl text-center border border-interview-surface-border">
+                  <span class="text-xs text-interview-text-secondary block mb-1">Relevance</span>
+                  <span class="font-bold text-interview-primary">{{ question.relevance_score }}/5</span>
+                </div>
+                <div class="bg-interview-surface px-4 py-3 rounded-xl text-center border border-interview-surface-border">
+                  <span class="text-xs text-interview-text-secondary block mb-1">Logical Thinking</span>
+                  <span class="font-bold text-interview-primary">{{ question.logical_thinking_score }}/5</span>
+                </div>
               </div>
-              <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
-                <span class="text-xs text-gray-500 block mb-1">Relevance</span>
-                <span class="font-bold text-gray-900">{{ question.relevance_score }}/5</span>
+
+              <!-- Transcript -->
+              <div v-if="question.transcript" class="mb-6">
+                <h4 class="text-sm font-bold text-interview-primary mb-2">Candidate's Answer:</h4>
+                <p class="bg-interview-surface p-4 rounded-xl text-interview-text-primary leading-relaxed border border-interview-surface-border">
+                  {{ question.transcript }}
+                </p>
               </div>
-              <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
-                <span class="text-xs text-gray-500 block mb-1">Logical Thinking</span>
-                <span class="font-bold text-gray-900">{{ question.logical_thinking_score }}/5</span>
+
+              <!-- Feedback -->
+              <div v-if="question.feedback" class="space-y-4">
+                <div
+                  v-if="question.feedback.strengths"
+                  class="p-4 bg-interview-success/10 border-l-4 border-interview-success rounded-r-xl"
+                >
+                  <h4 class="flex items-center gap-2 font-bold text-interview-success mb-1">
+                    <FireIcon class="w-4 h-4" />
+                    Strengths:
+                  </h4>
+                  <p class="text-interview-text-primary">{{ question.feedback.strengths }}</p>
+                </div>
+
+                <div
+                  v-if="question.feedback.weaknesses"
+                  class="p-4 bg-red-500/10 border-l-4 border-red-500 rounded-r-xl"
+                >
+                  <h4 class="flex items-center gap-2 font-bold text-red-400 mb-1">
+                    <ExclamationTriangleIcon class="w-4 h-4" />
+                    Areas for Improvement:
+                  </h4>
+                  <p class="text-interview-text-primary">{{ question.feedback.weaknesses }}</p>
+                </div>
+
+                <div
+                  v-if="question.feedback.summary"
+                  class="p-4 bg-interview-accent-sky/10 border-l-4 border-interview-accent-sky rounded-r-xl"
+                >
+                  <h4 class="flex items-center gap-2 font-bold text-interview-accent-sky mb-1">
+                    <DocumentTextIcon class="w-4 h-4" />
+                    Summary:
+                  </h4>
+                  <p class="text-interview-text-primary">{{ question.feedback.summary }}</p>
+                </div>
               </div>
             </div>
-
-            <!-- Transcript -->
-            <div v-if="question.transcript" class="mb-6">
-              <h4 class="text-sm font-bold text-gray-700 mb-2">Candidate's Answer:</h4>
-              <p class="bg-gray-50 p-4 rounded-lg text-gray-700 leading-relaxed">
-                {{ question.transcript }}
-              </p>
-            </div>
-
-            <!-- Feedback -->
-            <div v-if="question.feedback" class="space-y-4">
-              <div
-                v-if="question.feedback.strengths"
-                class="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg"
-              >
-                <h4 class="flex items-center gap-2 font-bold text-green-800 mb-1">
-                  <FireIcon class="w-4 h-4" />
-                  Strengths:
-                </h4>
-                <p class="text-green-900">{{ question.feedback.strengths }}</p>
-              </div>
-
-              <div
-                v-if="question.feedback.weaknesses"
-                class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg"
-              >
-                <h4 class="flex items-center gap-2 font-bold text-red-800 mb-1">
-                  <ExclamationTriangleIcon class="w-4 h-4" />
-                  Areas for Improvement:
-                </h4>
-                <p class="text-red-900">{{ question.feedback.weaknesses }}</p>
-              </div>
-
-              <div
-                v-if="question.feedback.summary"
-                class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg"
-              >
-                <h4 class="flex items-center gap-2 font-bold text-blue-800 mb-1">
-                  <DocumentTextIcon class="w-4 h-4" />
-                  Summary:
-                </h4>
-                <p class="text-blue-900">{{ question.feedback.summary }}</p>
-              </div>
-            </div>
-          </div>
+          </Transition>
         </div>
       </div>
     </div>
@@ -251,8 +252,50 @@ const route = useRoute()
 const router = useRouter()
 const { getReportDetails, downloadPDF } = useReports()
 
+interface Question {
+  id: number;
+  question: string;
+  pass_prediction: boolean;
+  average_score: number;
+  communication_score: number;
+  relevance_score: number;
+  logical_thinking_score: number;
+  transcript: string;
+  feedback?: {
+    strengths?: string;
+    weaknesses?: string;
+    summary?: string;
+  };
+}
+
+interface AggregatedScore {
+  average_score: number;
+  communication_avg: number;
+  relevance_avg: number;
+  logical_thinking_avg: number;
+  pass_rate: number;
+  questions_answered: number;
+  total_questions: number;
+  overall_recommendation: string;
+}
+
+interface Candidate {
+  id: string;
+  name: string;
+  email: string;
+  role_id: string;
+  interview_date: string;
+}
+
+interface Report {
+  session_id: string;
+  candidate: Candidate;
+  aggregated_score: AggregatedScore;
+  questions: Question[];
+}
+
 const sessionId = computed(() => route.params.sessionId as string)
-const report = ref<any>(null)
+const report = ref<Report | null>(null)
 const loading = ref(true)
 const error = ref('')
 const expandedQuestions = ref<Record<number, boolean>>({})
@@ -265,7 +308,7 @@ const loadReport = async () => {
   try {
     loading.value = true
     error.value = ''
-    report.value = await getReportDetails(sessionId.value)
+    report.value = await getReportDetails(sessionId.value) as unknown as Report
   } catch (err: any) {
     error.value = err.message || 'Failed to load report'
   } finally {
@@ -291,16 +334,36 @@ const formatDate = (dateStr: string) => {
 }
 
 const getScoreClass = (score: number) => {
-  if (score >= 4) return 'bg-green-500 text-white'
-  if (score >= 3) return 'bg-blue-500 text-white'
-  if (score >= 2) return 'bg-amber-500 text-white'
-  return 'bg-red-500 text-white'
+  if (score >= 4) return 'bg-interview-success/20 text-interview-success'
+  if (score >= 3) return 'bg-interview-accent-sky/20 text-interview-accent-sky'
+  if (score >= 2) return 'bg-interview-primary/20 text-interview-primary'
+  return 'bg-red-500/20 text-red-400'
 }
 
 const getRecommendationClass = (rec: string) => {
-  if (rec === 'Strong Pass') return 'bg-green-500'
-  if (rec === 'Pass') return 'bg-blue-500'
-  if (rec === 'Review') return 'bg-amber-500'
-  return 'bg-red-500'
+  if (rec === 'Strong Pass') return 'bg-interview-success text-white'
+  if (rec === 'Pass') return 'bg-interview-accent-sky text-interview-bg'
+  if (rec === 'Review') return 'bg-interview-primary text-interview-bg'
+  return 'bg-red-500 text-white'
 }
 </script>
+
+<style scoped>
+.report-card {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  animation: report-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+@keyframes report-fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+</style>

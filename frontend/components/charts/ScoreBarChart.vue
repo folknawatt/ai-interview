@@ -29,9 +29,9 @@ const chartCanvas = ref<HTMLCanvasElement | null>(null)
 let chart: ChartJS | null = null
 
 const getBarColor = (score: number) => {
-  if (score >= 4) return 'rgba(16, 185, 129, 0.8)' // Green
+  if (score >= 4) return 'rgba(34, 197, 94, 0.8)' // Green
   if (score >= 3) return 'rgba(59, 130, 246, 0.8)' // Blue
-  if (score >= 2) return 'rgba(245, 158, 11, 0.8)' // Orange
+  if (score >= 2) return 'rgba(255, 196, 40, 0.8)' // Amber
   return 'rgba(239, 68, 68, 0.8)' // Red
 }
 
@@ -67,16 +67,28 @@ onMounted(() => {
               max: 5,
               ticks: {
                 stepSize: 1,
+                color: '#a1a1aa',
               },
               title: {
                 display: true,
                 text: 'Score (out of 5)',
+                color: '#a1a1aa',
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)',
               },
             },
             x: {
+              ticks: {
+                color: '#a1a1aa',
+              },
               title: {
                 display: true,
                 text: 'Questions',
+                color: '#a1a1aa',
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)',
               },
             },
           },
@@ -85,6 +97,9 @@ onMounted(() => {
               display: false,
             },
             tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#fff',
+              bodyColor: '#fff',
               callbacks: {
                 label: function (context) {
                   return `Score: ${context.parsed.y?.toFixed(1) ?? 'N/A'} / 5`

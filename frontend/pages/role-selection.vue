@@ -1,35 +1,38 @@
-
-
 <template>
-  <div class="min-h-screen bg-minimal-bg text-minimal-text-primary flex items-center justify-center p-4">
+  <div class="min-h-screen bg-interview-bg text-interview-text-primary flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Background gradient effects -->
+    <div class="absolute inset-0 bg-gradient-to-br from-interview-bg via-interview-bg-secondary to-interview-bg-gradient"></div>
+    <div class="absolute top-1/3 -left-48 w-[500px] h-[500px] bg-interview-primary/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-1/3 -right-48 w-[500px] h-[500px] bg-interview-accent-teal/10 rounded-full blur-3xl"></div>
+
     <!-- Main Content (Blurred when modal is open) -->
     <div 
-      class="w-full max-w-4xl transition-all duration-300"
-      :class="{ 'blur-sm pointer-events-none': isUploadModalOpen }"
+      class="relative w-full max-w-5xl transition-all duration-300"
+      :class="{ 'blur-sm pointer-events-none scale-95': isUploadModalOpen }"
     >
-      <div class="text-center mb-12">
-        <h1 class="text-5xl font-bold mb-4 flex items-center justify-center gap-3">
-          <ChartPieIcon class="w-12 h-12 text-minimal-info" />
-          Select Your Role
+      <div class="text-center mb-12 animate-fade-in">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 flex items-center justify-center gap-3">
+          <ChartPieIcon class="w-12 h-12 text-interview-primary" />
+          <span class="bg-gradient-to-r from-interview-text-primary to-interview-text-secondary bg-clip-text">Select Your Role</span>
         </h1>
-        <p class="text-minimal-text-secondary text-lg">Choose the position you're interviewing for</p>
+        <p class="text-interview-text-secondary text-lg">Choose the position you're interviewing for</p>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-12">
-        <div class="animate-spin w-12 h-12 border-4 border-minimal-info border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p class="text-minimal-text-secondary">Loading available positions...</p>
+        <div class="animate-spin w-12 h-12 border-4 border-interview-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p class="text-interview-text-secondary">Loading available positions...</p>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="bg-red-50 border-2 border-red-200 rounded-xl p-8 text-center">
+      <div v-else-if="error" class="bg-red-500/10 border border-red-500/30 backdrop-blur-xl rounded-2xl p-8 text-center">
         <div class="flex justify-center mb-4">
-          <ExclamationTriangleIcon class="w-16 h-16 text-red-600" />
+          <ExclamationTriangleIcon class="w-16 h-16 text-red-400" />
         </div>
-        <p class="text-red-600 mb-4">{{ error }}</p>
+        <p class="text-red-400 mb-4">{{ error }}</p>
         <button
           @click="loadRoles"
-          class="px-6 py-3 bg-minimal-warning hover:bg-red-700 text-white rounded-lg font-semibold transition-all shadow-sm"
+          class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all shadow-sm"
         >
           Try Again
         </button>
@@ -38,29 +41,32 @@
       <!-- Roles Grid -->
       <div v-else-if="roles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <button
-          v-for="role in roles"
+          v-for="(role, index) in roles"
           :key="role.id"
           @click="openUploadModal(role)"
-          class="bg-minimal-card p-8 rounded-xl border-2 border-minimal-border hover:border-minimal-info hover:shadow-md hover:scale-[1.02] transition-all text-left"
+          :style="{ animationDelay: `${index * 100}ms` }"
+          class="group bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border hover:border-interview-primary/50 hover:bg-interview-surface-hover transition-all duration-300 text-left animate-fade-in-up hover:shadow-glow-amber hover:-translate-y-1"
         >
           <div class="flex justify-center mb-4">
-            <BriefcaseIcon class="w-14 h-14 text-minimal-info" />
+            <div class="w-16 h-16 rounded-2xl bg-interview-primary/10 flex items-center justify-center group-hover:bg-interview-primary/20 transition-colors duration-300">
+              <BriefcaseIcon class="w-8 h-8 text-interview-primary" />
+            </div>
           </div>
-          <h3 class="text-2xl font-bold mb-2 text-minimal-text-primary">{{ role.title }}</h3>
-          <p class="text-minimal-text-secondary text-sm">Click to select</p>
+          <h3 class="text-xl font-bold mb-2 text-interview-text-primary text-center">{{ role.title }}</h3>
+          <p class="text-interview-text-muted text-sm text-center">Click to select</p>
         </button>
       </div>
 
       <!-- Empty State -->
-      <div v-else class="bg-minimal-card rounded-xl p-12 text-center border border-minimal-border">
+      <div v-else class="bg-interview-surface backdrop-blur-xl rounded-2xl p-12 text-center border border-interview-surface-border">
         <div class="flex justify-center mb-4">
-          <DocumentTextIcon class="w-16 h-16 text-minimal-text-muted" />
+          <DocumentTextIcon class="w-16 h-16 text-interview-text-muted" />
         </div>
-        <h2 class="text-2xl font-semibold mb-2">No Positions Available</h2>
-        <p class="text-minimal-text-secondary mb-6">Please contact HR to set up interview questions</p>
+        <h2 class="text-2xl font-semibold mb-2 text-interview-text-primary">No Positions Available</h2>
+        <p class="text-interview-text-secondary mb-6">Please contact HR to set up interview questions</p>
         <NuxtLink
           to="/"
-          class="inline-block px-6 py-3 bg-minimal-info hover:bg-sky-600 text-white rounded-lg font-semibold transition-all shadow-sm"
+          class="inline-block px-6 py-3 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl font-semibold transition-all shadow-glow-amber"
         >
           Go Back
         </NuxtLink>
@@ -70,7 +76,7 @@
       <div v-if="!loading" class="mt-8 text-center">
         <NuxtLink
           to="/login"
-          class="text-minimal-text-secondary hover:text-minimal-text-primary transition-colors"
+          class="text-interview-text-secondary hover:text-interview-primary transition-colors duration-300"
         >
           ← Back to Login
         </NuxtLink>
@@ -78,67 +84,76 @@
     </div>
 
     <!-- Upload Modal Overlay -->
-    <div v-if="isUploadModalOpen" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-fade-in-up">
-         <!-- Modal Data -->
-         <h2 class="text-2xl font-bold mb-2 text-center">
-           Upload Resume
-         </h2>
-         <p class="text-center text-gray-500 mb-6">Create custom questions for {{ selectedRoleForUpload?.title }}</p>
+    <Transition
+      enter-active-class="transition-all duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-all duration-300"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="isUploadModalOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-interview-bg-secondary border border-interview-surface-border rounded-2xl shadow-2xl max-w-md w-full p-8 animate-fade-in-up">
+           <!-- Modal Data -->
+           <h2 class="text-2xl font-bold mb-2 text-center text-interview-text-primary">
+             Upload Resume
+           </h2>
+           <p class="text-center text-interview-text-secondary mb-6">Create custom questions for {{ selectedRoleForUpload?.title }}</p>
 
-         <!-- Drop Zone / File Input -->
-         <div 
-            class="border-2 border-dashed border-gray-300 rounded-xl p-8 mb-6 text-center hover:border-minimal-info transition-colors cursor-pointer bg-gray-50"
-            @click="triggerFileInput"
-            @dragover.prevent
-            @drop.prevent="handleDrop"
-         >
-             <input 
-               type="file" 
-               ref="fileInputRef" 
-               class="hidden" 
-               accept=".pdf"
-               @change="handleFileChange"
-             />
-             <div v-if="!selectedFile">
-                <DocumentTextIcon class="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p class="text-sm font-medium text-gray-700">Click to upload PDF</p>
-                <p class="text-xs text-gray-500 mt-1">or drag and drop</p>
-             </div>
-             <div v-else>
-                 <DocumentTextIcon class="w-12 h-12 text-green-500 mx-auto mb-2" />
-                 <p class="text-sm font-medium text-gray-900 truncate">{{ selectedFile.name }}</p>
-                 <p class="text-xs text-green-600 mt-1">Ready to upload</p>
-             </div>
-         </div>
+           <!-- Drop Zone / File Input -->
+           <div 
+              class="border-2 border-dashed border-interview-surface-border rounded-2xl p-8 mb-6 text-center hover:border-interview-primary/50 transition-all duration-300 cursor-pointer bg-interview-surface/50 group"
+              @click="triggerFileInput"
+              @dragover.prevent
+              @drop.prevent="handleDrop"
+           >
+               <input 
+                 type="file" 
+                 ref="fileInputRef" 
+                 class="hidden" 
+                 accept=".pdf"
+                 @change="handleFileChange"
+               />
+               <div v-if="!selectedFile">
+                  <DocumentTextIcon class="w-12 h-12 text-interview-text-muted mx-auto mb-2 group-hover:text-interview-primary transition-colors" />
+                  <p class="text-sm font-medium text-interview-text-secondary">Click to upload PDF</p>
+                  <p class="text-xs text-interview-text-muted mt-1">or drag and drop</p>
+               </div>
+               <div v-else>
+                   <DocumentTextIcon class="w-12 h-12 text-interview-success mx-auto mb-2" />
+                   <p class="text-sm font-medium text-interview-text-primary truncate">{{ selectedFile.name }}</p>
+                   <p class="text-xs text-interview-success mt-1">Ready to upload</p>
+               </div>
+           </div>
 
-         <!-- Error Message -->
-         <div v-if="uploadError" class="mb-4 text-sm text-red-600 bg-red-50 p-3 rounded-lg flex items-start gap-2">
-            <ExclamationTriangleIcon class="w-5 h-5 flex-shrink-0" />
-            <span>{{ uploadError }}</span>
-         </div>
-         
-         <!-- Actions -->
-         <div class="flex flex-col gap-3">
-            <button 
-              @click="handleUploadAndStart"
-              :disabled="!selectedFile || isUploading"
-              class="w-full py-3 bg-minimal-info hover:bg-sky-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-all shadow-md flex justify-center items-center gap-2"
-            >
-              <span v-if="isUploading" class="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></span>
-              {{ isUploading ? 'Generating Questions...' : 'Start Interview' }}
-            </button>
-            
-            <button 
-              @click="closeUploadModal"
-              :disabled="isUploading"
-              class="w-full py-3 text-gray-500 hover:text-gray-700 disabled:text-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
-         </div>
+           <!-- Error Message -->
+           <div v-if="uploadError" class="mb-4 text-sm text-red-400 bg-red-500/10 p-3 rounded-xl flex items-start gap-2 border border-red-500/30">
+              <ExclamationTriangleIcon class="w-5 h-5 flex-shrink-0" />
+              <span>{{ uploadError }}</span>
+           </div>
+           
+           <!-- Actions -->
+           <div class="flex flex-col gap-3">
+              <button 
+                @click="handleUploadAndStart"
+                :disabled="!selectedFile || isUploading"
+                class="w-full py-3.5 bg-interview-primary hover:bg-interview-primary-hover disabled:bg-interview-text-muted disabled:cursor-not-allowed text-interview-bg rounded-xl font-semibold transition-all duration-300 shadow-glow-amber hover:shadow-glow-amber-lg flex justify-center items-center gap-2"
+              >
+                <span v-if="isUploading" class="animate-spin w-5 h-5 border-2 border-interview-bg border-t-transparent rounded-full"></span>
+                {{ isUploading ? 'Generating Questions...' : 'Start Interview' }}
+              </button>
+              
+              <button 
+                @click="closeUploadModal"
+                :disabled="isUploading"
+                class="w-full py-3 text-interview-text-secondary hover:text-interview-text-primary disabled:text-interview-text-muted transition-colors duration-300"
+              >
+                Cancel
+              </button>
+           </div>
+        </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
