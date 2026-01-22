@@ -40,7 +40,7 @@ const props = withDefaults(
     strokeWidth?: number
   }>(),
   {
-    maxScore: 10,
+    maxScore: 5,
     size: 150,
     strokeWidth: 12,
   }

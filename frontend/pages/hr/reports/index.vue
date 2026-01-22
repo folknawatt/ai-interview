@@ -1,9 +1,9 @@
 <template>
   <div class="reports-container">
     <div class="mb-6">
-        <NuxtLink to="/hr/dashboard" class="text-minimal-info hover:text-sky-600">
-          ← Back to Dashboard
-        </NuxtLink>
+      <NuxtLink to="/hr/dashboard" class="text-minimal-info hover:text-sky-600">
+        ← Back to Dashboard
+      </NuxtLink>
     </div>
     <h1>Interview Reports</h1>
 
@@ -75,11 +75,7 @@
 
       <div class="filter-group">
         <label>Search:</label>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search by name..."
-        />
+        <input v-model="searchQuery" type="text" placeholder="Search by name..." />
       </div>
 
       <button @click="loadReports" class="btn-primary">Apply Filters</button>
@@ -89,20 +85,14 @@
     <!-- Reports Table -->
     <div v-if="loading" class="loading">Loading reports...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="filteredReports.length === 0" class="empty">
-      No reports found
-    </div>
+    <div v-else-if="filteredReports.length === 0" class="empty">No reports found</div>
     <table v-else class="reports-table">
       <thead>
         <tr>
           <th @click="sort('name')">Name {{ getSortIcon('name') }}</th>
           <th @click="sort('role_id')">Role {{ getSortIcon('role_id') }}</th>
-          <th @click="sort('interview_date')">
-            Date {{ getSortIcon('interview_date') }}
-          </th>
-          <th @click="sort('total_score')">
-            Score {{ getSortIcon('total_score') }}
-          </th>
+          <th @click="sort('interview_date')">Date {{ getSortIcon('interview_date') }}</th>
+          <th @click="sort('average_score')">Score {{ getSortIcon('average_score') }}</th>
           <th @click="sort('overall_recommendation')">
             Recommendation {{ getSortIcon('overall_recommendation') }}
           </th>
@@ -120,8 +110,8 @@
           <td>{{ report.role_id }}</td>
           <td>{{ formatDate(report.interview_date) }}</td>
           <td>
-            <span class="score-badge" :class="getScoreClass(report.total_score)">
-              {{ report.total_score || 'N/A' }}
+            <span class="score-badge" :class="getScoreClass(report.average_score)">
+              {{ report.average_score ? report.average_score.toFixed(0) : 'N/A' }}
             </span>
           </td>
           <td>
@@ -133,11 +123,7 @@
             </span>
           </td>
           <td @click.stop>
-            <button
-              @click="viewReport(report.session_id)"
-              class="btn-view"
-              title="View Details"
-            >
+            <button @click="viewReport(report.session_id)" class="btn-view" title="View Details">
               <EyeIcon class="icon-btn" />
             </button>
             <button
@@ -160,158 +146,156 @@ import {
   ChartBarIcon,
   CheckCircleIcon,
   EyeIcon,
-  ArrowDownTrayIcon
-} from '@heroicons/vue/24/solid';
+  ArrowDownTrayIcon,
+} from '@heroicons/vue/24/solid'
 
-const { getAllReports, getStatistics, downloadPDF } = useReports();
-const { getRoles } = useHR();
-const router = useRouter();
+const { getAllReports, getStatistics, downloadPDF } = useReports()
+const { getRoles } = useHR()
+const router = useRouter()
 
-const statistics = ref<any>(null);
-const reports = ref<any[]>([]);
-const roles = ref<any[]>([]);
-const loading = ref(false);
-const error = ref('');
+const statistics = ref<any>(null)
+const reports = ref<any[]>([])
+const roles = ref<any[]>([])
+const loading = ref(false)
+const error = ref('')
 
 const filters = reactive({
   roleId: '',
   minScore: undefined as number | undefined,
-  recommendation: ''
-});
+  recommendation: '',
+})
 
-const searchQuery = ref('');
-const sortKey = ref('interview_date');
-const sortOrder = ref<'asc' | 'desc'>('desc');
+const searchQuery = ref('')
+const sortKey = ref('average_score')
+const sortOrder = ref<'asc' | 'desc'>('desc')
 
 // Load initial data
 onMounted(async () => {
-  await loadStatistics();
-  await loadRoles();
-  await loadReports();
-});
+  await loadStatistics()
+  await loadRoles()
+  await loadReports()
+})
 
 const loadStatistics = async () => {
   try {
-    statistics.value = await getStatistics();
+    statistics.value = await getStatistics()
   } catch (err: any) {
-    console.error('Error loading statistics:', err);
+    console.error('Error loading statistics:', err)
   }
-};
+}
 
 const loadRoles = async () => {
   try {
-    roles.value = await getRoles();
+    roles.value = await getRoles()
   } catch (err: any) {
-    console.error('Error loading roles:', err);
+    console.error('Error loading roles:', err)
   }
-};
+}
 
 const loadReports = async () => {
   try {
-    loading.value = true;
-    error.value = '';
-    
-    const filterParams: any = {};
-    if (filters.roleId) filterParams.roleId = filters.roleId;
-    if (filters.minScore !== undefined) filterParams.minScore = filters.minScore;
-    if (filters.recommendation) filterParams.recommendation = filters.recommendation;
+    loading.value = true
+    error.value = ''
 
-    reports.value = await getAllReports(filterParams);
+    const filterParams: any = {}
+    if (filters.roleId) filterParams.roleId = filters.roleId
+    if (filters.minScore !== undefined) filterParams.minScore = filters.minScore
+    if (filters.recommendation) filterParams.recommendation = filters.recommendation
+
+    reports.value = await getAllReports(filterParams)
   } catch (err: any) {
-    error.value = err.message || 'Failed to load reports';
+    error.value = err.message || 'Failed to load reports'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const clearFilters = () => {
-  filters.roleId = '';
-  filters.minScore = undefined;
-  filters.recommendation = '';
-  searchQuery.value = '';
-  loadReports();
-};
+  filters.roleId = ''
+  filters.minScore = undefined
+  filters.recommendation = ''
+  searchQuery.value = ''
+  loadReports()
+}
 
 const filteredReports = computed(() => {
-  if (!searchQuery.value) return reports.value;
-  
-  const query = searchQuery.value.toLowerCase();
-  return reports.value.filter(report =>
-    report.name.toLowerCase().includes(query)
-  );
-});
+  if (!searchQuery.value) return reports.value
+
+  const query = searchQuery.value.toLowerCase()
+  return reports.value.filter(report => report.name.toLowerCase().includes(query))
+})
 
 const sortedReports = computed(() => {
-  const sorted = [...filteredReports.value];
-  
-  sorted.sort((a, b) => {
-    let aVal = a[sortKey.value];
-    let bVal = b[sortKey.value];
+  const sorted = [...filteredReports.value]
 
-    if (aVal === null || aVal === undefined) return 1;
-    if (bVal === null || bVal === undefined) return -1;
+  sorted.sort((a, b) => {
+    let aVal = a[sortKey.value]
+    let bVal = b[sortKey.value]
+
+    if (aVal === null || aVal === undefined) return 1
+    if (bVal === null || bVal === undefined) return -1
 
     if (typeof aVal === 'string') {
-      aVal = aVal.toLowerCase();
-      bVal = bVal.toLowerCase();
+      aVal = aVal.toLowerCase()
+      bVal = bVal.toLowerCase()
     }
 
     if (sortOrder.value === 'asc') {
-      return aVal > bVal ? 1 : -1;
+      return aVal > bVal ? 1 : -1
     } else {
-      return aVal < bVal ? 1 : -1;
+      return aVal < bVal ? 1 : -1
     }
-  });
+  })
 
-  return sorted;
-});
+  return sorted
+})
 
 const sort = (key: string) => {
   if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
-    sortKey.value = key;
-    sortOrder.value = 'desc';
+    sortKey.value = key
+    sortOrder.value = 'desc'
   }
-};
+}
 
 const getSortIcon = (key: string) => {
-  if (sortKey.value !== key) return '';
-  return sortOrder.value === 'asc' ? '↑' : '↓';
-};
+  if (sortKey.value !== key) return ''
+  return sortOrder.value === 'asc' ? '↑' : '↓'
+}
 
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-};
+  const date = new Date(dateStr)
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+}
 
 const getScoreClass = (score: number | null) => {
-  if (score === null) return 'score-pending';
-  if (score >= 8) return 'score-excellent';
-  if (score >= 6) return 'score-good';
-  if (score >= 4) return 'score-fair';
-  return 'score-poor';
-};
+  if (score === null) return 'score-pending'
+  if (score >= 8) return 'score-excellent'
+  if (score >= 6) return 'score-good'
+  if (score >= 4) return 'score-fair'
+  return 'score-poor'
+}
 
 const getRecommendationClass = (rec: string | null) => {
-  if (!rec) return 'rec-pending';
-  if (rec === 'Strong Pass') return 'rec-strong-pass';
-  if (rec === 'Pass') return 'rec-pass';
-  if (rec === 'Review') return 'rec-review';
-  return 'rec-fail';
-};
+  if (!rec) return 'rec-pending'
+  if (rec === 'Strong Pass') return 'rec-strong-pass'
+  if (rec === 'Pass') return 'rec-pass'
+  if (rec === 'Review') return 'rec-review'
+  return 'rec-fail'
+}
 
 const viewReport = (sessionId: string) => {
-  router.push(`/hr/reports/${sessionId}`);
-};
+  router.push(`/hr/reports/${sessionId}`)
+}
 
 const downloadReport = async (sessionId: string) => {
   try {
-    await downloadPDF(sessionId);
+    await downloadPDF(sessionId)
   } catch (err: any) {
-    alert('Failed to download PDF: ' + err.message);
+    alert('Failed to download PDF: ' + err.message)
   }
-};
+}
 </script>
 
 <style scoped>

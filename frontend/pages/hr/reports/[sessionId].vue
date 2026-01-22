@@ -16,7 +16,7 @@
       <!-- Header -->
       <div class="flex justify-between items-center mb-8">
         <button
-          @click="router.back()"
+          @click="navigateTo('/hr/reports')"
           class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
         >
           ← Back to Reports
@@ -31,23 +31,17 @@
       </div>
 
       <!-- Candidate Info -->
-      <div
-        class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6"
-      >
+      <div class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6">
         <h1 class="text-2xl font-bold mb-4 text-minimal-text-primary">
           {{ report.candidate.name }}
         </h1>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="flex flex-col">
-            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
-              >Email</span
-            >
+            <span class="text-xs font-semibold uppercase text-minimal-text-secondary">Email</span>
             <span class="font-medium">{{ report.candidate.email || 'N/A' }}</span>
           </div>
           <div class="flex flex-col">
-            <span class="text-xs font-semibold uppercase text-minimal-text-secondary"
-              >Role</span
-            >
+            <span class="text-xs font-semibold uppercase text-minimal-text-secondary">Role</span>
             <span class="font-medium">{{ report.candidate.role_id }}</span>
           </div>
           <div class="flex flex-col">
@@ -68,10 +62,11 @@
       </div>
 
       <!-- Score Overview -->
-      <div v-if="report.aggregated_score" class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6">
-        <h2 class="text-xl font-semibold mb-6 text-minimal-text-primary">
-          Score Overview
-        </h2>
+      <div
+        v-if="report.aggregated_score"
+        class="bg-minimal-card p-6 rounded-lg shadow-sm border border-minimal-border mb-6"
+      >
+        <h2 class="text-xl font-semibold mb-6 text-minimal-text-primary">Score Overview</h2>
         <div class="flex flex-col md:flex-row gap-8 items-center">
           <div class="flex flex-col items-center gap-4">
             <ScoreCard :score="report.aggregated_score.average_score" :size="200" />
@@ -86,19 +81,19 @@
             <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
               <div class="text-sm text-gray-600 mb-1">Communication</div>
               <div class="text-2xl font-bold text-gray-900">
-                {{ report.aggregated_score.communication_avg }} / 10
+                {{ report.aggregated_score.communication_avg }} / 5
               </div>
             </div>
             <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
               <div class="text-sm text-gray-600 mb-1">Relevance</div>
               <div class="text-2xl font-bold text-gray-900">
-                {{ report.aggregated_score.relevance_avg }} / 10
+                {{ report.aggregated_score.relevance_avg }} / 5
               </div>
             </div>
             <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
               <div class="text-sm text-gray-600 mb-1">Logical Thinking</div>
               <div class="text-2xl font-bold text-gray-900">
-                {{ report.aggregated_score.logical_thinking_avg }} / 10
+                {{ report.aggregated_score.logical_thinking_avg }} / 5
               </div>
             </div>
             <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
@@ -107,10 +102,10 @@
                 {{ report.aggregated_score.pass_rate }}%
               </div>
             </div>
-             <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
+            <div class="bg-sky-50 p-4 rounded-lg border-l-4 border-minimal-info">
               <div class="text-sm text-gray-600 mb-1">Questions Answered</div>
               <div class="text-2xl font-bold text-gray-900">
-                 {{ report.aggregated_score.questions_answered }} /
+                {{ report.aggregated_score.questions_answered }} /
                 {{ report.aggregated_score.total_questions }}
               </div>
             </div>
@@ -154,12 +149,19 @@
               <span class="text-gray-800 font-medium">{{ question.question }}</span>
             </div>
             <div class="flex gap-4 items-center">
-              <span class="px-3 py-1 rounded-full text-sm font-semibold" :class="getScoreClass(question.average_score)">
-                {{ question.average_score }}/10
+              <span
+                class="px-3 py-1 rounded-full text-sm font-semibold"
+                :class="getScoreClass(question.average_score)"
+              >
+                {{ question.average_score }}/5
               </span>
               <span
                 class="px-3 py-1 rounded-full text-sm font-semibold"
-                :class="question.pass_prediction ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                :class="
+                  question.pass_prediction
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                "
               >
                 {{ question.pass_prediction ? '✓ Pass' : '✗ Fail' }}
               </span>
@@ -172,15 +174,15 @@
             <div class="flex flex-wrap gap-4 mb-6">
               <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
                 <span class="text-xs text-gray-500 block mb-1">Communication</span>
-                <span class="font-bold text-gray-900">{{ question.communication_score }}/10</span>
+                <span class="font-bold text-gray-900">{{ question.communication_score }}/5</span>
               </div>
               <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
                 <span class="text-xs text-gray-500 block mb-1">Relevance</span>
-                <span class="font-bold text-gray-900">{{ question.relevance_score }}/10</span>
+                <span class="font-bold text-gray-900">{{ question.relevance_score }}/5</span>
               </div>
               <div class="bg-gray-50 px-4 py-2 rounded-lg text-center">
                 <span class="text-xs text-gray-500 block mb-1">Logical Thinking</span>
-                <span class="font-bold text-gray-900">{{ question.logical_thinking_score }}/10</span>
+                <span class="font-bold text-gray-900">{{ question.logical_thinking_score }}/5</span>
               </div>
             </div>
 
@@ -194,23 +196,32 @@
 
             <!-- Feedback -->
             <div v-if="question.feedback" class="space-y-4">
-              <div v-if="question.feedback.strengths" class="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
+              <div
+                v-if="question.feedback.strengths"
+                class="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg"
+              >
                 <h4 class="flex items-center gap-2 font-bold text-green-800 mb-1">
                   <FireIcon class="w-4 h-4" />
                   Strengths:
                 </h4>
                 <p class="text-green-900">{{ question.feedback.strengths }}</p>
               </div>
-              
-              <div v-if="question.feedback.weaknesses" class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+
+              <div
+                v-if="question.feedback.weaknesses"
+                class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg"
+              >
                 <h4 class="flex items-center gap-2 font-bold text-red-800 mb-1">
-                   <ExclamationTriangleIcon class="w-4 h-4" />
+                  <ExclamationTriangleIcon class="w-4 h-4" />
                   Areas for Improvement:
                 </h4>
                 <p class="text-red-900">{{ question.feedback.weaknesses }}</p>
               </div>
 
-               <div v-if="question.feedback.summary" class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+              <div
+                v-if="question.feedback.summary"
+                class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg"
+              >
                 <h4 class="flex items-center gap-2 font-bold text-blue-800 mb-1">
                   <DocumentTextIcon class="w-4 h-4" />
                   Summary:
@@ -230,66 +241,66 @@ import {
   ArrowDownTrayIcon,
   FireIcon,
   ExclamationTriangleIcon,
-  DocumentTextIcon
-} from '@heroicons/vue/24/solid';
-import ScoreCard from '../../../components/charts/ScoreCard.vue';
-import ScoreRadarChart from '../../../components/charts/ScoreRadarChart.vue';
-import ScoreBarChart from '../../../components/charts/ScoreBarChart.vue';
+  DocumentTextIcon,
+} from '@heroicons/vue/24/solid'
+import ScoreCard from '../../../components/charts/ScoreCard.vue'
+import ScoreRadarChart from '../../../components/charts/ScoreRadarChart.vue'
+import ScoreBarChart from '../../../components/charts/ScoreBarChart.vue'
 
-const route = useRoute();
-const router = useRouter();
-const { getReportDetails, downloadPDF } = useReports();
+const route = useRoute()
+const router = useRouter()
+const { getReportDetails, downloadPDF } = useReports()
 
-const sessionId = computed(() => route.params.sessionId as string);
-const report = ref<any>(null);
-const loading = ref(true);
-const error = ref('');
-const expandedQuestions = ref<Record<number, boolean>>({});
+const sessionId = computed(() => route.params.sessionId as string)
+const report = ref<any>(null)
+const loading = ref(true)
+const error = ref('')
+const expandedQuestions = ref<Record<number, boolean>>({})
 
 onMounted(async () => {
-  await loadReport();
-});
+  await loadReport()
+})
 
 const loadReport = async () => {
   try {
-    loading.value = true;
-    error.value = '';
-    report.value = await getReportDetails(sessionId.value);
+    loading.value = true
+    error.value = ''
+    report.value = await getReportDetails(sessionId.value)
   } catch (err: any) {
-    error.value = err.message || 'Failed to load report';
+    error.value = err.message || 'Failed to load report'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const toggleQuestion = (idx: number) => {
-  expandedQuestions.value[idx] = !expandedQuestions.value[idx];
-};
+  expandedQuestions.value[idx] = !expandedQuestions.value[idx]
+}
 
 const handleDownloadPDF = async () => {
   try {
-    await downloadPDF(sessionId.value);
+    await downloadPDF(sessionId.value)
   } catch (err: any) {
-    alert('Failed to download PDF: ' + err.message);
+    alert('Failed to download PDF: ' + err.message)
   }
-};
+}
 
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-};
+  const date = new Date(dateStr)
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+}
 
 const getScoreClass = (score: number) => {
-  if (score >= 8) return 'bg-green-500 text-white';
-  if (score >= 6) return 'bg-blue-500 text-white';
-  if (score >= 4) return 'bg-amber-500 text-white';
-  return 'bg-red-500 text-white';
-};
+  if (score >= 4) return 'bg-green-500 text-white'
+  if (score >= 3) return 'bg-blue-500 text-white'
+  if (score >= 2) return 'bg-amber-500 text-white'
+  return 'bg-red-500 text-white'
+}
 
 const getRecommendationClass = (rec: string) => {
-  if (rec === 'Strong Pass') return 'bg-green-500';
-  if (rec === 'Pass') return 'bg-blue-500';
-  if (rec === 'Review') return 'bg-amber-500';
-  return 'bg-red-500';
-};
+  if (rec === 'Strong Pass') return 'bg-green-500'
+  if (rec === 'Pass') return 'bg-blue-500'
+  if (rec === 'Review') return 'bg-amber-500'
+  return 'bg-red-500'
+}
 </script>
