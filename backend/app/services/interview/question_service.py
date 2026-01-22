@@ -56,19 +56,6 @@ class QuestionService:
         return {"status": "finished"}
 
     @staticmethod
-    def validate_role_exists(role_id: str) -> bool:
-        """
-        Validate that a role exists.
-
-        Args:
-            role_id: Unique role identifier
-
-        Returns:
-            True if role exists, False otherwise
-        """
-        return RoleService.exists(role_id)
-
-    @staticmethod
     def get_total_questions(role_id: str) -> int:
         """
         Get total number of questions for a role.
@@ -84,16 +71,3 @@ class QuestionService:
         """
         role_data = RoleService.get_role_by_id(role_id)
         return len(role_data.get("questions", []))
-
-    @staticmethod
-    def get_role_title(role_id: str) -> str:
-        """
-        Get the human-readable title for a role.
-
-        Args:
-            role_id: Unique role identifier
-
-        Returns:
-            Role title string, or role_id if not found
-        """
-        return RoleService.get_role_title(role_id)

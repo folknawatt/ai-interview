@@ -34,6 +34,7 @@ from app.exceptions import (
 from app.services.interview.candidate_service import CandidateService
 from app.services.core.mappers import InterviewMapper
 from app.services.core.media_service import MediaService
+from app.services.core.role_service import RoleService
 from app.services.interview.question_service import QuestionService
 from app.services.core.storage_service import StorageService
 
@@ -92,7 +93,7 @@ class InterviewService:
             file_location = await StorageService.save_upload(file, TEMP_DIR)
 
             # Fetch role title
-            role_title = QuestionService.get_role_title(role_id)
+            role_title = RoleService.get_role_title(role_id)
 
             # Process media (Video -> Audio -> Transcript)
             transcript = await MediaService.process_video_to_transcript(

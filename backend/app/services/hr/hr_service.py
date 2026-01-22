@@ -77,22 +77,6 @@ class HRService:
         ]
 
     @staticmethod
-    def get_role_by_id(role_id: str) -> Dict[str, Any]:
-        """
-        Get detailed information for a specific role.
-
-        Args:
-            role_id: Unique role identifier
-
-        Returns:
-            Role details including questions
-
-        Raises:
-            NotFoundError: If role not found
-        """
-        return RoleService.get_role_by_id(role_id)
-
-    @staticmethod
     def update_role_questions(
         role_id: str,
         questions: List[str]

@@ -12,6 +12,7 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends
 from app.schemas import JDInput, SaveQuestionsRequest, UpdateQuestionsRequest
 from app.services import HRService
+from app.services.core.role_service import RoleService
 from app.dependencies import get_api_key
 
 router = APIRouter(
@@ -49,7 +50,7 @@ def get_roles() -> list[Dict[str, str]]:
 @router.get("/roles/{role_id}")
 def get_role_details(role_id: str) -> Dict[str, Any]:
     """Get detailed information for a specific role."""
-    return HRService.get_role_by_id(role_id)
+    return RoleService.get_role_by_id(role_id)
 
 
 @router.put("/roles/{role_id}/questions")
