@@ -40,7 +40,12 @@ export const useApi = () => {
         errorMessage = JSON.stringify(error.data)
       }
     } else if (error.message) {
-      errorMessage = error.message
+      // Sanitize "Failed to fetch" or weird network errors which might expose URLs
+      if (error.message.includes('Failed to fetch') || error.message.includes('<no response>')) {
+        errorMessage = 'Unable to connect to server. Please check your internet connection or try again later.'
+      } else {
+        errorMessage = error.message
+      }
     } else if (error.statusMessage) {
       errorMessage = error.statusMessage
     }

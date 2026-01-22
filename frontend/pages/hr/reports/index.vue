@@ -50,7 +50,7 @@
         <label>Role:</label>
         <select v-model="filters.roleId">
           <option value="">All Roles</option>
-          <option v-for="role in roles" :key="role.id" :value="role.id">
+          <option v-for="role in visibleRoles" :key="role.id" :value="role.id">
             {{ role.title }}
           </option>
         </select>
@@ -61,10 +61,10 @@
         <input
           v-model.number="filters.minScore"
           type="number"
-          min="0"
-          max="10"
+          min="1"
+          max="5"
           step="0.1"
-          placeholder="0-10"
+          placeholder="1-5"
         />
       </div>
 
@@ -113,7 +113,7 @@
           class="clickable-row"
         >
           <td>{{ report.name }}</td>
-          <td>{{ report.role_id }}</td>
+          <td>{{ formatRoleName(report.role_id) }}</td>
           <td>{{ formatDate(report.interview_date) }}</td>
           <td>
             <span class="score-badge" :class="getScoreClass(report.average_score)">
@@ -174,6 +174,7 @@ const filters = reactive({
 const searchQuery = ref('')
 const sortKey = ref('average_score')
 const sortOrder = ref<'asc' | 'desc'>('desc')
+const appliedRoleId = ref('')
 
 // Load initial data
 onMounted(async () => {
@@ -203,8 +204,12 @@ const loadReports = async () => {
     loading.value = true
     error.value = ''
 
+    // Update applied role ID when applying filters
+    appliedRoleId.value = filters.roleId
+
     const filterParams: any = {}
-    if (filters.roleId) filterParams.roleId = filters.roleId
+    // Role filtering is handled in frontend to include candidate sub-roles
+    // if (filters.roleId) filterParams.roleId = filters.roleId 
     if (filters.minScore !== undefined) filterParams.minScore = filters.minScore
     if (filters.recommendation) filterParams.recommendation = filters.recommendation
 
@@ -224,11 +229,26 @@ const clearFilters = () => {
   loadReports()
 }
 
-const filteredReports = computed(() => {
-  if (!searchQuery.value) return reports.value
+const visibleRoles = computed(() => {
+  return roles.value.filter((role: any) => !role.title.includes('(Candidate'))
+})
 
-  const query = searchQuery.value.toLowerCase()
-  return reports.value.filter(report => report.name.toLowerCase().includes(query))
+const filteredReports = computed(() => {
+  let result = reports.value
+
+  // Frontend Role Filter
+  if (appliedRoleId.value) {
+    const targetName = formatRoleName(appliedRoleId.value)
+    result = result.filter((r: any) => formatRoleName(r.role_id) === targetName)
+  }
+
+  // Search Filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter((report: any) => report.name.toLowerCase().includes(query))
+  }
+  
+  return result
 })
 
 const sortedReports = computed(() => {
@@ -273,6 +293,14 @@ const getSortIcon = (key: string) => {
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr)
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+}
+
+const formatRoleName = (roleId: string) => {
+  const role = roles.value.find(r => r.id === roleId)
+  if (role) {
+    return role.title.replace(/\s*\(Candidate.*\)/, '')
+  }
+  return roleId
 }
 
 // Unified color scheme:

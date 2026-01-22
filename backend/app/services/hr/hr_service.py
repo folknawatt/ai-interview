@@ -174,29 +174,10 @@ class HRService:
         """
         Create a candidate-specific role by cloning a base role.
 
-        Args:
-            base_role_id: ID of the Job Role selected by candidate.
-            unique_suffix: Unique string to append (e.g. session_id or uuid).
-
-        Returns:
-            The new role_id for this candidate.
+        DEPRECATED: This method implements the "Duplicate Role" anti-pattern.
+        Use InterviewService.init_session_with_questions() (Snapshot Pattern) instead.
         """
-        repo = get_question_repository()
-
-        # Check if base role exists
-        if not RoleService.exists(base_role_id):
-            raise NotFoundError(f"Base role '{base_role_id}' not found")
-
-        # Create new ID and Title
-        new_role_id = f"{base_role_id}_{unique_suffix}"
-
-        # If already exists (idempotency), just return it
-        if RoleService.exists(new_role_id):
-            return new_role_id
-
-        # Get base role title for better naming
-        base_title = RoleService.get_role_title(base_role_id)
-        new_title = f"{base_title} (Candidate {unique_suffix})"
-
-        repo.duplicate_role(base_role_id, new_role_id, new_title)
-        return new_role_id
+        # Deprecated logic removed to prevent accidental use
+        raise NotImplementedError(
+            "create_candidate_role is deprecated. Use InterviewService.init_session_with_questions() instead."
+        )

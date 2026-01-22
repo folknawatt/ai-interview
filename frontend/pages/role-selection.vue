@@ -169,7 +169,7 @@ import type { Role } from '@/types';
 
 // Use composables
 const { getRoles } = useHR();
-const { setSelectedRole, uploadResume } = useInterview();
+const { setSelectedRole, uploadResume, sessionId } = useInterview();
 const router = useRouter();
 
 // State
@@ -249,18 +249,25 @@ const handleUploadAndStart = async () => {
   uploadError.value = '';
 
   try {
-    // 1. Upload Resume & Generate Questions
+    // 1. Upload Resume & Generate Questions (and Session)
+    // accessible via useInterview destructuring if needed, or just use result
     const result = await uploadResume(selectedFile.value, selectedRoleForUpload.value.id);
     
-    // 2. Set the NEW candidate-specific Role (using the ID returned by backend)
-    // Create detailed role object
-    const candidateRole = {
+    // 2. Set Global State
+    // We use the Base Role ID (not candidate specific anymore)
+    const baseRole = {
        id: result.role_id,
-       name: selectedRoleForUpload.value.title // Map title to name as expected by store
+       name: selectedRoleForUpload.value.title
     };
     
-    // 3. Set Global State & Navigate
-    setSelectedRole(candidateRole);
+    // Set role (this triggers a client session ID generation)
+    setSelectedRole(baseRole);
+
+    // 3. Update Session ID from Server
+    if (result.session_id) {
+        sessionId.value = result.session_id;
+    }
+    
     router.push('/question');
     
   } catch (err: any) {

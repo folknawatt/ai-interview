@@ -5,7 +5,7 @@ This module provides a repository pattern for managing interview questions
 stored in the relational database.
 """
 from typing import Any, Dict, List, Optional
-from sqlmodel import Session, select
+from sqlmodel import Session, select, desc
 
 from app.config.logging_config import get_logger
 
@@ -242,7 +242,8 @@ class QuestionRepository:
                 existing_questions = session.exec(
                     select(Question)
                     .where(Question.role_id == role_id)
-                    .order_by(Question.order.desc())
+                    # FIX: Use desc() function matching imports
+                    .order_by(desc(Question.order))
                 ).first()
 
                 start_order = 0
@@ -282,53 +283,13 @@ class QuestionRepository:
         """
         Duplicate an existing role and all its questions.
 
-        Args:
-            base_role_id: ID of the role to copy from.
-            new_role_id: ID for the new role.
-            new_title: Title for the new role.
-
-        Raises:
-            ValueError: If base role doesn't exist or new role ID already exists.
+        DEPRECATED: This method supports the "Duplicate Role" anti-pattern.
+        Do not use this for candidate sessions.
         """
-        with Session(self.engine) as session:
-            try:
-                # Validate base role exists
-                base_role = session.exec(select(JobRole).where(
-                    JobRole.id == base_role_id)).first()
-                if not base_role:
-                    raise ValueError(f"Base Role '{base_role_id}' not found")
-
-                # Validate new role ID doesn't exist
-                existing = session.exec(select(JobRole).where(
-                    JobRole.id == new_role_id)).first()
-                if existing:
-                    raise ValueError(f"Role ID '{new_role_id}' already exists")
-
-                # Create new Role
-                new_role = JobRole(id=new_role_id, title=new_title)
-                session.add(new_role)
-                session.flush()
-
-                # Copy Questions
-                questions = session.exec(select(Question).where(
-                    Question.role_id == base_role_id).order_by(Question.order)).all()
-
-                for q in questions:
-                    new_q = Question(
-                        role_id=new_role_id,
-                        content=q.content,
-                        order=q.order
-                    )
-                    session.add(new_q)
-
-                session.commit()
-                logger.info("Duplicated role %s to %s",
-                            base_role_id, new_role_id)
-
-            except Exception as e:
-                session.rollback()
-                logger.error("Failed to duplicate role: %s", e)
-                raise RuntimeError(f"Database duplication failed: {e}") from e
+        # Deprecated logic removed
+        raise NotImplementedError(
+            "duplicate_role is deprecated. Use Snapshot Pattern via QuestionResult instead."
+        )
 
 
 # Singleton instance

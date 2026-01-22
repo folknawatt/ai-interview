@@ -32,9 +32,12 @@ router = APIRouter(
 @router.post("/upload-pdf")
 async def upload_pdf(
     file: UploadFile,
-    role_id: str = Form(..., description="Role ID to add questions to")
+    role_id: str = Form(..., description="Role ID to add questions to"),
+    candidate_name: str = Form(..., description="Candidate Name"),
+    candidate_email: str = Form(None, description="Candidate Email"),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Upload PDF resume, generate questions, and append them to an existing Role."""
+    """Upload PDF resume, generate questions, and initialize session (Snapshot Pattern)."""
     # Read file bytes from UploadFile
     pdf_bytes = await file.read()
 
@@ -51,28 +54,57 @@ async def upload_pdf(
     if not isinstance(questions_list, list):
         raise ValueError("AI Service did not return a list of questions")
 
-    # Create a unique candidate-specific Role based on the selected Role
-    unique_suffix = str(uuid.uuid4())[:8]
-    candidate_role_id = HRService.create_candidate_role(role_id, unique_suffix)
+    # Fetch Base Role Questions
+    from app.services.core.role_service import RoleService
+    role_data = RoleService.get_role_by_id(role_id)
+    base_questions = [q['content'] for q in role_data.get('questions', [])]
 
-    # Append generated questions to the NEW candidate-specific Role
-    HRService.append_role_questions(candidate_role_id, questions_list)
+    # Combine questions (Base first, then Custom)
+    all_questions = base_questions + questions_list
+
+    # Initialize Session with Questions (Snapshot)
+    # This prevents creating duplicate "Candidate Roles"
+    session_id = InterviewService.init_session_with_questions(
+        db, role_id, all_questions, candidate_name, candidate_email
+    )
 
     return {
-        "role_id": candidate_role_id,  # Frontend should use this ID for the interview
-        "base_role_id": role_id,
-        "questions": questions_list
+        "session_id": session_id,
+        "role_id": role_id,  # Base Role ID
+        "questions": all_questions
     }
 
 
 @router.get("/question/{role_id}/{index}")
 async def get_interview_question(role_id: str, index: int) -> Dict[str, Any]:
-    """Get interview question by role and index with TTS audio."""
+    """Get interview question by role and index (Legacy/Standard Flow)."""
     result = QuestionService.get_next_question(role_id, index)
     if not result:
         raise NotFoundError(f"Role '{role_id}' not found")
 
     # Generate TTS audio for the question if status is "continue"
+    if result.get("status") == "continue" and "question" in result:
+        result["audio_path"] = TTSService.generate_question_audio(
+            text=result["question"],
+            question_id=result["question_id"]
+        )
+
+    return result
+
+
+@router.get("/session/{session_id}/question/{index}")
+async def get_session_question(
+    session_id: str,
+    index: int,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Get interview question from a specific session (Snapshot Flow)."""
+    result = QuestionService.get_session_question(db, session_id, index)
+
+    if not result:
+        # If no questions found in session, likely invalid session
+        raise NotFoundError(f"Session '{session_id}' not found")
+
     if result.get("status") == "continue" and "question" in result:
         result["audio_path"] = TTSService.generate_question_audio(
             text=result["question"],

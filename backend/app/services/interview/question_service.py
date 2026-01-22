@@ -71,3 +71,43 @@ class QuestionService:
         """
         role_data = RoleService.get_role_by_id(role_id)
         return len(role_data.get("questions", []))
+
+    @staticmethod
+    def get_session_question(
+        session: Any,  # SQLModel Session
+        session_id: str,
+        index: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get question from a specific interview session (Snapshot).
+
+        Args:
+            session: Database session
+            session_id: Session ID
+            index: Question index (0-based)
+        """
+        from app.database.models import QuestionResult
+        from sqlmodel import select
+
+        # Fetch all questions for this session ordered by ID (creation order)
+        # Note: We assume ID order matches the generated order.
+        results = session.exec(
+            select(QuestionResult)
+            .where(QuestionResult.session_id == session_id)
+            .order_by(QuestionResult.id)
+        ).all()
+
+        if not results:
+            return None
+
+        if index < len(results):
+            qr = results[index]
+            return {
+                "status": "continue",
+                "question": qr.question,
+                "question_id": qr.id,
+                "total": len(results),
+                "session_id": session_id
+            }
+
+        return {"status": "finished"}

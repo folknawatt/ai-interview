@@ -36,21 +36,35 @@ def calculate_aggregated_score(
             total_questions=expected_total_questions
         )
 
-    num_questions = len(all_question_results)
+    # Filter for actually answered questions (e.g. valid score or transcript)
+    # We use transcript as the flag for "answered"
+    answered_results = [
+        q for q in all_question_results if q.transcript is not None]
 
-    # Calculate averages
-    # Note: QuestionResult fields are communication_score, relevance_score, logical_thinking_score, total_score
+    num_answered = len(answered_results)
+
+    # If no questions answered, return 0 scores but keep total_questions info
+    if num_answered == 0:
+        return AggregatedScore(
+            average_score=0.0,
+            communication_avg=0.0,
+            relevance_avg=0.0,
+            logical_thinking_avg=0.0,
+            pass_rate=0.0,
+            overall_recommendation="Fail",
+            questions_answered=0,
+            total_questions=expected_total_questions
+        )
+
+    # Calculate averages based on ANSWERED questions only
     communication_avg = (
-        sum(q.communication_score for q in all_question_results) /
-        num_questions
+        sum(q.communication_score for q in answered_results) / num_answered
     )
     relevance_avg = (
-        sum(q.relevance_score for q in all_question_results) /
-        num_questions
+        sum(q.relevance_score for q in answered_results) / num_answered
     )
     logical_thinking_avg = (
-        sum(q.logical_thinking_score for q in all_question_results) /
-        num_questions
+        sum(q.logical_thinking_score for q in answered_results) / num_answered
     )
 
     # Calculate total_score as average of the three category averages
@@ -58,11 +72,13 @@ def calculate_aggregated_score(
         communication_avg + relevance_avg + logical_thinking_avg
     ) / 3
 
-    # Calculate pass rate (percentage)
+    # Calculate pass rate
+    # Note: pass_prediction implies the question was evaluated
     passed_questions_count = sum(
-        1 for q in all_question_results if q.pass_prediction
+        1 for q in answered_results if q.pass_prediction
     )
-    passed_percentage = (passed_questions_count / num_questions) * 100
+    # Pass rate is usually based on answered questions
+    passed_percentage = (passed_questions_count / num_answered) * 100
 
     # Generate recommendation
     recommendation = generate_recommendation(avg_score, passed_percentage)
@@ -74,7 +90,7 @@ def calculate_aggregated_score(
         logical_thinking_avg=round(logical_thinking_avg, 2),
         pass_rate=round(passed_percentage, 2),
         overall_recommendation=recommendation,
-        questions_answered=num_questions,
+        questions_answered=num_answered,
         total_questions=expected_total_questions
     )
 

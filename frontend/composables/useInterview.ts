@@ -1,10 +1,11 @@
 import type { Question, AnalysisResponse, SessionSummary } from '../types/api';
+import { interviewService } from '../services/interview';
 
 /**
  * Updated Interview composable with API integration
  */
 export const useInterview = () => {
-  const { get, post, uploadFile } = useApi();
+
 
   // State management
   const candidateName = useState<string>('candidateName', () => '');
@@ -43,17 +44,24 @@ export const useInterview = () => {
    */
   const getQuestion = async (roleId: string, index: number) => {
     try {
-      const response = await get<Question>(`/interview/question/${roleId}/${index}`);
-      
-      if (response.status === 'continue' && response.question) {
-        currentQuestion.value = response.question;
-        currentQuestionId.value = response.question_id || -1;
-        currentQuestionIndex.value = index;
-        currentAudioPath.value = response.audio_path || null;
+      // If we have a server-generated session (from uploadResume), use the session endpoint
+      // Client-generated sessions start with 'session_', server ones with 'sess_'
+      if (sessionId.value && sessionId.value.startsWith('sess_')) {
+        const response = await interviewService.getSessionQuestion(sessionId.value, index);
+        
+        if (response.status === 'continue' && response.question) {
+          currentQuestion.value = response.question;
+          currentQuestionId.value = response.question_id || -1;
+          currentQuestionIndex.value = index;
+          currentAudioPath.value = response.audio_path || null;
+          return response;
+        }
         return response;
       }
       
-      return response;
+      // If no valid session-based question found
+      console.warn('No session question found or invalid session ID');
+      return { status: 'finished' } as Question;
     } catch (error) {
       console.error('Error fetching question:', error);
       throw error;
@@ -84,7 +92,7 @@ export const useInterview = () => {
       formData.append('candidate_name', candidateName.value || 'Anonymous');
       formData.append('candidate_email', candidateEmail.value || '');
 
-      const response = await uploadFile<AnalysisResponse>('/interview/upload-answer', formData);
+      const response = await interviewService.uploadAnswer(formData);
       
       analysisResult.value = response;
       return response;
@@ -102,14 +110,19 @@ export const useInterview = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('role_id', roleId);
+      formData.append('candidate_name', candidateName.value || 'Anonymous');
+      if (candidateEmail.value) {
+        formData.append('candidate_email', candidateEmail.value);
+      }
 
-      // Expect back: { role_id: "new_id", base_role_id: "old_id", questions: [...] }
-      const response = await uploadFile<{
-         role_id: string; 
-         base_role_id: string; 
-         questions: string[]
-      }>('/interview/upload-pdf', formData);
+      // Now endpoint returns { session_id, role_id, questions }
+      const response = await interviewService.uploadResume(formData);
       
+      // Update session ID immediately
+      if (response.session_id) {
+          sessionId.value = response.session_id;
+      }
+
       return response;
     } catch (error) {
       console.error('Error uploading resume:', error);
@@ -120,9 +133,12 @@ export const useInterview = () => {
   /**
    * Get interview summary
    */
+  /**
+   * Get interview session summary
+   */
   const getSummary = async () => {
     try {
-      return await get<SessionSummary>(`/interview/summary/${sessionId.value}`);
+      return await interviewService.getSummary(sessionId.value);
     } catch (error) {
       console.error('Error fetching summary:', error);
       throw error;
@@ -134,12 +150,7 @@ export const useInterview = () => {
    */
   const completeInterview = async () => {
     try {
-      const response = await post<{
-        message: string;
-        session_id: string;
-        recommendation: string;
-        total_score: number;
-      }>(`/interview/complete/${sessionId.value}`);
+      const response = await interviewService.completeInterview(sessionId.value);
       return response;
     } catch (error) {
       console.error('Error completing interview:', error);

@@ -35,7 +35,6 @@ from app.services.interview.candidate_service import CandidateService
 from app.services.core.mappers import InterviewMapper
 from app.services.core.media_service import MediaService
 from app.services.core.role_service import RoleService
-from app.services.interview.question_service import QuestionService
 from app.services.core.storage_service import StorageService
 
 logger = get_logger(__name__)
@@ -107,10 +106,42 @@ class InterviewService:
             )
 
             # Save result using Mapper
-            question_result = InterviewMapper.to_orm_question_result(
-                session_id, question_id, question, transcript, evaluation
-            )
-            session.add(question_result)
+            # Logic: Check if snapshot exists first to avoid duplicates
+            existing_qr = session.exec(
+                select(QuestionResult)
+                .where(QuestionResult.session_id == session_id)
+                .where(QuestionResult.question == question)
+            ).first()
+
+            if existing_qr:
+                # Update existing snapshot
+                existing_qr.transcript = transcript
+                existing_qr.communication_score = evaluation.scores.communication
+                existing_qr.relevance_score = evaluation.scores.relevance
+                existing_qr.logical_thinking_score = evaluation.scores.logical_thinking
+                existing_qr.pass_prediction = evaluation.pass_prediction
+
+                # Feedback needs to be Dict for JSON storage
+                existing_qr.feedback = {
+                    "strengths": evaluation.feedback.strengths,
+                    "weaknesses": evaluation.feedback.weaknesses,
+                    "summary": evaluation.feedback.summary
+                }
+
+                # question_id is optional, but if provided in form, we might want to ensure it's set
+                if question_id != -1:
+                    existing_qr.question_id = question_id
+
+                session.add(existing_qr)
+                question_result = existing_qr
+            else:
+                # Fallback: Create new if not found (should not happen in snapshot flow)
+                # Note: InterviewMapper.to_orm_question_result handles the mapping internally
+                # We need to make sure it also handles the nested object correctly if we use it
+                question_result = InterviewMapper.to_orm_question_result(
+                    session_id, question_id, question, transcript, evaluation
+                )
+                session.add(question_result)
             session.commit()
             session.refresh(question_result)
 
@@ -174,13 +205,9 @@ class InterviewService:
             raise ValidationError("No question results found for this session")
 
         # Get total questions
-        try:
-            total_questions = QuestionService.get_total_questions(
-                interview_session.role_id
-            )
-        except Exception as e:
-            logger.error("Error getting total questions: %s", e)
-            raise
+        # Using Snapshot Pattern: The number of QuestionResult rows IS the total questions for this session.
+        # This naturally handles custom questions added via Resume Upload.
+        total_questions = len(question_results)
 
         # Convert ORM models to domain models
         # Calculate aggregated score (directly from ORM models)
@@ -205,6 +232,51 @@ class InterviewService:
             "recommendation": aggregated_score_result.overall_recommendation,
             "average_score": aggregated_score_result.average_score,
         }
+
+    @staticmethod
+    def init_session_with_questions(
+        session: Session,
+        role_id: str,
+        questions: list[str],
+        candidate_name: str = "Anonymous",
+        candidate_email: Optional[str] = None
+    ) -> str:
+        """
+        Initialize a new interview session with specific questions (Snapshot Pattern).
+        Creates/Retrieves candidate and persists questions to QuestionResult.
+        """
+        # 1. Create/Get Candidate
+        candidate = CandidateService.get_or_create(
+            session, candidate_name, candidate_email)
+
+        # 2. Generate Session ID
+        session_id = f"sess_{uuid.uuid4().hex[:12]}"
+
+        # 3. Create Session
+        interview_session = InterviewSession(
+            session_id=session_id,
+            candidate_id=candidate.id,
+            role_id=role_id,  # Link to Base Role (e.g., 'marketing')
+            status=InterviewStatus.STARTED
+        )
+        session.add(interview_session)
+
+        # 4. Snapshot Questions to QuestionResult
+        for idx, q_text in enumerate(questions):
+            # Create QuestionResult with empty status
+            qr = QuestionResult(
+                session_id=session_id,
+                question=q_text,
+                communication_score=0.0,
+                relevance_score=0.0,
+                logical_thinking_score=0.0,
+                pass_prediction=False,
+                feedback={}
+            )
+            session.add(qr)
+
+        session.commit()
+        return session_id
 
     @staticmethod
     def get_summary(session: Session, session_id: str) -> Dict[str, Any]:

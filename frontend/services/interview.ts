@@ -7,11 +7,27 @@ import type { Question, AnalysisResponse, SessionSummary } from '@/types'
 
 export const interviewService = {
   /**
-   * Fetch a question for a specific role and index
+   * Fetch a question for a specific session and index (Snapshot Pattern)
    */
-  async getQuestion(roleId: string, index: number): Promise<Question> {
+  async getSessionQuestion(sessionId: string, index: number): Promise<Question> {
     const { get } = useApi()
-    return await get<Question>(`/interview/question/${roleId}/${index}`)
+    return await get<Question>(`/interview/session/${sessionId}/question/${index}`)
+  },
+
+  /**
+   * Upload resume PDF and generate questions
+   */
+  async uploadResume(formData: FormData): Promise<{
+    session_id: string
+    role_id: string
+    questions: string[]
+  }> {
+    const { uploadFile } = useApi()
+    return await uploadFile<{
+      session_id: string
+      role_id: string
+      questions: string[]
+    }>('/interview/upload-pdf', formData)
   },
 
   /**

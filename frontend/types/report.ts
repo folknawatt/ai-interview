@@ -27,10 +27,10 @@ export enum ReportStatus {
 }
 
 export enum RecommendationType {
-  STRONG_HIRE = 'strong_hire',
-  HIRE = 'hire',
-  MAYBE = 'maybe',
-  NO_HIRE = 'no_hire'
+  STRONG_PASS = 'Strong Pass',
+  PASS = 'Pass',
+  REVIEW = 'Review',
+  FAIL = 'Fail'
 }
 
 export interface ScoreBreakdown {
