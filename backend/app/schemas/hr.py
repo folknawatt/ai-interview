@@ -50,8 +50,12 @@ class SaveQuestionsRequest(BaseModel):
 class UpdateQuestionsRequest(BaseModel):
     """Request to update interview questions for an existing role."""
 
-    questions: List[str] = Field(
-        ...,
+    questions: List[str] | None = Field(
+        None,
         min_items=1,
         description="Updated list of interview questions"
+    )
+    title: str | None = Field(
+        None,
+        description="Updated job role title"
     )

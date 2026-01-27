@@ -28,6 +28,7 @@ def get_all_reports(
     role_id: Optional[str] = None,
     min_score: Optional[float] = None,
     recommendation: Optional[str] = None,
+    search_query: Optional[str] = None,
     db: Session = Depends(get_db)
 ) -> list[ReportListItem]:
     """
@@ -37,9 +38,10 @@ def get_all_reports(
     - role_id: Filter by role ID
     - min_score: Minimum total score
     - recommendation: Filter by recommendation (Strong Pass, Pass, Review, Fail)
+    - search_query: Search by candidate name
     """
     return ReportService.get_all_reports(
-        db, role_id, min_score, recommendation
+        db, role_id, min_score, recommendation, search_query
     )
 
 

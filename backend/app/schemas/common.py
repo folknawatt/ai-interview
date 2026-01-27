@@ -35,6 +35,7 @@ class QuestionResultResponse(BaseModel):
     id: int
     question: str
     transcript: str | None
+    video_url: str | None
     communication_score: float
     relevance_score: float
     logical_thinking_score: float

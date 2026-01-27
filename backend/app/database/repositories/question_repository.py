@@ -172,15 +172,16 @@ class QuestionRepository:
                 JobRole.id == role_id)).first()
             return role is not None
 
-    def update_questions(
-        self, role_id: str, questions: List[str]
+    def update_role(
+        self, role_id: str, questions: Optional[List[str]] = None, title: Optional[str] = None
     ) -> None:
         """
-        Update questions for an existing role.
+        Update details (title, questions) for an existing role.
 
         Args:
             role_id (str): The ID of the role to update.
-            questions (List[str]): List of new question content strings.
+            questions (Optional[List[str]]): List of new question strings. If None, questions are not updated.
+            title (Optional[str]): New title. If None, title is not updated.
 
         Raises:
             ValueError: If the role does not exist.
@@ -192,16 +193,22 @@ class QuestionRepository:
                 if not role:
                     raise ValueError(f"Role '{role_id}' not found")
 
-                # Simplistic approach: delete all and recreate
-                existing_questions = session.exec(
-                    select(Question).where(Question.role_id == role_id)
-                ).all()
-                for q in existing_questions:
-                    session.delete(q)
+                if title is not None:
+                    role.title = title
+                    session.add(role)
 
-                for idx, q_text in enumerate(questions):
-                    q = Question(role_id=role_id, content=q_text, order=idx)
-                    session.add(q)
+                if questions is not None:
+                    # Simplistic approach: delete all and recreate
+                    existing_questions = session.exec(
+                        select(Question).where(Question.role_id == role_id)
+                    ).all()
+                    for q in existing_questions:
+                        session.delete(q)
+
+                    for idx, q_text in enumerate(questions):
+                        q = Question(role_id=role_id,
+                                     content=q_text, order=idx)
+                        session.add(q)
 
                 session.commit()
             except ValueError:
@@ -210,7 +217,7 @@ class QuestionRepository:
             except Exception as e:
                 session.rollback()
                 logger.error(
-                    "Failed to update questions for role %s: %s",
+                    "Failed to update role %s: %s",
                     role_id,
                     e
                 )

@@ -34,8 +34,8 @@ class HRService:
         Returns:
             List of generated questions
         """
-        questions = gen_questions(api_key, role_title, job_description)
-        return questions
+        response = gen_questions(api_key, role_title, job_description)
+        return response.questions
 
     @staticmethod
     def save_role_questions(
@@ -62,31 +62,38 @@ class HRService:
         }
 
     @staticmethod
-    def get_all_roles() -> List[Dict[str, str]]:
+    def get_all_roles() -> List[Dict[str, Any]]:
         """
-        Get all job roles.
+        Get all job roles with details.
 
         Returns:
-            List of roles with id and name
+            List of roles with id, title, question_count, and questions
         """
         repo = get_question_repository()
         questions_db = repo.load_all()
         return [
-            {"id": k, "title": v["title"]}
+            {
+                "id": k,
+                "title": v.get("title", "Unknown Role"),
+                "question_count": len(v.get("questions", [])),
+                "questions": v.get("questions", [])
+            }
             for k, v in questions_db.items()
         ]
 
     @staticmethod
     def update_role_questions(
         role_id: str,
-        questions: List[str]
+        questions: List[str] | None = None,
+        title: str | None = None
     ) -> Dict[str, str]:
         """
-        Update questions for an existing role.
+        Update details for an existing role.
 
         Args:
             role_id: Unique role identifier
-            questions: New list of questions
+            questions: New list of questions (optional)
+            title: New title (optional)
 
         Returns:
             Success status and message
@@ -96,16 +103,16 @@ class HRService:
         """
         repo = get_question_repository()
 
-        # Check existence via RoleService
-        if not RoleService.exists(role_id):
+        # Check existence via Repo directly (faster/cleaner than Service wrapper)
+        if not repo.exists(role_id):
             raise NotFoundError(f"Role '{role_id}' not found")
 
-        repo.update_questions(role_id, questions)
+        repo.update_role(role_id, questions=questions, title=title)
         role_data = RoleService.get_role_by_id(role_id)
 
         return {
             "status": "success",
-            "message": f"Updated questions for {role_data['title']}"
+            "message": f"Updated details for {role_data['title']}"
         }
 
     @staticmethod
@@ -128,7 +135,7 @@ class HRService:
         """
         repo = get_question_repository()
 
-        if not RoleService.exists(role_id):
+        if not repo.exists(role_id):
             raise NotFoundError(f"Role '{role_id}' not found")
 
         repo.append_questions(role_id, questions)
@@ -168,16 +175,3 @@ class HRService:
             "status": "success",
             "message": f"Deleted role: {role_title}"
         }
-
-    @staticmethod
-    def create_candidate_role(base_role_id: str, unique_suffix: str) -> str:
-        """
-        Create a candidate-specific role by cloning a base role.
-
-        DEPRECATED: This method implements the "Duplicate Role" anti-pattern.
-        Use InterviewService.init_session_with_questions() (Snapshot Pattern) instead.
-        """
-        # Deprecated logic removed to prevent accidental use
-        raise NotImplementedError(
-            "create_candidate_role is deprecated. Use InterviewService.init_session_with_questions() instead."
-        )

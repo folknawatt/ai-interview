@@ -24,6 +24,34 @@ class InterviewStatus(str, enum.Enum):
     FAILED = "failed"
 
 
+class UserRole(str, enum.Enum):
+    """Role for HR system users."""
+    ADMIN = "admin"
+    HR = "hr"
+    VIEWER = "viewer"
+
+
+class HRUser(SQLModel, table=True):
+    """HR System User for authentication."""
+    __tablename__ = "hr_users"
+
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    username: str = Field(max_length=100, unique=True,
+                          index=True, nullable=False)
+    email: str = Field(max_length=255, unique=True, index=True, nullable=False)
+    hashed_password: str = Field(max_length=255, nullable=False)
+    full_name: str = Field(max_length=255, nullable=False)
+    role: UserRole = Field(default=UserRole.HR, nullable=False)
+    is_active: bool = Field(default=True, nullable=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        nullable=False
+    )
+
+
 class JobRole(SQLModel, table=True):
     """
     Job Role definition.
@@ -156,6 +184,7 @@ class QuestionResult(SQLModel, table=True):
     question: str = Field(sa_type=Text, nullable=False)  # Snapshot of text
     transcript: Optional[str] = Field(
         default=None, sa_type=Text, nullable=True)
+    video_url: Optional[str] = Field(default=None, nullable=True)
 
     # Scores (1-5 scale)
     communication_score: float = Field(nullable=False)

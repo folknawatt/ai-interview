@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     gemini_temperature: float = 0.2
 
+    # JWT Authentication
+    jwt_secret_key: str = "change-this-secret-key-in-production"
+
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins from comma-separated string."""

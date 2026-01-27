@@ -8,7 +8,7 @@ Encapsulates business logic for report generation and statistics, including:
 - Overall statistics calculation
 """
 from typing import Optional, List, Dict, Any
-from sqlmodel import Session, select, func, desc, col
+from sqlmodel import Session, select, func, desc
 
 from app.database.models import (
     Candidate,
@@ -35,7 +35,8 @@ class ReportService:
         session: Session,
         role_id: Optional[str] = None,
         min_score: Optional[float] = None,
-        recommendation: Optional[str] = None
+        recommendation: Optional[str] = None,
+        search_query: Optional[str] = None
     ) -> List[ReportListItem]:
         """
         List all completed interviews with optional filtering.
@@ -73,6 +74,12 @@ class ReportService:
         if recommendation:
             statement = statement.where(
                 AggregatedScore.overall_recommendation == recommendation
+            )
+
+        if search_query:
+            statement = statement.where(
+                # pylint: disable=no-member
+                Candidate.name.contains(search_query)
             )
 
         # Ordering
@@ -152,7 +159,8 @@ class ReportService:
                 average_score=round(
                     (qr.communication_score + qr.relevance_score + qr.logical_thinking_score) / 3, 2),
                 feedback=qr.feedback,
-                pass_prediction=qr.pass_prediction
+                pass_prediction=qr.pass_prediction,
+                video_url=qr.video_url
             )
             for qr in question_results
         ]
@@ -210,7 +218,7 @@ class ReportService:
 
         passed = session.exec(
             select(func.count(AggregatedScore.id))
-            .where(col(AggregatedScore.overall_recommendation).in_(["Strong Pass", "Pass"]))
+            .where(AggregatedScore.overall_recommendation.in_(["Strong Pass", "Pass"]))  # pylint: disable=no-member
         ).one() or 0
 
         pass_rate = (

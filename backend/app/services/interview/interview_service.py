@@ -42,6 +42,10 @@ logger = get_logger(__name__)
 TEMP_DIR = Path(settings.temp_storage_dir)
 
 
+VIDEO_DIR = Path("storage/videos")
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+
+
 class InterviewService:
     """Service class for handling interview business logic."""
 
@@ -82,6 +86,7 @@ class InterviewService:
 
         file_location: Optional[Path] = None
         cleanup_needed = True  # Flag to track if cleanup is needed
+        video_url: Optional[str] = None
 
         try:
             # Save video file
@@ -89,7 +94,11 @@ class InterviewService:
             unique_filename = f"{uuid.uuid4()}{file_ext}"
             file.filename = unique_filename
 
-            file_location = await StorageService.save_upload(file, TEMP_DIR)
+            # Save to permanent storage
+            file_location = await StorageService.save_upload(file, VIDEO_DIR)
+
+            # Construct public URL
+            video_url = f"/videos/{unique_filename}"
 
             # Fetch role title
             role_title = RoleService.get_role_title(role_id)
@@ -121,6 +130,9 @@ class InterviewService:
                 existing_qr.logical_thinking_score = evaluation.scores.logical_thinking
                 existing_qr.pass_prediction = evaluation.pass_prediction
 
+                if video_url:
+                    existing_qr.video_url = video_url
+
                 # Feedback needs to be Dict for JSON storage
                 existing_qr.feedback = {
                     "strengths": evaluation.feedback.strengths,
@@ -128,7 +140,7 @@ class InterviewService:
                     "summary": evaluation.feedback.summary
                 }
 
-            # Note: question_id from frontend is actually question_result_id (for Snapshot Pattern)
+                # Note: question_id from frontend is actually question_result_id (for Snapshot Pattern)
                 # We don't set the question_id FK since session questions aren't in the 'questions' table
                 # The existing_qr.question_id should remain None for Snapshot Pattern
 
@@ -141,9 +153,14 @@ class InterviewService:
                 question_result = InterviewMapper.to_orm_question_result(
                     session_id, question_id, question, transcript, evaluation
                 )
+                if video_url:
+                    question_result.video_url = video_url
                 session.add(question_result)
             session.commit()
             session.refresh(question_result)
+
+            # Use a flag to prevent cleanup of the successfully processed video
+            cleanup_needed = False
 
             return InterviewMapper.to_dict(question_result)
 

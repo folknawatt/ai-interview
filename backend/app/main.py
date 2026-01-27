@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config.settings import settings
 from app.exceptions import AppException, convert_exception
 from app.database.db import init_db
-from app.routers import hr, interview, reports, tts
+from app.routers import auth, hr, interview, reports, tts
 
 logging.basicConfig(
     level=logging.INFO,
@@ -83,7 +83,15 @@ AUDIO_DIR.mkdir(exist_ok=True)
 # Mount static files for audio
 app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")
 
+# Create videos directory if it doesn't exist
+VIDEO_DIR = Path("storage/videos")
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+
+# Mount static files for videos
+app.mount("/videos", StaticFiles(directory=str(VIDEO_DIR)), name="videos")
+
 # Include routers
+app.include_router(auth.router)
 app.include_router(hr.router)
 app.include_router(interview.router)
 app.include_router(tts.router)

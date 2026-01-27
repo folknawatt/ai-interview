@@ -42,7 +42,7 @@ async def save_questions_api(data: SaveQuestionsRequest) -> Dict[str, str]:
 
 
 @router.get("/roles")
-def get_roles() -> list[Dict[str, str]]:
+def get_roles() -> list[Dict[str, Any]]:
     """Get all job roles."""
     return HRService.get_all_roles()
 
@@ -59,7 +59,7 @@ async def update_role_questions(
     data: UpdateQuestionsRequest
 ) -> Dict[str, str]:
     """Update questions for an existing role."""
-    return HRService.update_role_questions(role_id, data.questions)
+    return HRService.update_role_questions(role_id, questions=data.questions, title=data.title)
 
 
 @router.delete("/roles/{role_id}")
