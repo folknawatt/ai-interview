@@ -1,21 +1,24 @@
 import type { Question, AnalysisResponse, SessionSummary } from '../types/api';
-import { interviewService } from '../services/interview';
 
 /**
  * Updated Interview composable with API integration
  */
 export const useInterview = () => {
+  const { get, post, uploadFile } = useApi();
 
+  // State management - Persistent (Cookies)
+  const candidateName = useCookie<string>('curr_candidate_name', { default: () => '', maxAge: 86400 });
+  const candidateEmail = useCookie<string>('curr_candidate_email', { default: () => '', maxAge: 86400 });
+  const sessionId = useCookie<string>('curr_session_id', { default: () => '', maxAge: 86400 });
+  const selectedRole = useCookie<{ id: string; name: string } | null>('curr_selected_role', { default: () => null, maxAge: 86400 });
 
-  // State management
-  const candidateName = useState<string>('candidateName', () => '');
-  const candidateEmail = useState<string>('candidateEmail', () => '');
-  const selectedRole = useState<{ id: string; name: string } | null>('selectedRole', () => null);
+  // State management - Ephemeral (Memory/State)
+  // These can be reset on reload without breaking the flow too much, 
+  // or logic will re-fetch them based on sessionId/index
   const currentQuestionIndex = useState<number>('currentQuestionIndex', () => 0);
   const currentQuestionId = useState<number>('currentQuestionId', () => -1);
   const currentQuestion = useState<string>('currentQuestion', () => '');
   const currentAudioPath = useState<string | null>('currentAudioPath', () => null);
-  const sessionId = useState<string>('sessionId', () => '');
   const analysisResult = useState<AnalysisResponse | null>('analysisResult', () => null);
 
   // Setters
@@ -30,8 +33,8 @@ export const useInterview = () => {
 
   const setSelectedRole = (role: { id: string; name: string }) => {
     selectedRole.value = role;
-    // Generate session ID when role is selected
-    sessionId.value = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Don't auto-generate session ID here. 
+    // We must wait for uploadResume() to return the real server session ID.
     currentQuestionIndex.value = 0;
   };
 
@@ -47,8 +50,10 @@ export const useInterview = () => {
     try {
       // If we have a server-generated session (from uploadResume), use the session endpoint
       // Client-generated sessions start with 'session_', server ones with 'sess_'
+      // Strict Mode: Session ID from backend is REQUIRED (must start with 'sess_')
       if (sessionId.value && sessionId.value.startsWith('sess_')) {
-        const response = await interviewService.getSessionQuestion(sessionId.value, index, skipTts);
+        const params = skipTts ? '?skip_tts=true' : '';
+        const response = await get<Question>(`/interview/session/${sessionId.value}/question/${index}${params}`);
         
         if (response.status === 'continue' && response.question) {
           currentQuestion.value = response.question;
@@ -60,8 +65,7 @@ export const useInterview = () => {
         return response;
       }
       
-      // If no valid session-based question found
-      console.warn('No session question found or invalid session ID');
+      console.warn('Invalid session state: Missing resume-generated session ID');
       return { status: 'finished' } as Question;
     } catch (error) {
       console.error('Error fetching question:', error);
@@ -112,6 +116,18 @@ export const useInterview = () => {
   };
 
   /**
+   * Stop currently playing audio
+   */
+  const stopAudio = () => {
+    if (currentAudioInstance) {
+      currentAudioInstance.pause();
+      currentAudioInstance.currentTime = 0;
+      currentAudioInstance.src = '';
+      currentAudioInstance = null;
+    }
+  };
+
+  /**
    * Upload answer video and get evaluation
    */
   const uploadAnswer = async (videoBlob: Blob, question: string) => {
@@ -125,7 +141,7 @@ export const useInterview = () => {
       formData.append('candidate_name', candidateName.value || 'Anonymous');
       formData.append('candidate_email', candidateEmail.value || '');
 
-      const response = await interviewService.uploadAnswer(formData);
+      const response = await uploadFile<AnalysisResponse>('/interview/upload-answer', formData);
       
       analysisResult.value = response;
       return response;
@@ -149,7 +165,11 @@ export const useInterview = () => {
       }
 
       // Now endpoint returns { session_id, role_id, questions }
-      const response = await interviewService.uploadResume(formData);
+      const response = await uploadFile<{
+        session_id: string
+        role_id: string
+        questions: string[]
+      }>('/interview/upload-pdf', formData);
       
       // Update session ID immediately
       if (response.session_id) {
@@ -164,14 +184,11 @@ export const useInterview = () => {
   };
 
   /**
-   * Get interview summary
-   */
-  /**
    * Get interview session summary
    */
   const getSummary = async () => {
     try {
-      return await interviewService.getSummary(sessionId.value);
+      return await get<SessionSummary>(`/interview/summary/${sessionId.value}`);
     } catch (error) {
       console.error('Error fetching summary:', error);
       throw error;
@@ -183,7 +200,12 @@ export const useInterview = () => {
    */
   const completeInterview = async () => {
     try {
-      const response = await interviewService.completeInterview(sessionId.value);
+      const response = await post<{
+        message: string
+        session_id: string
+        recommendation: string
+        total_score: number
+      }>(`/interview/complete/${sessionId.value}`);
       return response;
     } catch (error) {
       console.error('Error completing interview:', error);
@@ -222,6 +244,7 @@ export const useInterview = () => {
     setAnalysisResult,
     getQuestion,
     playAudio,
+    stopAudio,
     uploadAnswer,
     uploadResume,
     getSummary,

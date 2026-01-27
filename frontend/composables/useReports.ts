@@ -14,20 +14,28 @@ export const useReports = () => {
   /**
    * Get all interview reports with optional filtering
    */
+  /*
+   * Get all interview reports with optional filtering
+   */
   const getAllReports = async (filters?: {
     roleId?: string;
     minScore?: number;
     recommendation?: string;
+    searchQuery?: string;
   }) => {
     const params = new URLSearchParams();
     
     if (filters?.roleId) params.append('role_id', filters.roleId);
     if (filters?.minScore !== undefined) params.append('min_score', filters.minScore.toString());
     if (filters?.recommendation) params.append('recommendation', filters.recommendation);
+    if (filters?.searchQuery) params.append('search_query', filters.searchQuery);
 
     const queryString = params.toString();
     const endpoint = `/reports/all${queryString ? `?${queryString}` : ''}`;
 
+    // Note: The previous implementation used api.get<any[]> which returned promised data.
+    // Ensure useApi().get returns the data directly or if we need to await it properly.
+    // Based on usage in other files, it returns the data.
     return await api.get<any[]>(endpoint);
   };
 

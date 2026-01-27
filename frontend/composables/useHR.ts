@@ -48,8 +48,8 @@ export const useHR = () => {
   /**
    * Update questions for an existing role
    */
-  const updateQuestions = async (roleId: string, questions: string[]) => {
-    return await put(`/hr/roles/${roleId}/questions`, { questions });
+  const updateQuestions = async (roleId: string, questions: string[], title?: string) => {
+    return await put(`/hr/roles/${roleId}/questions`, { questions, title });
   };
 
   /**

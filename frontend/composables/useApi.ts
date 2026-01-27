@@ -2,10 +2,12 @@
  * Base API client using Nuxt's $fetch
  * Provides centralized error handling and base URL configuration
  */
+import { useAuth } from '@/store/auth'
 
 export const useApi = () => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBaseUrl || 'http://localhost:8000'
+  const authStore = useAuth()
 
   /**
    * Centralized error handling helper
@@ -54,6 +56,17 @@ export const useApi = () => {
   }
 
   /**
+   * Get authorization headers if user is logged in
+   */
+  const getAuthHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {}
+    if (authStore.isLogin && authStore.tokenAuth) {
+      headers['Authorization'] = `Bearer ${authStore.tokenAuth}`
+    }
+    return headers
+  }
+
+  /**
    * Generic API call wrapper
    */
   const apiCall = async <T>(
@@ -62,6 +75,7 @@ export const useApi = () => {
       method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
       body?: any
       headers?: Record<string, string>
+      skipAuth?: boolean
     } = {}
   ): Promise<T> => {
     try {
@@ -69,6 +83,7 @@ export const useApi = () => {
         ...options,
         headers: {
           'Content-Type': 'application/json',
+          ...(options.skipAuth ? {} : getAuthHeaders()),
           ...options.headers,
         },
       })
