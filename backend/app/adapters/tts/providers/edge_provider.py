@@ -18,6 +18,12 @@ from app.config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# Edge TTS timeout configuration (in seconds)
+EDGE_TTS_CONNECT_TIMEOUT = 30
+EDGE_TTS_RECEIVE_TIMEOUT = 60
+EDGE_TTS_MAX_RETRIES = 3
+EDGE_TTS_RETRY_DELAY = 2  # Initial delay in seconds
+
 
 class EdgeTTSProvider(TTSProvider):
     """Edge TTS provider implementation."""
@@ -79,7 +85,99 @@ class EdgeTTSProvider(TTSProvider):
             os.makedirs(audio_dir, exist_ok=True)
             output_path = os.path.join(audio_dir, filename)
 
-        return asyncio.run(self._generate_audio_async(text, voice, output_path))
+        # Try to use existing event loop or create new one
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            # If there's already a running loop, create a new one in a thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    asyncio.run,
+                    self._generate_audio_with_retry(text, voice, output_path)
+                )
+                return future.result()
+        else:
+            return asyncio.run(
+                self._generate_audio_with_retry(text, voice, output_path)
+            )
+
+    async def _generate_audio_with_retry(
+        self,
+        text: str,
+        voice: str,
+        output_path: str
+    ) -> str:
+        """
+        Generate audio with retry logic for connection issues.
+
+        Args:
+            text: Text to convert
+            voice: Voice to use
+            output_path: Output path
+
+        Returns:
+            str: Output path
+        """
+        last_error = None
+        retry_delay = EDGE_TTS_RETRY_DELAY
+
+        for attempt in range(EDGE_TTS_MAX_RETRIES):
+            try:
+                logger.info(
+                    "Generating Edge TTS (attempt %d/%d) for text: '%s...' (voice: %s)",
+                    attempt + 1,
+                    EDGE_TTS_MAX_RETRIES,
+                    text[:50],
+                    voice
+                )
+
+                # Generate with timeout
+                result = await asyncio.wait_for(
+                    self._generate_audio_async(text, voice, output_path),
+                    timeout=EDGE_TTS_CONNECT_TIMEOUT + EDGE_TTS_RECEIVE_TIMEOUT
+                )
+                return result
+
+            except asyncio.TimeoutError as e:
+                last_error = e
+                logger.warning(
+                    "Edge TTS timeout (attempt %d/%d). Retrying in %ds...",
+                    attempt + 1,
+                    EDGE_TTS_MAX_RETRIES,
+                    retry_delay
+                )
+                if attempt < EDGE_TTS_MAX_RETRIES - 1:
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+
+            except Exception as e:
+                # For connection errors, retry
+                error_str = str(e).lower()
+                if "timeout" in error_str or "connection" in error_str:
+                    last_error = e
+                    logger.warning(
+                        "Edge TTS connection error (attempt %d/%d): %s. Retrying in %ds...",
+                        attempt + 1,
+                        EDGE_TTS_MAX_RETRIES,
+                        str(e)[:100],
+                        retry_delay
+                    )
+                    if attempt < EDGE_TTS_MAX_RETRIES - 1:
+                        await asyncio.sleep(retry_delay)
+                        retry_delay *= 2
+                else:
+                    # For other errors, fail immediately
+                    raise TTSProviderError(
+                        f"Edge TTS generation failed: {e}") from e
+
+        # All retries exhausted
+        error_msg = f"Edge TTS failed after {EDGE_TTS_MAX_RETRIES} attempts: {last_error}"
+        logger.error(error_msg)
+        raise TTSProviderError(error_msg)
 
     async def _generate_audio_async(
         self,
@@ -98,14 +196,8 @@ class EdgeTTSProvider(TTSProvider):
         Returns:
             str: Output path
         """
-        logger.info(
-            "Generating Edge TTS for text: '%s...' (voice: %s)",
-            text[:50],
-            voice
-        )
-
         try:
-            # Create communicator
+            # Create communicator with proxy settings if needed
             communicate = edge_tts.Communicate(text, voice)
 
             # Save audio file

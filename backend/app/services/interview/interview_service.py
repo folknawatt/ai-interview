@@ -128,9 +128,9 @@ class InterviewService:
                     "summary": evaluation.feedback.summary
                 }
 
-                # question_id is optional, but if provided in form, we might want to ensure it's set
-                if question_id != -1:
-                    existing_qr.question_id = question_id
+            # Note: question_id from frontend is actually question_result_id (for Snapshot Pattern)
+                # We don't set the question_id FK since session questions aren't in the 'questions' table
+                # The existing_qr.question_id should remain None for Snapshot Pattern
 
                 session.add(existing_qr)
                 question_result = existing_qr

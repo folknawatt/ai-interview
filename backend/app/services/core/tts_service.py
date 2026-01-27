@@ -59,7 +59,11 @@ class TTSService:
                 audio_dir = Path.cwd() / settings.tts_audio_dir
                 audio_dir.mkdir(parents=True, exist_ok=True)
 
-                filename = f"question_{question_id}.wav"
+                # Get the correct file extension from the generated audio file
+                # Edge TTS generates .mp3, Gemini TTS generates .wav
+                # e.g., ".mp3" or ".wav"
+                audio_extension = Path(audio_path).suffix
+                filename = f"question_{question_id}{audio_extension}"
                 dest_path = audio_dir / filename
                 shutil.copy2(audio_path, dest_path)
 

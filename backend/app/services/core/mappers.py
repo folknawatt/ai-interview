@@ -16,15 +16,20 @@ class InterviewMapper:
     @staticmethod
     def to_orm_question_result(
         session_id: str,
-        question_id: int,
+        question_id: int,  # Note: This is actually question_result_id from Snapshot Pattern
         question: str,
         transcript: str,
         evaluation: InterviewEvaluationResponse
     ) -> QuestionResult:
-        """Convert Schema Evaluation to ORM QuestionResult."""
+        """Convert Schema Evaluation to ORM QuestionResult.
+
+        Note: question_id parameter is NOT used as FK to questions table
+        since Snapshot Pattern stores questions directly in QuestionResult.question field.
+        """
         return QuestionResult(
             session_id=session_id,
-            question_id=question_id,
+            # question_id FK intentionally left as None for Snapshot Pattern
+            # Session questions aren't stored in the 'questions' table
             question=question,
             transcript=transcript,
             communication_score=evaluation.scores.communication,

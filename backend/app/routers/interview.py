@@ -7,14 +7,13 @@ Provides endpoints for candidates to:
 - Get interview session summary and results
 """
 import json
-import uuid
 from typing import Dict, Any
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from sqlalchemy.orm import Session
 
 from app.database.db import get_db
 from app.dependencies import get_api_key
-from app.services import InterviewService, QuestionService, HRService
+from app.services import InterviewService, QuestionService
 from app.services.core.tts_service import TTSService
 from app.services.interview.resume_service import ResumeService
 from app.exceptions import NotFoundError
@@ -96,20 +95,30 @@ async def get_interview_question(role_id: str, index: int) -> Dict[str, Any]:
 async def get_session_question(
     session_id: str,
     index: int,
+    skip_tts: bool = False,
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Get interview question from a specific session (Snapshot Flow)."""
+    """Get interview question from a specific session (Snapshot Flow).
+
+    Args:
+        session_id: Interview session ID
+        index: Question index (0-based)
+        skip_tts: If True, skip TTS audio generation (for checking next question without audio)
+    """
     result = QuestionService.get_session_question(db, session_id, index)
 
     if not result:
         # If no questions found in session, likely invalid session
         raise NotFoundError(f"Session '{session_id}' not found")
 
-    if result.get("status") == "continue" and "question" in result:
+    # Only generate TTS if not skipped
+    if result.get("status") == "continue" and "question" in result and not skip_tts:
         result["audio_path"] = TTSService.generate_question_audio(
             text=result["question"],
             question_id=result["question_id"]
         )
+    else:
+        result["audio_path"] = None
 
     return result
 
