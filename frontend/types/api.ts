@@ -60,6 +60,8 @@ export interface HRUser extends User {
 export interface Role {
   id: string;
   title: string;
+  question_count?: number;
+  questions?: string[];
 }
 
 export interface Question {

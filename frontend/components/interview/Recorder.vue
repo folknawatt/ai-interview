@@ -42,38 +42,18 @@
       <button
         v-if="!isRecording && !recordedBlob"
         @click="$emit('start')"
-        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-bg bg-interview-primary rounded-xl hover:bg-interview-primary-hover focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 shadow-glow-amber hover:shadow-glow-amber-lg"
+        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-bg bg-interview-primary rounded-xl hover:bg-interview-primary-hover focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 shadow-glow-amber hover:shadow-glow-amber-lg group"
       >
-        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-          ></path>
-        </svg>
+        <VideoCameraIcon class="w-6 h-6 mr-2 transition-transform duration-300 group-hover:scale-110" />
         เริ่มอัดวิดีโอ
       </button>
 
       <button
         v-if="isRecording"
         @click="$emit('stop')"
-        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-interview-bg transition-all shadow-lg animate-pulse"
+        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-white bg-interview-warning rounded-xl hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-interview-warning focus:ring-offset-2 focus:ring-offset-interview-bg transition-all shadow-lg animate-pulse"
       >
-        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          ></path>
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
-          ></path>
-        </svg>
+        <StopIcon class="w-6 h-6 mr-2 animate-pulse" />
         หยุดอัด
       </button>
 
@@ -81,22 +61,12 @@
         v-if="recordedBlob"
         @click="$emit('submit')"
         :disabled="isSubmitting"
-        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-bg bg-interview-primary rounded-xl hover:bg-interview-primary-hover focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-amber hover:shadow-glow-amber-lg"
+        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-bg bg-interview-primary rounded-xl hover:bg-interview-primary-hover focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-amber hover:shadow-glow-amber-lg group"
       >
-        <svg
-          v-if="!isSubmitting"
-          class="w-6 h-6 mr-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-          ></path>
-        </svg>
+        <PaperAirplaneIcon 
+          v-if="!isSubmitting" 
+          class="w-6 h-6 mr-2 -rotate-45 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" 
+        />
         <svg v-else class="animate-spin w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24">
           <circle
             class="opacity-25"
@@ -112,14 +82,15 @@
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
         </svg>
-        ส่งคำตอบ
+        {{ isSubmitting ? 'กำลังส่ง...' : 'ส่งคำตอบ' }}
       </button>
 
       <button
         v-if="recordedBlob && !isSubmitting"
         @click="$emit('reset')"
-        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-text-secondary border-2 border-interview-surface-border rounded-xl hover:bg-interview-surface-hover hover:text-interview-text-primary focus:outline-none focus:ring-2 focus:ring-interview-surface-border focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300"
+        class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-text-secondary border-2 border-interview-surface-border rounded-xl hover:bg-interview-surface-hover hover:text-interview-text-primary focus:outline-none focus:ring-2 focus:ring-interview-surface-border focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 group"
       >
+        <ArrowPathIcon class="w-5 h-5 mr-2 transition-transform duration-500 group-hover:rotate-180" />
         อัดใหม่
       </button>
     </div>
@@ -127,14 +98,14 @@
     <div v-if="isSubmitting" class="mt-4 text-center text-interview-text-secondary animate-pulse">
       กำลังอัพโหลดและวิเคราะห์ผล...
     </div>
-    <div v-if="error" class="mt-4 text-center text-red-400">
+    <div v-if="error" class="mt-4 text-center text-interview-warning">
       {{ error }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { VideoCameraIcon } from '@heroicons/vue/24/solid'
+import { VideoCameraIcon, StopIcon, PaperAirplaneIcon, ArrowPathIcon } from '@heroicons/vue/24/solid'
 
 defineProps<{
   isRecording: boolean

@@ -16,10 +16,9 @@ export default defineNuxtRouteMiddleware((to) => {
     })
   }
 
-  // TODO: Add role-based authorization when user roles are implemented
-  // For now, all authenticated users can access HR routes
-  // In production, check if user has 'hr' or 'admin' role:
-  // if (!authStore.hasRole('hr') && !authStore.hasRole('admin')) {
-  //   return navigateTo('/403')
-  // }
+  // Role-based authorization: only HR and Admin can access
+  if (!authStore.hasRole('hr') && !authStore.hasRole('admin')) {
+    return navigateTo('/403')
+  }
 })
+
