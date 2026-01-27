@@ -41,13 +41,14 @@ export const useInterview = () => {
 
   /**
    * Fetch question from API
+   * @param skipTts - If true, skip TTS audio generation (for checking next question status)
    */
-  const getQuestion = async (roleId: string, index: number) => {
+  const getQuestion = async (roleId: string, index: number, skipTts: boolean = false) => {
     try {
       // If we have a server-generated session (from uploadResume), use the session endpoint
       // Client-generated sessions start with 'session_', server ones with 'sess_'
       if (sessionId.value && sessionId.value.startsWith('sess_')) {
-        const response = await interviewService.getSessionQuestion(sessionId.value, index);
+        const response = await interviewService.getSessionQuestion(sessionId.value, index, skipTts);
         
         if (response.status === 'continue' && response.question) {
           currentQuestion.value = response.question;
@@ -68,13 +69,45 @@ export const useInterview = () => {
     }
   };
 
+  // Track current audio instance for cleanup
+  let currentAudioInstance: HTMLAudioElement | null = null;
+
   /**
    * Play audio for current question
+   * Supports both .mp3 (Edge TTS) and .wav (Gemini TTS) formats
    */
   const playAudio = async () => {
-    if (currentAudioPath.value) {
+    if (!currentAudioPath.value) {
+      console.warn('No audio path available for playback');
+      return;
+    }
+
+    // Stop and cleanup previous audio if playing
+    if (currentAudioInstance) {
+      currentAudioInstance.pause();
+      currentAudioInstance.src = '';
+      currentAudioInstance = null;
+    }
+
+    try {
       const audio = new Audio(currentAudioPath.value);
-      await audio.play(); // Return promise for error handling
+      currentAudioInstance = audio;
+      
+      // Add error handler for audio loading/playback issues
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        console.error('Failed to load audio from:', currentAudioPath.value);
+      };
+
+      await audio.play();
+    } catch (error) {
+      // Handle autoplay restrictions or other playback errors
+      if (error instanceof DOMException && error.name === 'NotAllowedError') {
+        console.log('Autoplay blocked by browser. User interaction required.');
+      } else {
+        console.error('Failed to play audio:', error);
+      }
+      throw error; // Re-throw for caller to handle
     }
   };
 

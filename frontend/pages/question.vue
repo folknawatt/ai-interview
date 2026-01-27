@@ -49,12 +49,28 @@
         </div>
       </div>
 
+      <!-- Audio notification when autoplay blocked -->
+      <div 
+        v-if="showAudioNotification && currentAudioPath" 
+        class="mb-4 p-3 bg-interview-primary/20 border border-interview-primary/50 rounded-xl animate-fade-in-up"
+      >
+        <p class="text-interview-primary text-sm font-medium flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          กดปุ่มด้านล่างเพื่อฟังคำถาม
+        </p>
+      </div>
+
       <!-- Audio playback button -->
       <div v-if="currentAudioPath" class="mb-4">
         <button
-          @click="playAudio"
-          class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-interview-text-secondary bg-interview-surface border border-interview-surface-border hover:border-interview-primary/50 hover:bg-interview-surface-hover rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary transition-all duration-300"
-          aria-label="ฟังคำถามอีกครั้ง"
+          @click="handlePlayAudio"
+          class="inline-flex items-center px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-300"
+          :class="showAudioNotification 
+            ? 'text-interview-bg bg-interview-primary hover:bg-interview-primary-hover shadow-glow-amber animate-pulse' 
+            : 'text-interview-text-secondary bg-interview-surface border border-interview-surface-border hover:border-interview-primary/50 hover:bg-interview-surface-hover'"
+          aria-label="ฟังคำถาม"
         >
           <svg
             class="w-5 h-5 mr-2"
@@ -71,7 +87,7 @@
               d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
             ></path>
           </svg>
-          ฟังคำถามอีกครั้ง
+          {{ showAudioNotification ? '🔊 กดเพื่อฟังคำถาม' : 'ฟังคำถามอีกครั้ง' }}
         </button>
       </div>
 
@@ -141,7 +157,18 @@ const router = useRouter()
 
 const timeLeft = ref(30)
 const totalQuestions = ref(5) // Default value, will be updated from API response
+const showAudioNotification = ref(false) // Show notification when autoplay blocked
 let timer: ReturnType<typeof setInterval>
+
+// Handle audio play with notification dismissal
+const handlePlayAudio = async () => {
+  try {
+    await playAudio()
+    showAudioNotification.value = false
+  } catch (error) {
+    console.error('Error playing audio:', error)
+  }
+}
 
 onMounted(async () => {
   // Check if role is selected
@@ -166,11 +193,13 @@ onMounted(async () => {
         setTimeout(async () => {
           try {
             await playAudio()
+            showAudioNotification.value = false
           } catch (error) {
             // Autoplay blocked by browser - show notification
             console.log('Autoplay blocked. User needs to click play button.')
+            showAudioNotification.value = true
           }
-        }, 100)
+        }, 300)
       }
     } else if (response.status === 'finished') {
       // All questions completed - mark interview as complete

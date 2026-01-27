@@ -92,10 +92,10 @@ const submitRecording = async () => {
     // Set analysis result in state for result page
     setAnalysisResult(result)
 
-    // Check if there are more questions
+    // Check if there are more questions (skip TTS to avoid playing audio before navigation)
     if (selectedRole.value) {
       const nextIndex = currentQuestionIndex.value + 1
-      const nextQ = await getQuestion(selectedRole.value.id, nextIndex)
+      const nextQ = await getQuestion(selectedRole.value.id, nextIndex, true)  // skipTts = true
 
       if (nextQ.status === 'continue') {
         // More questions available - go to next question

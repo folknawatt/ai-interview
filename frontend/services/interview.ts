@@ -8,10 +8,12 @@ import type { Question, AnalysisResponse, SessionSummary } from '@/types'
 export const interviewService = {
   /**
    * Fetch a question for a specific session and index (Snapshot Pattern)
+   * @param skipTts - If true, skip TTS audio generation (for checking next question)
    */
-  async getSessionQuestion(sessionId: string, index: number): Promise<Question> {
+  async getSessionQuestion(sessionId: string, index: number, skipTts: boolean = false): Promise<Question> {
     const { get } = useApi()
-    return await get<Question>(`/interview/session/${sessionId}/question/${index}`)
+    const params = skipTts ? '?skip_tts=true' : ''
+    return await get<Question>(`/interview/session/${sessionId}/question/${index}${params}`)
   },
 
   /**
