@@ -1,148 +1,234 @@
 <template>
-  <div class="reports-container">
-    <div class="mb-6">
-      <NuxtLink 
-        to="/hr/dashboard" 
-        class="inline-flex items-center gap-2 px-4 py-2 text-interview-text-secondary hover:text-interview-text-primary hover:bg-interview-surface rounded-xl transition-all duration-300 -ml-4"
+  <div class="relative min-h-screen pb-20">
+    <!-- Ambient Background Elements -->
+    <div class="absolute top-20 right-20 w-[400px] h-[400px] bg-interview-accent-rose/10 rounded-full blur-[100px] -z-10"></div>
+    <div class="absolute bottom-40 left-10 w-[300px] h-[300px] bg-interview-primary/5 rounded-full blur-[80px] -z-10"></div>
+
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 opacity-0 animate-fade-in-up">
+      <div>
+        <NuxtLink 
+          to="/hr/dashboard" 
+          class="inline-flex items-center gap-2 text-interview-text-secondary hover:text-white transition-colors mb-4 group"
+        >
+          <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          Back to Dashboard
+        </NuxtLink>
+        <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">
+          Interview Reports
+        </h1>
+        <p class="text-interview-text-secondary text-lg">
+          Analyze candidate performance and review results.
+        </p>
+      </div>
+      
+      <!-- Top Level Actions or Summary -->
+      <div v-if="statistics" class="flex gap-4">
+         <div class="px-6 py-3 rounded-2xl bg-interview-surface border border-interview-surface-border backdrop-blur-md">
+            <div class="text-xs text-interview-text-secondary uppercase tracking-wider mb-1">Pass Rate</div>
+            <div class="text-2xl font-bold text-interview-success">{{ statistics.pass_rate }}%</div>
+         </div>
+         <div class="px-6 py-3 rounded-2xl bg-interview-surface border border-interview-surface-border backdrop-blur-md">
+            <div class="text-xs text-interview-text-secondary uppercase tracking-wider mb-1">Avg Score</div>
+            <div class="text-2xl font-bold text-interview-accent-sky">{{ statistics.average_score }}</div>
+         </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar (Floating Command Island) -->
+    <div class="sticky top-4 z-30 mb-8 opacity-0 animate-fade-in-up" style="animation-delay: 100ms">
+      <div class="bg-interview-bg-secondary/40 backdrop-blur-xl border border-interview-surface-border rounded-2xl p-2 shadow-xl flex flex-col md:flex-row items-center gap-2">
+        
+        <!-- Search -->
+        <div class="relative flex-1 w-full md:w-auto">
+          <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-interview-text-muted" />
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Search candidates..." 
+            class="w-full bg-transparent border-none text-white focus:ring-0 pl-10 pr-4 py-2 placeholder-interview-text-muted/50"
+          />
+        </div>
+
+        <div class="h-8 w-px bg-interview-surface-border hidden md:block"></div>
+
+        <!-- Filters Group -->
+        <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto p-1">
+          <select 
+            v-model="filters.roleId"
+            class="bg-interview-bg-secondary/50 border border-interview-surface-border rounded-xl text-sm text-interview-text-secondary px-3 py-2 outline-none focus:border-interview-primary focus:text-white transition-colors"
+          >
+            <option value="" class="bg-interview-surface text-interview-text-primary">All Roles</option>
+            <option v-for="role in visibleRoles" :key="role.id" :value="role.id" class="bg-interview-surface text-interview-text-primary">
+              {{ role.title }}
+            </option>
+          </select>
+
+          <select 
+            v-model="filters.recommendation"
+            class="bg-interview-bg-secondary/50 border border-interview-surface-border rounded-xl text-sm text-interview-text-secondary px-3 py-2 outline-none focus:border-interview-primary focus:text-white transition-colors"
+          >
+            <option value="" class="bg-interview-surface text-interview-text-primary">Recommendation</option>
+            <option value="Strong Pass" class="bg-interview-surface text-interview-text-primary">Strong Pass</option>
+            <option value="Pass" class="bg-interview-surface text-interview-text-primary">Pass</option>
+            <option value="Review" class="bg-interview-surface text-interview-text-primary">Review</option>
+            <option value="Fail" class="bg-interview-surface text-interview-text-primary">Fail</option>
+          </select>
+
+           <!-- Clear Button -->
+           <button 
+             v-if="hasActiveFilters"
+             @click="clearFilters"
+             class="p-2 rounded-xl hover:bg-interview-surface-hover text-interview-text-muted hover:text-white transition-colors"
+             title="Clear Filters"
+           >
+             <XMarkIcon class="w-5 h-5" />
+           </button>
+        </div>
+
+        <div class="h-8 w-px bg-interview-surface-border hidden md:block"></div>
+
+        <button 
+          @click="loadReports" 
+          class="bg-interview-primary text-interview-bg font-bold px-6 py-2 rounded-xl hover:bg-interview-primary-hover transition-colors shadow-glow-amber w-full md:w-auto"
+        >
+          Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Reports Data Grid -->
+    <!-- Loading State: Skeleton Loader -->
+    <div v-if="loading" class="space-y-4">
+      <div 
+        v-for="n in 5" 
+        :key="n" 
+        class="bg-interview-surface/50 border border-interview-surface-border/50 rounded-2xl p-4 md:grid md:grid-cols-12 md:gap-4 md:items-center animate-pulse"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Dashboard
-      </NuxtLink>
-    </div>
-    <h1 class="reports-anim text-3xl font-bold mb-8 text-interview-text-primary" style="--delay: 0ms">Interview Reports</h1>
-
-    <!-- Statistics Cards -->
-    <div v-if="statistics" class="stats-grid">
-      <div class="stat-card reports-anim" style="--delay: 80ms">
-        <div class="stat-icon">
-          <UsersIcon class="icon-svg" />
+        <div class="col-span-3 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-interview-surface-border"></div>
+          <div class="space-y-2">
+            <div class="h-4 w-32 bg-interview-surface-border rounded"></div>
+            <div class="h-3 w-20 bg-interview-surface-border rounded md:hidden"></div>
+          </div>
         </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ statistics.total_candidates }}</div>
-          <div class="stat-label">Total Candidates</div>
+        <div class="col-span-2 hidden md:block">
+          <div class="h-4 w-24 bg-interview-surface-border rounded"></div>
         </div>
-      </div>
-      <div class="stat-card reports-anim" style="--delay: 160ms">
-        <div class="stat-icon">
-          <ChartBarIcon class="icon-svg" />
+        <div class="col-span-2 hidden md:block">
+           <div class="h-4 w-20 bg-interview-surface-border rounded"></div>
         </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ statistics.average_score }}</div>
-          <div class="stat-label">Average Score</div>
+        <div class="col-span-2 flex justify-center">
+           <div class="h-8 w-16 bg-interview-surface-border rounded-full"></div>
         </div>
-      </div>
-      <div class="stat-card reports-anim" style="--delay: 240ms">
-        <div class="stat-icon">
-          <CheckCircleIcon class="icon-svg" />
+        <div class="col-span-2 flex justify-center">
+           <div class="h-6 w-20 bg-interview-surface-border rounded"></div>
         </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ statistics.pass_rate }}%</div>
-          <div class="stat-label">Pass Rate</div>
-        </div>
+        <div class="col-span-1"></div>
       </div>
     </div>
 
-    <!-- Filter Panel -->
-    <div class="filter-panel reports-anim" style="--delay: 320ms">
-      <div class="filter-group">
-        <label>Role:</label>
-        <select v-model="filters.roleId">
-          <option value="">All Roles</option>
-          <option v-for="role in visibleRoles" :key="role.id" :value="role.id">
-            {{ role.title }}
-          </option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label>Min Score:</label>
-        <input
-          v-model.number="filters.minScore"
-          type="number"
-          min="1"
-          max="5"
-          step="0.1"
-          placeholder="1-5"
-        />
-      </div>
-
-      <div class="filter-group">
-        <label>Recommendation:</label>
-        <select v-model="filters.recommendation">
-          <option value="">All</option>
-          <option value="Strong Pass">Strong Pass</option>
-          <option value="Pass">Pass</option>
-          <option value="Review">Review</option>
-          <option value="Fail">Fail</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label>Search:</label>
-        <input v-model="searchQuery" type="text" placeholder="Search by name..." />
-      </div>
-
-      <button @click="loadReports" class="btn-primary">Apply Filters</button>
-      <button @click="clearFilters" class="btn-secondary">Clear</button>
+    <!-- Error State -->
+    <div v-else-if="error" class="text-center py-20 text-interview-warning bg-interview-surface/30 rounded-3xl border border-interview-warning/20">
+      <ExclamationTriangleIcon class="w-12 h-12 mx-auto mb-4 opacity-50" />
+      <p>{{ error }}</p>
     </div>
 
-    <!-- Reports Table -->
-    <div v-if="loading" class="loading">Loading reports...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="filteredReports.length === 0" class="empty">No reports found</div>
-    <table v-else class="reports-table reports-anim" style="--delay: 400ms">
-      <thead>
-        <tr>
-          <th @click="sort('name')">Name {{ getSortIcon('name') }}</th>
-          <th @click="sort('role_id')">Role {{ getSortIcon('role_id') }}</th>
-          <th @click="sort('interview_date')">Date {{ getSortIcon('interview_date') }}</th>
-          <th @click="sort('average_score')">Score {{ getSortIcon('average_score') }}</th>
-          <th @click="sort('overall_recommendation')">
-            Recommendation {{ getSortIcon('overall_recommendation') }}
-          </th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="report in sortedReports"
+    <!-- Empty State -->
+    <div v-else-if="filteredReports.length === 0" class="text-center py-20 bg-interview-surface/30 rounded-3xl border border-interview-surface-border">
+      <div class="bg-interview-bg-secondary w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+        <MagnifyingGlassIcon class="w-8 h-8 text-interview-text-muted" />
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">No reports found</h3>
+      <p class="text-interview-text-secondary">Try adjusting your filters or search query.</p>
+      <button @click="clearFilters" class="mt-6 text-interview-primary hover:underline">Clear all filters</button>
+    </div>
+
+    <!-- Data State -->
+    <div v-else class="space-y-4">
+      
+      <!-- Table Header (Pseudo-Table) -->
+      <div class="hidden md:grid grid-cols-12 gap-4 px-6 text-xs font-bold text-interview-text-muted uppercase tracking-wider mb-2 opacity-0 animate-fade-in-up" style="animation-delay: 100ms">
+        <div class="col-span-3 cursor-pointer hover:text-white transition-colors" @click="sort('name')">Candidate {{ getSortIcon('name') }}</div>
+        <div class="col-span-2 cursor-pointer hover:text-white transition-colors" @click="sort('role_id')">Role {{ getSortIcon('role_id') }}</div>
+        <div class="col-span-2 cursor-pointer hover:text-white transition-colors" @click="sort('interview_date')">Date {{ getSortIcon('interview_date') }}</div>
+        <div class="col-span-2 text-center cursor-pointer hover:text-white transition-colors" @click="sort('average_score')">Score {{ getSortIcon('average_score') }}</div>
+        <div class="col-span-2 text-center cursor-pointer hover:text-white transition-colors" @click="sort('overall_recommendation')">Result {{ getSortIcon('overall_recommendation') }}</div>
+        <div class="col-span-1 text-right">Actions</div>
+      </div>
+
+      <!-- Rows with TransitionGroup -->
+      <TransitionGroup name="list" tag="div" class="space-y-4">
+        <div 
+          v-for="(report, index) in sortedReports"
           :key="report.session_id"
           @click="viewReport(report.session_id)"
-          class="clickable-row"
+          class="group relative bg-interview-surface backdrop-blur-sm border border-interview-surface-border rounded-2xl p-4 md:grid md:grid-cols-12 md:gap-4 md:items-center transition-all duration-300 hover:scale-[1.01] hover:bg-interview-surface-hover hover:border-interview-primary/30 hover:shadow-lg cursor-pointer"
+          :style="{ transitionDelay: `${index * 50}ms` }"
         >
-          <td>{{ report.name }}</td>
-          <td>{{ formatRoleName(report.role_id) }}</td>
-          <td>{{ formatDate(report.interview_date) }}</td>
-          <td>
-            <span class="score-badge" :class="getScoreClass(report.average_score)">
-              {{ report.average_score ? report.average_score.toFixed(0) : 'N/A' }}
-            </span>
-          </td>
-          <td>
-            <span
-              class="recommendation-badge"
-              :class="getRecommendationClass(report.overall_recommendation)"
+          <!-- Name -->
+          <div class="col-span-3 flex items-center gap-3 mb-2 md:mb-0">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-interview-bg-secondary to-interview-surface border border-interview-surface-border flex items-center justify-center text-interview-text-primary font-bold shadow-inner">
+              {{ report.name.charAt(0).toUpperCase() }}
+            </div>
+            <div>
+               <div class="font-bold text-white group-hover:text-interview-primary transition-colors">{{ report.name }}</div>
+               <div class="text-xs text-interview-text-muted md:hidden">Applied for {{ formatRoleName(report.role_id) }}</div>
+            </div>
+          </div>
+
+          <!-- Role -->
+          <div class="col-span-2 text-sm text-interview-text-secondary hidden md:block text-ellipsis overflow-hidden whitespace-nowrap">
+            {{ formatRoleName(report.role_id) }}
+          </div>
+
+          <!-- Date -->
+          <div class="col-span-2 text-sm text-interview-text-secondary flex items-center gap-1 hidden md:flex">
+             {{ new Date(report.interview_date).toLocaleDateString() }}
+          </div>
+
+          <!-- Score -->
+          <div class="col-span-2 flex justify-center mt-2 md:mt-0">
+            <div 
+              class="px-3 py-1 rounded-full text-sm font-bold border"
+              :class="getScoreBadgeClass(report.average_score)"
             >
-              {{ report.overall_recommendation || 'Pending' }}
-            </span>
-          </td>
-          <td @click.stop>
-            <button @click="viewReport(report.session_id)" class="btn-view" title="View Details">
-              <EyeIcon class="icon-btn" />
-            </button>
-            <button
-              @click="downloadReport(report.session_id)"
-              class="btn-download"
+              {{ report.average_score ? report.average_score.toFixed(1) : 'N/A' }} / 5.0
+            </div>
+          </div>
+
+          <!-- Recommendation -->
+          <div class="col-span-2 flex justify-center mt-2 md:mt-0">
+             <span 
+               class="text-xs font-bold px-2 py-1 rounded uppercase tracking-wide border border-transparent"
+               :class="getRecTextClass(report.overall_recommendation)"
+             >
+               {{ report.overall_recommendation || 'PENDING' }}
+             </span>
+          </div>
+
+          <!-- Actions -->
+          <div class="col-span-1 flex justify-end gap-2 mt-4 md:mt-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+            <button 
+              @click.stop="downloadReport(report.session_id)"
+              class="p-2 rounded-xl hover:bg-interview-bg hover:text-interview-success transition-all text-interview-text-muted hover:scale-110 active:scale-95"
               title="Download PDF"
             >
-              <ArrowDownTrayIcon class="icon-btn" />
+              <ArrowDownTrayIcon class="w-5 h-5" />
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <button 
+              @click.stop="viewReport(report.session_id)"
+              class="p-2 rounded-xl bg-interview-bg-secondary text-interview-text-primary border border-interview-surface-border hover:border-interview-primary hover:text-interview-primary transition-all hover:scale-110 active:scale-95"
+              title="View Details"
+            >
+              <ChevronRightIcon class="w-5 h-5" />
+            </button>
+          </div>
+
+        </div>
+      </TransitionGroup>
+
+    </div>
   </div>
 </template>
 
@@ -153,7 +239,19 @@ import {
   CheckCircleIcon,
   EyeIcon,
   ArrowDownTrayIcon,
-} from '@heroicons/vue/24/solid'
+  ArrowLeftIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  XMarkIcon,
+  CalendarIcon,
+  ChevronRightIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/vue/24/outline'
+
+definePageMeta({
+  layout: 'hr',
+  middleware: ['hr']
+})
 
 const { getAllReports, getStatistics, downloadPDF } = useReports()
 const { getRoles } = useHR()
@@ -162,7 +260,7 @@ const router = useRouter()
 const statistics = ref<any>(null)
 const reports = ref<any[]>([])
 const roles = ref<any[]>([])
-const loading = ref(false)
+const loading = ref(true)
 const error = ref('')
 
 const filters = reactive({
@@ -172,7 +270,7 @@ const filters = reactive({
 })
 
 const searchQuery = ref('')
-const sortKey = ref('average_score')
+const sortKey = ref('average_score') // Default to highest score first
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const appliedRoleId = ref('')
 
@@ -208,10 +306,10 @@ const loadReports = async () => {
     appliedRoleId.value = filters.roleId
 
     const filterParams: any = {}
-    // Role filtering is handled in frontend to include candidate sub-roles
-    // if (filters.roleId) filterParams.roleId = filters.roleId 
+    if (filters.roleId) filterParams.roleId = filters.roleId 
     if (filters.minScore !== undefined) filterParams.minScore = filters.minScore
     if (filters.recommendation) filterParams.recommendation = filters.recommendation
+    if (searchQuery.value) filterParams.searchQuery = searchQuery.value
 
     reports.value = await getAllReports(filterParams)
   } catch (err: any) {
@@ -229,26 +327,18 @@ const clearFilters = () => {
   loadReports()
 }
 
+const hasActiveFilters = computed(() => {
+    return filters.roleId || filters.recommendation || searchQuery.value;
+});
+
 const visibleRoles = computed(() => {
   return roles.value.filter((role: any) => !role.title.includes('(Candidate'))
 })
 
 const filteredReports = computed(() => {
-  let result = reports.value
-
-  // Frontend Role Filter
-  if (appliedRoleId.value) {
-    const targetName = formatRoleName(appliedRoleId.value)
-    result = result.filter((r: any) => formatRoleName(r.role_id) === targetName)
-  }
-
-  // Search Filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter((report: any) => report.name.toLowerCase().includes(query))
-  }
-  
-  return result
+  // Client-side filtering is no longer needed as backend handles it along with search.
+  // We just return the reports from backend.
+  return reports.value
 })
 
 const sortedReports = computed(() => {
@@ -281,18 +371,13 @@ const sort = (key: string) => {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortKey.value = key
-    sortOrder.value = 'desc'
+    sortOrder.value = 'desc' // Default to desc for new sort
   }
 }
 
 const getSortIcon = (key: string) => {
   if (sortKey.value !== key) return ''
   return sortOrder.value === 'asc' ? '↑' : '↓'
-}
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
 }
 
 const formatRoleName = (roleId: string) => {
@@ -303,27 +388,21 @@ const formatRoleName = (roleId: string) => {
   return roleId
 }
 
-// Unified color scheme:
-// Green (22c55e) = Excellent (Score >= 4/5, Strong Pass)
-// Blue (3b82f6) = Good (Score >= 3/5, Pass)
-// Amber (FFC428) = Fair (Score >= 2/5, Review)
-// Red (ef4444) = Poor (Score < 2/5, Fail)
-// Gray = Pending/Unknown
-
-const getScoreClass = (score: number | null) => {
-  if (score === null) return 'score-pending'
-  if (score >= 4) return 'score-excellent'   // 4-5: Excellent (Green)
-  if (score >= 3) return 'score-good'        // 3-4: Good (Blue)
-  if (score >= 2) return 'score-fair'        // 2-3: Fair (Amber)
-  return 'score-poor'                        // 0-2: Poor (Red)
+// New Visual Style Helpers
+const getScoreBadgeClass = (score: number | null) => {
+  if (score === null) return 'bg-interview-surface border-interview-surface-border text-interview-text-muted'
+  if (score >= 4) return 'bg-interview-success/10 border-interview-success/30 text-interview-success shadow-[0_0_10px_rgba(34,197,94,0.2)]'
+  if (score >= 3) return 'bg-interview-info/10 border-interview-info/30 text-interview-info'
+  if (score >= 2) return 'bg-interview-warning/10 border-interview-warning/30 text-interview-warning'
+  return 'bg-red-500/10 border-red-500/30 text-red-500'
 }
 
-const getRecommendationClass = (rec: string | null) => {
-  if (!rec) return 'rec-pending'
-  if (rec === 'Strong Pass') return 'rec-strong-pass'  // Green
-  if (rec === 'Pass') return 'rec-pass'                // Blue
-  if (rec === 'Review') return 'rec-review'            // Amber
-  return 'rec-fail'                                    // Red
+const getRecTextClass = (rec: string | null) => {
+  if (!rec) return 'text-interview-text-muted'
+  if (rec === 'Strong Pass') return 'text-interview-success'
+  if (rec === 'Pass') return 'text-interview-info'
+  if (rec === 'Review') return 'text-interview-warning'
+  return 'text-red-500' 
 }
 
 const viewReport = (sessionId: string) => {
@@ -340,286 +419,27 @@ const downloadReport = async (sessionId: string) => {
 </script>
 
 <style scoped>
-.reports-container {
-  padding: 0;
-  max-width: 1400px;
-  margin: 0 auto;
+/* Minimal override for select dropdown chevron color if needed, majority is tailwind */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a1a1aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+/* List Transitions */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.4s ease;
 }
-
-.stat-card {
-  background: linear-gradient(135deg, #FFB128 0%, #FF9500 100%);
-  color: #0a0a0f;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 0 30px rgba(255, 177, 40, 0.2);
-}
-
-.stat-icon {
-  font-size: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon-svg {
-  width: 3rem;
-  height: 3rem;
-  color: #0a0a0f;
-}
-
-.icon-btn {
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-.filter-panel {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  padding: 1.5rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  align-items: flex-end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.filter-group label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #a1a1aa;
-}
-
-.filter-group input,
-.filter-group select {
-  padding: 0.6rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.75rem;
-  font-size: 0.95rem;
-  color: #ffffff;
-}
-
-.filter-group input::placeholder {
-  color: #71717a;
-}
-
-.filter-group select option {
-  background: #12121a;
-  color: #ffffff;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 0.6rem 1.5rem;
-  border: none;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: #FFB128;
-  color: #0a0a0f;
-}
-
-.btn-primary:hover {
-  background: #FF9500;
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #a1a1aa;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-}
-
-.reports-table {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  border-radius: 1rem;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.reports-table th {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  color: #ffffff;
-}
-
-.reports-table th:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.reports-table td {
-  padding: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  color: #a1a1aa;
-}
-
-.clickable-row {
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.clickable-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.clickable-row:hover td {
-  color: #ffffff;
-}
-
-.score-badge,
-.recommendation-badge {
-  padding: 0.4rem 0.8rem;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: inline-block;
-}
-
-.score-excellent {
-  background: #22c55e;
-  color: white;
-}
-
-.score-good {
-  background: #3b82f6;
-  color: white;
-}
-
-.score-fair {
-  background: #FFC428;
-  color: #0a0a0f;
-}
-
-.score-poor {
-  background: #ef4444;
-  color: white;
-}
-
-.score-pending {
-  background: rgba(255, 255, 255, 0.2);
-  color: #a1a1aa;
-}
-
-.rec-strong-pass {
-  background: #22c55e;
-  color: white;
-}
-
-.rec-pass {
-  background: #3b82f6;
-  color: white;
-}
-
-.rec-review {
-  background: #FFC428;
-  color: #0a0a0f;
-}
-
-.rec-fail {
-  background: #ef4444;
-  color: white;
-}
-
-.rec-pending {
-  background: rgba(255, 255, 255, 0.2);
-  color: #a1a1aa;
-}
-
-.btn-view,
-.btn-download {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  transition: all 0.2s;
-  color: #a1a1aa;
-}
-
-.btn-view:hover {
-  color: #FFB128;
-  transform: scale(1.2);
-}
-
-.btn-download:hover {
-  color: #22c55e;
-  transform: scale(1.2);
-}
-
-.loading,
-.error,
-.empty {
-  text-align: center;
-  padding: 3rem;
-  font-size: 1.1rem;
-  color: #a1a1aa;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.error {
-  color: #ef4444;
-}
-
-/* Smooth staggered animation */
-.reports-anim {
+.list-enter-from,
+.list-leave-to {
   opacity: 0;
-  transform: translate3d(0, 20px, 0);
-  animation: reports-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: var(--delay, 0ms);
+  transform: translateY(20px);
 }
-
-@keyframes reports-fade-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
+.list-move {
+  transition: transform 0.4s ease;
 }
 </style>

@@ -1,35 +1,39 @@
 <template>
   <div class="text-interview-text-primary p-8">
+    <!-- Header Actions (Always Visible) -->
+    <div class="max-w-6xl mx-auto flex justify-between items-center mb-8">
+      <button
+        @click="navigateTo('/hr/reports')"
+        class="inline-flex items-center gap-2 px-4 py-2 text-interview-text-secondary hover:text-interview-text-primary hover:bg-interview-surface rounded-xl transition-all duration-300 group z-10"
+      >
+        <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        Back to Reports
+      </button>
+
+      <button
+        v-if="report"
+        @click="handleDownloadPDF"
+        class="flex items-center gap-2 px-4 py-2 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl transition-all duration-300 font-semibold shadow-glow-amber hover:shadow-glow-amber-lg group z-10"
+      >
+        <ArrowDownTrayIcon class="w-5 h-5 transition-transform group-hover:-translate-y-1" />
+        Download PDF
+      </button>
+    </div>
+
     <div v-if="loading" class="text-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-4 border-interview-primary border-t-transparent mx-auto mb-4"></div>
       <p class="text-interview-text-secondary">Loading report...</p>
     </div>
+
     <div
       v-else-if="error"
-      class="max-w-4xl mx-auto bg-red-500/20 border border-red-500/30 text-red-400 px-6 py-4 rounded-xl"
+      class="max-w-4xl mx-auto bg-interview-warning/10 border border-interview-warning/30 text-interview-warning px-6 py-4 rounded-xl flex items-center gap-2"
     >
+      <ExclamationTriangleIcon class="w-6 h-6 flex-shrink-0" />
       {{ error }}
     </div>
+
     <div v-else-if="report" class="max-w-6xl mx-auto">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-8">
-        <button
-          @click="navigateTo('/hr/reports')"
-          class="inline-flex items-center gap-2 px-4 py-2 text-interview-text-secondary hover:text-interview-text-primary hover:bg-interview-surface rounded-xl transition-all duration-300"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Reports
-        </button>
-        <button
-          @click="handleDownloadPDF"
-          class="flex items-center gap-2 px-4 py-2 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl transition-all duration-300 font-semibold shadow-glow-amber"
-        >
-          <ArrowDownTrayIcon class="w-5 h-5" />
-          Download PDF
-        </button>
-      </div>
 
       <!-- Candidate Info -->
       <div class="report-card bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border mb-6" style="--delay: 0ms">
@@ -152,12 +156,19 @@
                 :class="
                   question.pass_prediction
                     ? 'bg-interview-success/20 text-interview-success'
-                    : 'bg-red-500/20 text-red-400'
+                    : 'bg-interview-warning/20 text-interview-warning'
                 "
               >
                 {{ question.pass_prediction ? '✓ Pass' : '✗ Fail' }}
               </span>
-              <span class="text-interview-text-muted">{{ expandedQuestions[idx] ? '▲' : '▼' }}</span>
+              <button
+                class="p-2 rounded-full hover:bg-interview-surface-border transition-colors text-interview-text-muted hover:text-white"
+              >
+                <ChevronDownIcon
+                  class="w-5 h-5 transition-transform duration-300"
+                  :class="{ 'rotate-180': expandedQuestions[idx] }"
+                />
+              </button>
             </div>
           </div>
 
@@ -170,6 +181,23 @@
             leave-to-class="opacity-0 max-h-0"
           >
             <div v-if="expandedQuestions[idx]" class="p-6 bg-interview-bg-secondary border-t border-interview-surface-border">
+              <!-- Video Answer -->
+              <div v-if="question.video_url" class="mb-6">
+                <h4 class="text-sm font-bold text-interview-primary mb-2 flex items-center gap-2">
+                  <VideoCameraIcon class="w-4 h-4" />
+                  Video Answer:
+                </h4>
+                <div class="relative w-full max-w-2xl rounded-xl overflow-hidden border border-interview-surface-border bg-black">
+                  <video 
+                    controls 
+                    class="w-full h-auto aspect-video"
+                    :src="getVideoUrl(question.video_url)"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              </div>
+
               <!-- Individual Scores -->
               <div class="flex flex-wrap gap-4 mb-6">
                 <div class="bg-interview-surface px-4 py-3 rounded-xl text-center border border-interview-surface-border">
@@ -209,9 +237,9 @@
 
                 <div
                   v-if="question.feedback.weaknesses"
-                  class="p-4 bg-red-500/10 border-l-4 border-red-500 rounded-r-xl"
+                  class="p-4 bg-interview-warning/10 border-l-4 border-interview-warning rounded-r-xl"
                 >
-                  <h4 class="flex items-center gap-2 font-bold text-red-400 mb-1">
+                  <h4 class="flex items-center gap-2 font-bold text-interview-warning mb-1">
                     <ExclamationTriangleIcon class="w-4 h-4" />
                     Areas for Improvement:
                   </h4>
@@ -243,10 +271,18 @@ import {
   FireIcon,
   ExclamationTriangleIcon,
   DocumentTextIcon,
+  ArrowLeftIcon,
+  ChevronDownIcon,
+  VideoCameraIcon
 } from '@heroicons/vue/24/solid'
 import ScoreCard from '../../../components/charts/ScoreCard.vue'
 import ScoreRadarChart from '../../../components/charts/ScoreRadarChart.vue'
 import ScoreBarChart from '../../../components/charts/ScoreBarChart.vue'
+
+definePageMeta({
+  layout: 'hr',
+  middleware: ['hr']
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -261,6 +297,7 @@ interface Question {
   relevance_score: number;
   logical_thinking_score: number;
   transcript: string;
+  video_url?: string;
   feedback?: {
     strengths?: string;
     weaknesses?: string;
@@ -337,22 +374,35 @@ const getScoreClass = (score: number) => {
   if (score >= 4) return 'bg-interview-success/20 text-interview-success'
   if (score >= 3) return 'bg-interview-accent-sky/20 text-interview-accent-sky'
   if (score >= 2) return 'bg-interview-primary/20 text-interview-primary'
-  return 'bg-red-500/20 text-red-400'
+  return 'bg-interview-warning/20 text-interview-warning'
 }
 
 const getRecommendationClass = (rec: string) => {
-  if (rec === 'Strong Pass') return 'bg-interview-success text-white'
-  if (rec === 'Pass') return 'bg-interview-accent-sky text-interview-bg'
-  if (rec === 'Review') return 'bg-interview-primary text-interview-bg'
-  return 'bg-red-500 text-white'
+  if (rec === 'Strong Pass') return 'bg-interview-success text-white shadow-glow-green'
+  if (rec === 'Pass') return 'bg-interview-accent-sky text-white shadow-glow-blue'
+  if (rec === 'Review') return 'bg-interview-primary text-interview-bg shadow-glow-amber'
+  return 'bg-interview-warning text-white shadow-glow-red'
+}
+
+const getVideoUrl = (path: string) => {
+  if (!path) return ''
+  // If absolute URL, return as is
+  if (path.startsWith('http')) return path
+  
+  const config = useRuntimeConfig()
+  const baseURL = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
+  
+  // Ensure we don't double slash if base ends with / and path starts with /
+  const cleanBase = baseURL.replace(/\/$/, '')
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  
+  return `${cleanBase}${cleanPath}`
 }
 </script>
 
 <style scoped>
 .report-card {
-  opacity: 0;
-  transform: translate3d(0, 20px, 0);
-  animation: report-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: report-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: var(--delay, 0ms);
 }
 

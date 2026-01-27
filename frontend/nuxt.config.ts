@@ -6,8 +6,13 @@ export default defineNuxtConfig({
     devtools: { enabled: true },
     modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
     
+    // Global CSS
+    css: ['~/assets/css/main.css'],
+
     // Add Google Fonts for premium typography
     app: {
+        pageTransition: { name: 'page', mode: 'out-in' },
+        layoutTransition: { name: 'layout', mode: 'out-in' },
         head: {
             link: [
                 { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -16,6 +21,10 @@ export default defineNuxtConfig({
                     rel: 'stylesheet', 
                     href: 'https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap' 
                 }
+
+            ],
+            style: [
+                { innerHTML: 'body { background-color: #0a0a0f; color: #ffffff; }' }
             ]
         }
     },
@@ -34,7 +43,6 @@ export default defineNuxtConfig({
         '~': fileURLToPath(new URL('./', import.meta.url)),
         '@components': fileURLToPath(new URL('./components', import.meta.url)),
         '@composables': fileURLToPath(new URL('./composables', import.meta.url)),
-        '@services': fileURLToPath(new URL('./services', import.meta.url)),
         '@types': fileURLToPath(new URL('./types', import.meta.url)),
         '@store': fileURLToPath(new URL('./store', import.meta.url)),
     },

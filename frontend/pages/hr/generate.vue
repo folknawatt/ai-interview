@@ -1,137 +1,208 @@
 <template>
-  <div class="text-interview-text-primary p-8">
-    <div class="max-w-4xl mx-auto">
-      <div class="mb-6">
+  <div class="relative min-h-[80vh] flex flex-col items-center justify-center p-6 z-10">
+    <!-- Ambient Background Elements -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-interview-accent-sky/10 rounded-full blur-[100px] animate-pulse"></div>
+      <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-interview-primary/5 rounded-full blur-[80px]"></div>
+    </div>
+
+    <div class="w-full max-w-3xl opacity-0 animate-fade-in-up" style="animation-delay: 0ms">
+      <!-- Nav -->
+      <div class="mb-8">
         <NuxtLink 
           to="/hr/dashboard" 
-          class="inline-flex items-center gap-2 px-4 py-2 text-interview-text-secondary hover:text-interview-text-primary hover:bg-interview-surface rounded-xl transition-all duration-300 -ml-4"
+          class="inline-flex items-center gap-2 text-interview-text-secondary hover:text-white transition-colors mb-4 group"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeftIcon class="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           Back to Dashboard
         </NuxtLink>
+        <div class="flex items-center justify-between">
+          <h1 class="text-4xl font-black tracking-tight text-white flex items-center gap-3">
+            <SparklesIcon class="w-8 h-8 text-interview-primary animate-pulse" />
+            AI Generator
+          </h1>
+          <!-- Step Indicators -->
+          <div class="flex items-center gap-2">
+             <div class="h-2 w-8 rounded-full transition-all duration-500" :class="step >= 1 ? 'bg-interview-primary' : 'bg-interview-surface-border'"></div>
+             <div class="h-2 w-8 rounded-full transition-all duration-500" :class="step >= 2 ? 'bg-interview-primary' : 'bg-interview-surface-border'"></div>
+             <div class="h-2 w-8 rounded-full transition-all duration-500" :class="step >= 3 ? 'bg-interview-success' : 'bg-interview-surface-border'"></div>
+          </div>
+        </div>
       </div>
 
-      <h1 class="text-4xl font-bold mb-8 flex items-center gap-3 text-interview-text-primary">
-        <CpuChipIcon class="w-10 h-10 text-interview-primary" />
-        AI Question Generator
-      </h1>
-
-      <!-- Step 1: Input Form -->
-      <div v-if="step === 1" class="bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border animate-fade-in-up">
-        <h2 class="text-2xl font-semibold mb-6 text-interview-text-primary">Step 1: Input Job Details</h2>
+      <!-- Main Console Card -->
+      <div class="relative bg-interview-surface backdrop-blur-xl border border-interview-surface-border rounded-3xl overflow-hidden shadow-2xl transition-all duration-500">
         
-        <form @submit.prevent="generateQuestions">
+        <!-- Step 1: Input Form -->
+        <div v-if="step === 1" class="p-8 animate-fade-in">
           <div class="mb-6">
-            <label class="block text-sm font-medium mb-2 text-interview-text-secondary">Role Title</label>
-            <input
-              v-model="roleTitle"
-              type="text"
-              required
-              placeholder="e.g., Frontend Developer, Sales Manager"
-              class="w-full px-4 py-3 bg-interview-bg-secondary border border-interview-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:border-transparent text-interview-text-primary placeholder-interview-text-muted"
-            />
+            <h2 class="text-2xl font-bold text-white mb-2">Define The Role</h2>
+            <p class="text-interview-text-secondary">Provide the job details so our AI can craft the perfect interview questions.</p>
+          </div>
+          
+          <form @submit.prevent="generateQuestions">
+            <div class="mb-6 space-y-2">
+              <label class="block text-sm font-bold text-interview-text-primary uppercase tracking-wider">Role Title</label>
+              <div class="relative group">
+                <input
+                  v-model="roleTitle"
+                  type="text"
+                  required
+                  placeholder="e.g. Senior Frontend Engineer"
+                  class="w-full px-5 py-4 bg-interview-bg-secondary/50 border border-interview-surface-border rounded-xl focus:outline-none focus:border-interview-primary focus:ring-1 focus:ring-interview-primary text-white placeholder-interview-text-muted transition-all group-hover:border-interview-surface-border/80"
+                />
+                <BriefcaseIcon class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-interview-text-muted" />
+              </div>
+            </div>
+
+            <div class="mb-8 space-y-2">
+              <label class="block text-sm font-bold text-interview-text-primary uppercase tracking-wider">Job Description</label>
+              <div class="relative group">
+                <textarea
+                  v-model="jobDescription"
+                  required
+                  rows="6"
+                  placeholder="Paste the full job description here (responsibilities, requirements, etc.)..."
+                  class="w-full px-5 py-4 bg-interview-bg-secondary/50 border border-interview-surface-border rounded-xl focus:outline-none focus:border-interview-primary focus:ring-1 focus:ring-interview-primary text-white placeholder-interview-text-muted resize-none transition-all group-hover:border-interview-surface-border/80 custom-scrollbar"
+                ></textarea>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="isGenerating"
+              class="w-full px-6 py-4 bg-gradient-to-r from-interview-primary to-interview-primary-hover text-interview-bg rounded-xl font-bold text-lg transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed shadow-glow-amber hover:shadow-glow-amber-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-3"
+            >
+              <span v-if="!isGenerating" class="flex items-center gap-2">
+                <CpuChipIcon class="w-6 h-6" />
+                Generate Questions
+              </span>
+              <span v-else class="flex items-center gap-2">
+                <ArrowPathIcon class="w-6 h-6 animate-spin" />
+                Processing with AI...
+              </span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Review Questions -->
+        <div v-if="step === 2" class="p-8 animate-fade-in">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-2xl font-bold text-white mb-1">Review Questions</h2>
+              <p class="text-interview-text-secondary">AI has generated {{ generatedQuestions.length }} questions. Review and refine them below.</p>
+            </div>
+            <div class="hidden sm:block text-xs font-mono text-interview-primary bg-interview-primary/10 px-2 py-1 rounded">
+               AI_CONFIDENCE: HIGH
+            </div>
+          </div>
+          
+          <div class="space-y-4 mb-8 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2 -mr-2 pl-1">
+            <TransitionGroup name="list">
+              <div
+                v-for="(question, index) in generatedQuestions"
+                :key="index"
+                class="group relative bg-interview-bg-secondary/50 p-5 rounded-2xl border border-interview-surface-border hover:border-interview-primary/50 focus-within:border-interview-primary/80 focus-within:bg-interview-bg-secondary focus-within:shadow-lg transition-all duration-300"
+              >
+                <!-- Question Number & Delete -->
+                <div class="flex items-center justify-between mb-3">
+                   <span class="text-xs font-black text-interview-primary/80 uppercase tracking-widest bg-interview-primary/10 px-2 py-1 rounded">
+                     Question {{ index + 1 }}
+                   </span>
+                   <button 
+                     @click="removeGeneratedQuestion(index)"
+                     class="text-interview-text-muted hover:text-red-400 p-1 rounded-lg hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                     title="Remove Question"
+                   >
+                     <TrashIcon class="w-4 h-4" />
+                   </button>
+                </div>
+                
+                <!-- Editable Text Area -->
+                <textarea
+                  v-model="generatedQuestions[index]"
+                  rows="3"
+                  class="w-full bg-transparent border-none p-0 text-white placeholder-interview-text-muted focus:ring-0 resize-y leading-relaxed text-base"
+                  placeholder="Enter interview question..."
+                ></textarea>
+              </div>
+            </TransitionGroup>
+
+            <!-- Add Question Button -->
+            <button 
+              @click="addGeneratedQuestion"
+              class="w-full py-4 border-2 border-dashed border-interview-surface-border rounded-xl text-interview-text-secondary hover:text-interview-primary hover:border-interview-primary/50 hover:bg-interview-surface transition-all flex items-center justify-center gap-2 group"
+            >
+              <PlusIcon class="w-5 h-5 transition-transform group-hover:rotate-90" />
+              Add Another Question
+            </button>
           </div>
 
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2 text-interview-text-secondary">Job Description</label>
-            <textarea
-              v-model="jobDescription"
-              required
-              rows="8"
-              placeholder="Paste the job description here..."
-              class="w-full px-4 py-3 bg-interview-bg-secondary border border-interview-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:border-transparent text-interview-text-primary placeholder-interview-text-muted resize-none"
-            ></textarea>
-          </div>
-
-          <button
-            type="submit"
-            :disabled="isGenerating"
-            class="w-full px-6 py-3 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-amber flex items-center justify-center gap-2"
-          >
-            <SparklesIcon v-if="!isGenerating" class="w-5 h-5" />
-            <ArrowPathIcon v-else class="w-5 h-5 animate-spin" />
-            {{ isGenerating ? 'Generating...' : 'Generate Questions with AI' }}
-          </button>
-        </form>
-      </div>
-
-      <!-- Step 2: Review Questions -->
-      <div v-if="step === 2" class="bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border animate-fade-in-up">
-        <h2 class="text-2xl font-semibold mb-6 text-interview-text-primary">Step 2: Review & Edit Questions</h2>
-        
-        <div class="space-y-4 mb-8">
-          <div
-            v-for="(question, index) in generatedQuestions"
-            :key="index"
-            class="bg-interview-bg-secondary p-4 rounded-xl border border-interview-surface-border"
-          >
-            <label class="block text-sm font-medium mb-2 text-interview-primary">Question {{ index + 1 }}</label>
-            <textarea
-              v-model="generatedQuestions[index]"
-              rows="3"
-              class="w-full px-4 py-3 bg-interview-surface border border-interview-surface-border rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:border-transparent text-interview-text-primary resize-none"
-            ></textarea>
+          <!-- Actions -->
+          <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-interview-surface-border">
+            <button
+              @click="step = 1"
+              class="px-6 py-3 rounded-xl border border-interview-surface-border text-interview-text-secondary hover:text-white hover:bg-interview-surface-hover transition-colors font-medium"
+            >
+              Back to Edit
+            </button>
+            <button
+              @click="saveQuestionsToDb"
+              :disabled="isSaving || generatedQuestions.length === 0"
+              class="flex-1 px-6 py-3 bg-interview-success text-white rounded-xl font-bold transition-all hover:bg-green-500 shadow-glow-green disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform active:scale-95"
+            >
+              <span v-if="!isSaving" class="flex items-center gap-2">
+                <CheckCircleIcon class="w-5 h-5" />
+                Approve & Save ({{ generatedQuestions.length }})
+              </span>
+              <span v-else class="flex items-center gap-2">
+                <ArrowPathIcon class="w-5 h-5 animate-spin" />
+                Saving...
+              </span>
+            </button>
           </div>
         </div>
 
-        <div class="flex gap-4">
-          <button
-            @click="step = 1"
-            class="flex-1 px-6 py-3 bg-interview-surface border border-interview-surface-border hover:bg-interview-surface-hover text-interview-text-secondary hover:text-interview-text-primary rounded-xl font-semibold transition-all duration-300"
-          >
-            ← Back
-          </button>
-          <button
-            @click="saveQuestionsToDb"
-            :disabled="isSaving"
-            class="flex-1 px-6 py-3 bg-interview-success hover:bg-green-600 text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <DocumentCheckIcon v-if="!isSaving" class="w-5 h-5" />
-            <ArrowPathIcon v-else class="w-5 h-5 animate-spin" />
-            {{ isSaving ? 'Saving...' : 'Save Questions' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Success Message -->
-      <div v-if="step === 3" class="bg-interview-surface backdrop-blur-xl p-8 rounded-2xl text-center border border-interview-surface-border animate-fade-in-up">
-        <div class="flex justify-center mb-4">
-          <div class="p-4 bg-interview-success/20 rounded-full">
-            <CheckCircleIcon class="w-16 h-16 text-interview-success animate-float" />
+        <!-- Success Message -->
+        <div v-if="step === 3" class="p-12 text-center animate-fade-in flex flex-col items-center">
+          <div class="w-24 h-24 bg-interview-success/10 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
+            <CheckCircleIcon class="w-12 h-12 text-interview-success" />
+          </div>
+          <h2 class="text-3xl font-black text-white mb-4">Mission Complete!</h2>
+          <p class="text-interview-text-secondary mb-8 text-lg max-w-md mx-auto">
+            The interview questions for <strong class="text-white">{{ roleTitle }}</strong> have been successfully saved to the database.
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+            <button
+              @click="resetForm"
+              class="flex-1 px-6 py-3 bg-interview-surface border border-interview-surface-border hover:bg-interview-surface-hover text-white rounded-xl font-bold transition-all"
+            >
+              Generate More
+            </button>
+            <NuxtLink
+              to="/hr/roles"
+              class="flex-1 px-6 py-3 bg-interview-primary text-interview-bg hover:bg-interview-primary-hover rounded-xl font-bold transition-all shadow-glow-amber text-center"
+            >
+              View Roles
+            </NuxtLink>
           </div>
         </div>
-        <h2 class="text-3xl font-bold mb-4 text-interview-text-primary">Questions Saved Successfully!</h2>
-        <p class="text-interview-text-secondary mb-8">The questions for "{{ roleTitle }}" have been saved to the database.</p>
-        
-        <div class="flex gap-4 justify-center">
-          <button
-            @click="resetForm"
-            class="px-6 py-3 bg-interview-primary hover:bg-interview-primary-hover text-interview-bg rounded-xl font-semibold transition-all duration-300 shadow-glow-amber"
-          >
-            Generate More Questions
-          </button>
-          <NuxtLink
-            to="/hr/roles"
-            class="px-6 py-3 bg-interview-success hover:bg-green-600 text-white rounded-xl font-semibold transition-all duration-300 inline-block"
-          >
-            View All Roles
-          </NuxtLink>
-        </div>
+
       </div>
 
       <!-- Error Message -->
       <Transition
-        enter-active-class="transition-all duration-300"
+        enter-active-class="transition duration-300 ease-out"
         enter-from-class="opacity-0 translate-y-2"
         enter-to-class="opacity-100 translate-y-0"
-        leave-active-class="transition-all duration-300"
+        leave-active-class="transition duration-200 ease-in"
         leave-from-class="opacity-100 translate-y-0"
         leave-to-class="opacity-0 translate-y-2"
       >
-        <div v-if="error" class="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
-          <p class="text-red-400">{{ error }}</p>
+        <div v-if="error" class="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3">
+          <ExclamationTriangleIcon class="w-6 h-6 text-red-500 flex-shrink-0" />
+          <p class="text-red-400 font-medium">{{ error }}</p>
         </div>
       </Transition>
     </div>
@@ -143,9 +214,18 @@ import {
   CpuChipIcon,
   SparklesIcon,
   ArrowPathIcon,
-  DocumentCheckIcon,
-  CheckCircleIcon
-} from '@heroicons/vue/24/solid';
+  CheckCircleIcon,
+  ArrowLeftIcon,
+  ExclamationTriangleIcon,
+  BriefcaseIcon,
+  TrashIcon,
+  PlusIcon
+} from '@heroicons/vue/24/outline';
+
+definePageMeta({
+  layout: 'hr',
+  middleware: ['hr']
+})
 
 const { generateQuestions: generateQuestionsAPI, saveQuestions } = useHR();
 
@@ -156,6 +236,14 @@ const generatedQuestions = ref<string[]>([]);
 const isGenerating = ref(false);
 const isSaving = ref(false);
 const error = ref('');
+
+const removeGeneratedQuestion = (index: number) => {
+  generatedQuestions.value.splice(index, 1);
+};
+
+const addGeneratedQuestion = () => {
+  generatedQuestions.value.push('');
+};
 
 const generateQuestions = async () => {
   isGenerating.value = true;
@@ -229,3 +317,20 @@ const resetForm = () => {
   error.value = '';
 };
 </script>
+
+<style scoped>
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s infinite;
+}
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+</style>
+

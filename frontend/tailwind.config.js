@@ -22,11 +22,14 @@ export default {
             secondary: '#12121a',   // Slightly lighter for sections
             gradient: '#1a1a2e',    // Gradient end color
           },
+          backgroundImage: {
+            'radial-vignette': 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)',
+          },
           // Card surfaces (glassmorphism)
           surface: {
             DEFAULT: 'rgba(255, 255, 255, 0.05)',  // Glass effect
             hover: 'rgba(255, 255, 255, 0.08)',    // Hover state
-            border: 'rgba(255, 255, 255, 0.1)',    // Subtle border
+            border: 'rgba(255, 255, 255, 0.05)',    // Subtle border
           },
           // Primary accent - Amber/Orange (InterviewPro signature color)
           primary: {
@@ -106,8 +109,8 @@ export default {
       },
       // Box shadow with glow
       boxShadow: {
-        'glow-amber': '0 0 30px rgba(255, 177, 40, 0.2)',
-        'glow-amber-lg': '0 0 60px rgba(255, 177, 40, 0.3)',
+        'glow-amber': '0 0 30px rgba(255, 196, 40, 0.2)',
+        'glow-amber-lg': '0 0 60px rgba(255, 196, 40, 0.3)',
         'glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
       },
     },

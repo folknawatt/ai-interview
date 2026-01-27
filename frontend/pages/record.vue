@@ -3,9 +3,11 @@
     class="min-h-screen bg-interview-bg text-interview-text-primary flex flex-col items-center justify-center p-4 relative overflow-hidden"
   >
     <!-- Background gradient effects -->
-    <div class="absolute inset-0 bg-gradient-to-br from-interview-bg via-interview-bg-secondary to-interview-bg-gradient"></div>
-    <div class="absolute top-1/4 -left-32 w-96 h-96 bg-red-500/10 rounded-full blur-3xl"></div>
-    <div class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"></div>
+    <div class="fixed inset-0 z-0 bg-interview-bg">
+      <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-interview-bg to-black"></div>
+      <div class="absolute top-1/4 -left-32 w-96 h-96 bg-red-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"></div>
+    </div>
 
     <Recorder
       ref="recorderRef"
@@ -27,6 +29,10 @@
 <script setup lang="ts">
 import Recorder from '../components/interview/Recorder.vue'
 import { useMediaRecorder } from '../composables/useMediaRecorder'
+
+definePageMeta({
+  layout: 'blank'
+})
 
 const {
   currentQuestion,

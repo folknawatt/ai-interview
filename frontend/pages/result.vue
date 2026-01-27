@@ -5,20 +5,19 @@
     aria-labelledby="result-title"
   >
     <!-- Background gradient effects -->
-    <div
-      class="absolute inset-0 bg-gradient-to-br from-interview-bg via-interview-bg-secondary to-interview-bg-gradient"
-      aria-hidden="true"
-    ></div>
-    <div
-      class="absolute top-1/4 -left-32 w-96 h-96 bg-interview-success/10 rounded-full blur-3xl"
-      aria-hidden="true"
-    ></div>
-    <div
-      class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"
-      aria-hidden="true"
-    ></div>
+    <div class="fixed inset-0 z-0 bg-interview-bg">
+      <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-interview-bg to-black" aria-hidden="true"></div>
+      <div
+        class="absolute top-1/4 -left-32 w-96 h-96 bg-interview-success/10 rounded-full blur-3xl"
+        aria-hidden="true"
+      ></div>
+      <div
+        class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"
+        aria-hidden="true"
+      ></div>
+    </div>
 
-    <div class="relative max-w-xl w-full text-center animate-fade-in-up">
+    <div class="relative z-10 max-w-xl w-full text-center animate-fade-in-up">
       <!-- Success Icon -->
       <div class="mb-8" role="status" aria-live="polite">
         <div
@@ -40,7 +39,18 @@
       >
         <p class="text-xl text-interview-text-primary mb-4">ขอบคุณที่เข้าร่วมการสัมภาษณ์</p>
         <p class="text-interview-text-secondary">ผลการสัมภาษณ์จะถูกส่งให้ทีม HR ดำเนินการต่อไป</p>
-        <p class="text-interview-text-secondary mt-2">เราจะติดต่อกลับภายใน 3-5 วันทำการ</p>
+      <p class="text-interview-text-secondary mt-2">เราจะติดต่อกลับภายใน 3-5 วันทำการ</p>
+      </div>
+
+      <!-- Action Button -->
+      <div>
+        <button
+          @click="handleFinish"
+          class="px-8 py-3 bg-interview-primary text-interview-bg font-semibold rounded-xl hover:bg-interview-primary-hover shadow-glow-amber transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg"
+          aria-label="กลับสู่หน้าหลัก"
+        >
+          กลับสู่หน้าหลัก
+        </button>
       </div>
     </div>
   </div>
@@ -48,4 +58,16 @@
 
 <script setup lang="ts">
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+
+definePageMeta({
+  layout: 'blank'
+})
+
+const { resetInterview } = useInterview()
+const router = useRouter()
+
+const handleFinish = () => {
+  resetInterview()
+  router.push('/login')
+}
 </script>

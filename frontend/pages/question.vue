@@ -3,18 +3,18 @@
     class="min-h-screen bg-interview-bg text-interview-text-primary flex flex-col items-center justify-center p-4 relative overflow-hidden"
   >
     <!-- Background gradient effects -->
-    <div
-      class="absolute inset-0 bg-gradient-to-br from-interview-bg via-interview-bg-secondary to-interview-bg-gradient"
-    ></div>
-    <div
-      class="absolute top-1/4 -left-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"
-    ></div>
-    <div
-      class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-accent-sky/10 rounded-full blur-3xl"
-    ></div>
+    <div class="fixed inset-0 z-0 bg-interview-bg">
+      <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-interview-bg to-black"></div>
+      <div
+        class="absolute top-1/4 -left-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"
+      ></div>
+      <div
+        class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-accent-sky/10 rounded-full blur-3xl"
+      ></div>
+    </div>
 
     <div
-      class="relative w-full max-w-2xl bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border shadow-glass text-center animate-fade-in-up"
+      class="relative z-10 w-full max-w-2xl bg-interview-surface backdrop-blur-xl p-8 rounded-2xl border border-interview-surface-border shadow-glass text-center animate-fade-in-up"
     >
       <!-- Progress Indicator -->
       <div class="mb-6 flex flex-col items-center gap-3">
@@ -66,27 +66,16 @@
       <div v-if="currentAudioPath" class="mb-4">
         <button
           @click="handlePlayAudio"
-          class="inline-flex items-center px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-300"
+          class="inline-flex items-center px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-300 group"
           :class="showAudioNotification 
             ? 'text-interview-bg bg-interview-primary hover:bg-interview-primary-hover shadow-glow-amber animate-pulse' 
             : 'text-interview-text-secondary bg-interview-surface border border-interview-surface-border hover:border-interview-primary/50 hover:bg-interview-surface-hover'"
           aria-label="ฟังคำถาม"
         >
-          <svg
-            class="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-            ></path>
-          </svg>
+          <SpeakerWaveIcon 
+            class="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" 
+            :class="{ 'animate-pulse': showAudioNotification }" 
+          />
           {{ showAudioNotification ? '🔊 กดเพื่อฟังคำถาม' : 'ฟังคำถามอีกครั้ง' }}
         </button>
       </div>
@@ -117,24 +106,10 @@
       <div class="mt-8">
         <button
           @click="goToRecord"
-          class="inline-flex items-center px-8 py-4 text-lg font-semibold text-interview-bg bg-interview-primary hover:bg-interview-primary-hover rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 shadow-glow-amber hover:shadow-glow-amber-lg"
+          class="inline-flex items-center px-8 py-4 text-lg font-semibold text-interview-bg bg-interview-primary hover:bg-interview-primary-hover rounded-xl focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 shadow-glow-amber hover:shadow-glow-amber-lg group transform hover:-translate-y-0.5"
           aria-label="เริ่มอัดวิดีโอตอบคำถาม"
         >
-          <svg
-            class="w-6 h-6 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-            ></path>
-          </svg>
+          <VideoCameraIcon class="w-6 h-6 mr-2 transition-transform duration-300 group-hover:scale-110" />
           พร้อมแล้ว! เริ่มอัดวิดีโอเลย
         </button>
       </div>
@@ -143,6 +118,12 @@
 </template>
 
 <script setup lang="ts">
+import { SpeakerWaveIcon, VideoCameraIcon } from '@heroicons/vue/24/solid'
+
+definePageMeta({
+  layout: 'blank'
+})
+
 const {
   selectedRole,
   currentQuestionIndex,
@@ -150,6 +131,7 @@ const {
   currentAudioPath,
   getQuestion,
   playAudio,
+  stopAudio,
   completeInterview,
   sessionId,
 } = useInterview()
@@ -230,9 +212,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   clearInterval(timer)
+  stopAudio()
 })
 
 const goToRecord = () => {
+  stopAudio()
   router.push('/record')
 }
 </script>
