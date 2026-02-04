@@ -1,0 +1,78 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "ready": "Ready!",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm"
+  },
+  "login": {
+    "title": "Welcome",
+    "subtitle": "AI-Powered Smart Interview System",
+    "nameLabel": "Your Full Name",
+    "emailLabel": "Email Address",
+    "namePlaceholder": "Enter your full name...",
+    "emailPlaceholder": "example@email.com",
+    "privacyLabel": "I have read and accept the",
+    "privacyLink": "Privacy Policy",
+    "privacyNote": "(Consent to video/audio recording for AI evaluation)",
+    "startButton": "Start Interview",
+    "required": "*",
+    "errorNameRequired": "Please enter your full name",
+    "errorEmailRequired": "Please enter your email address",
+    "errorEmailInvalid": "Invalid email format",
+    "errorPrivacyRequired": "Please accept the privacy policy"
+  },
+  "question": {
+    "title": "Question {current} of {total}",
+    "loadingQuestion": "Loading question",
+    "instruction": "Click the button below to listen to the question",
+    "playAudio": "🔊 Click to listen",
+    "replayAudio": "Listen again",
+    "preparationTime": "Preparation Time",
+    "timeRemaining": "{seconds} seconds remaining",
+    "timeWarning": "⚠️ Time is running out! Get ready",
+    "startRecording": "I'm Ready - Start Recording"
+  },
+  "result": {
+    "title": "Interview Complete",
+    "thankYou": "Thank you for participating in the interview",
+    "message": "Your interview results will be sent to the HR team for review",
+    "followUp": "We will contact you within 3-5 business days",
+    "backToHome": "Back to Home"
+  },
+  "privacy": {
+    "backToLogin": "← Back to Login",
+    "title": "Privacy Policy",
+    "intro": "The AI Interview platform (\\\"System\\\") is committed to protecting your personal data. This policy explains how we collect, use, and disclose your information when using our automated interview service.",
+    "section2Title": "Data We Collect",
+    "section2Content": "We may collect the following information:",
+    "dataIdentity": "Personal Information: Full name, email, work history (Resume/CV)",
+    "dataMedia": "Audio/Video Data: Interview recordings, voice data",
+    "dataTech": "Technical Data: IP address, device type, usage history",
+    "section3Title": "Purpose of Data Usage",
+    "section3Intro": "We use your data for:",
+    "purpose1": "Processing and analyzing interview results using AI",
+    "purpose2": "Sending evaluation reports to the company's HR department",
+    "purpose3": "Improving AI system performance (data will be anonymized)",
+    "section4Title": "Data Retention",
+    "section4Content": "Video data and evaluation results will be stored for 1 year or as determined by the hiring company. After that, the system will automatically delete the data. If you wish to delete your data earlier, please contact the HR department of the company you applied to.",
+    "section5Title": "Consent",
+    "section5Content": "By using this system, you consent to our recording of your video and audio throughout the interview and to using AI for initial analysis.",
+    "lastUpdated": "Last updated:"
+  },
+  "hr": {
+    "login": {
+      "title": "HR Administration Login",
+      "loginButton": "Login",
+      "loggingIn": "Logging in...",
+      "errorInvalidCredentials": "Invalid username or password"
+    }
+  }
+}
