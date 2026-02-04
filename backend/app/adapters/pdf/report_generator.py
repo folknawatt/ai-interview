@@ -28,6 +28,11 @@ from reportlab.platypus import (
 from app.schemas import InterviewReportResponse
 
 
+from app.config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
+
 def _register_thai_fonts():
     """Register Thai-compatible fonts for PDF generation."""
     try:
@@ -44,7 +49,7 @@ def _register_thai_fonts():
                     TTFont('ThaiFont-Bold', str(leelawadee_bold)))
             return True
     except (OSError, TTFError) as e:
-        print(f"Warning: Could not register Thai fonts: {e}")
+        logger.warning(f"Could not register Thai fonts: {e}")
     return False
 
 
