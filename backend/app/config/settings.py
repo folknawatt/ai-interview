@@ -43,21 +43,37 @@ class Settings(BaseSettings):
     google_api_key: str
 
     # Database Configuration
-    database_url: str = "postgresql://postgres:postgres@localhost:5433/ai_interview"
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_user: str = "postgres"
+    postgres_password: str = "postgres"
+    postgres_db: str = "ai_interview"
+
+    @property
+    def database_url(self) -> str:
+        """Construct database URL from components."""
+        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
     # TTS Configuration
-    tts_provider: str = "edge"  # TTS provider to use: "gemini" or "edge"
+    tts_provider: str = "vachana"  # TTS provider to use: "gemini" or "vachana"
     tts_max_retries: int = 2
     tts_initial_delay: int = 1
-    tts_audio_dir: str = "audio"
+    tts_audio_dir: str = os.path.join("storage", "audio")
     tts_gemini_voice: str = "kore"  # Gemini voice name
-    tts_edge_voice: str = "th-TH-PremwadeeNeural"  # Edge voice name
+    tts_vachana_voice: str = "th_f_1"  # Vachana voice name
+    voices_dir: str = "voices"
 
     # Storage Configuration
     questions_file_path: str = os.path.join(
         os.path.dirname(__file__), "questions_db.json")
-    temp_storage_dir: str = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), r"storage\temp")
+
+    # Use 'storage' at project root (or CWD in backend)
+    base_storage_dir: str = "storage"
+
+    @property
+    def temp_storage_dir(self) -> str:
+        """Get temporary storage directory path."""
+        return os.path.join(self.base_storage_dir, "temp")
 
     # CORS Configuration
     cors_origins: str = "http://localhost:3000"
@@ -68,6 +84,18 @@ class Settings(BaseSettings):
 
     # JWT Authentication
     jwt_secret_key: str = "change-this-secret-key-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60 * 24  # 24 hours
+    jwt_refresh_token_expire_days: int = 7
+
+    # Cookie Configuration
+    cookie_secure: bool = False  # Set to True in production (HTTPS)
+    cookie_samesite: str = "lax"
+    cookie_domain: str | None = None
+
+    # Admin Configuration
+    admin_default_email: str = "admin@ai-interview.com"
+    admin_default_password: str = "change-me-in-production"
 
     @property
     def cors_origins_list(self) -> List[str]:
