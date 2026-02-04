@@ -128,18 +128,54 @@ For developers who want to run services individually.
 
 #### Prerequisites
 
-- Python 3.11+
+- Python 3.11+ (Recommended: Install via `uv`)
 - Node.js 18+
-- FFmpeg
+- FFmpeg (Required for audio processing)
+- Key.json (Required for Vachana TTS) -> Place in `voices/`
 
 #### Automated Setup (Windows)
 
-```powershell
-# Setup everything
-.\scripts\setup.ps1
+You can start both Backend and Frontend servers in new windows using:
 
-# Run dev servers
-.\scripts\dev.ps1
+```batch
+.\dev.bat
+```
+
+#### Manual Setup
+
+**1. Backend Setup:**
+
+```bash
+cd backend
+# Create virtual environment and install dependencies
+uv sync
+# OR manually:
+# python -m venv .venv
+# source .venv/bin/activate
+# pip install -r requirements.txt
+```
+
+**2. Frontend Setup:**
+
+```bash
+cd frontend
+npm install
+```
+
+**3. Running Dev Servers:**
+
+Terminal 1 (Backend):
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+```
+
+Terminal 2 (Frontend):
+
+```bash
+cd frontend
+npm run dev
 ```
 
 ## 📁 Project Structure
@@ -244,17 +280,13 @@ Once the backend is running, visit:
 
 ### Development Workflow
 
-**PowerShell Scripts:**
+### Helper Scripts
+
+Utility scripts are located in `backend/scripts/`.
 
 ```bash
-# Setup project
-.\scripts\setup.ps1
-
-# Start dev servers
-.\scripts\dev.ps1
-
-# Clean caches
-.\scripts\clean.ps1
+# Debug Authentication
+python backend/scripts/debug_auth.py
 ```
 
 ### Code Quality Tools
@@ -287,7 +319,13 @@ npm run type-check
 
 ### Running with Docker
 
-Docker support is planned for future releases. See [docs/setup/deploy/DOCKER_DEPLOYMENT.md](docs/setup/deploy/DOCKER_DEPLOYMENT.md) for manual deployment instructions.
+Docker support is fully implemented. You can run the entire stack using:
+
+```bash
+docker-compose up -d --build
+```
+
+See [docs/setup/deploy/DOCKER_DEPLOYMENT.md](docs/setup/deploy/DOCKER_DEPLOYMENT.md) for more detailed deployment instructions.
 
 ## 📖 Documentation
 
