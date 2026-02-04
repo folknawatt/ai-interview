@@ -4,7 +4,27 @@ import { fileURLToPath } from 'url'
 export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
     devtools: { enabled: true },
-    modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
+    modules: [
+        '@nuxtjs/tailwindcss',
+        '@pinia/nuxt',
+        '@nuxtjs/i18n'
+    ],
+
+    // i18n Configuration
+    i18n: {
+        locales: [
+            { code: 'th', name: 'ภาษาไทย', file: 'th.json' },
+            { code: 'en', name: 'English', file: 'en.json' }
+        ],
+        defaultLocale: 'th',
+        langDir: 'locales/',
+        strategy: 'no_prefix',
+        detectBrowserLanguage: {
+            useCookie: true,
+            cookieKey: 'i18n_redirected',
+            redirectOn: 'root'
+        }
+    },
     
     // Global CSS
     css: ['~/assets/css/main.css'],
