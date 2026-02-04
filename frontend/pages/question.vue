@@ -21,7 +21,7 @@
         <span
           class="bg-interview-primary/10 text-interview-primary text-xs font-medium px-3 py-1.5 rounded-full border border-interview-primary/30"
         >
-          คำถามที่ {{ currentQuestionIndex + 1 }} / {{ totalQuestions }}
+          {{ $t('question.title', { current: currentQuestionIndex + 1, total: totalQuestions }) }}
         </span>
         <!-- Progress Bar -->
         <div class="w-full max-w-xs h-2 bg-interview-surface-border rounded-full overflow-hidden">
@@ -44,7 +44,7 @@
       </h2>
       <div v-else class="text-2xl md:text-3xl font-bold mb-8 text-interview-text-secondary">
         <div class="flex items-center justify-center gap-2">
-          <span>กำลังโหลดคำถาม</span>
+          <span>{{ $t('question.loadingQuestion') }}</span>
           <span class="animate-pulse">•••</span>
         </div>
       </div>
@@ -58,7 +58,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          กดปุ่มด้านล่างเพื่อฟังคำถาม
+          {{ $t('question.instruction') }}
         </p>
       </div>
 
@@ -76,12 +76,12 @@
             class="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" 
             :class="{ 'animate-pulse': showAudioNotification }" 
           />
-          {{ showAudioNotification ? '🔊 กดเพื่อฟังคำถาม' : 'ฟังคำถามอีกครั้ง' }}
+          {{ showAudioNotification ? $t('question.playAudio') : $t('question.replayAudio') }}
         </button>
       </div>
 
       <div class="flex flex-col items-center justify-center space-y-4 py-6">
-        <div class="text-interview-text-secondary text-sm">เวลาเตรียมตัว (Preparation Time)</div>
+        <div class="text-interview-text-secondary text-sm">{{ $t('question.preparationTime') }}</div>
         <div
           class="text-7xl font-mono font-bold transition-colors duration-300"
           :class="
@@ -99,7 +99,7 @@
           v-if="timeLeft <= 5 && timeLeft > 0"
           class="text-interview-warning text-sm font-medium animate-pulse"
         >
-          ⚠️ เวลาใกล้หมด! เตรียมตัวให้พร้อม
+          {{ $t('question.timeWarning') }}
         </div>
       </div>
 
@@ -110,7 +110,7 @@
           aria-label="เริ่มอัดวิดีโอตอบคำถาม"
         >
           <VideoCameraIcon class="w-6 h-6 mr-2 transition-transform duration-300 group-hover:scale-110" />
-          พร้อมแล้ว! เริ่มอัดวิดีโอเลย
+          {{ $t('question.startRecording') }}
         </button>
       </div>
     </div>
@@ -178,7 +178,7 @@ onMounted(async () => {
             showAudioNotification.value = false
           } catch (error) {
             // Autoplay blocked by browser - show notification
-            console.log('Autoplay blocked. User needs to click play button.')
+            // Autoplay blocked - notification shown to user
             showAudioNotification.value = true
           }
         }, 300)
@@ -187,7 +187,7 @@ onMounted(async () => {
       // All questions completed - mark interview as complete
       try {
         await completeInterview()
-        console.log('Interview marked as complete')
+        // Interview completion handled successfully
       } catch (error) {
         console.error('Failed to complete interview:', error)
         // Still redirect to result page even if completion fails
