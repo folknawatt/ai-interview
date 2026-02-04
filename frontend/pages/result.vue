@@ -26,7 +26,7 @@
           <CheckCircleIcon class="w-16 h-16 text-interview-success" aria-hidden="true" />
         </div>
         <h1 id="result-title" class="text-3xl font-bold text-interview-text-primary mb-2">
-          สัมภาษณ์เสร็จสิ้น
+          {{ $t('result.title') }}
         </h1>
         <p class="text-lg text-interview-text-secondary">Interview Completed</p>
       </div>
@@ -37,9 +37,9 @@
         role="region"
         aria-label="ข้อความขอบคุณ"
       >
-        <p class="text-xl text-interview-text-primary mb-4">ขอบคุณที่เข้าร่วมการสัมภาษณ์</p>
-        <p class="text-interview-text-secondary">ผลการสัมภาษณ์จะถูกส่งให้ทีม HR ดำเนินการต่อไป</p>
-      <p class="text-interview-text-secondary mt-2">เราจะติดต่อกลับภายใน 3-5 วันทำการ</p>
+        <p class="text-xl text-interview-text-primary mb-4">{{ $t('result.thankYou') }}</p>
+        <p class="text-interview-text-secondary">{{ $t('result.message') }}</p>
+      <p class="text-interview-text-secondary mt-2">{{ $t('result.followUp') }}</p>
       </div>
 
       <!-- Action Button -->
@@ -49,7 +49,7 @@
           class="px-8 py-3 bg-interview-primary text-interview-bg font-semibold rounded-xl hover:bg-interview-primary-hover shadow-glow-amber transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg"
           aria-label="กลับสู่หน้าหลัก"
         >
-          กลับสู่หน้าหลัก
+          {{ $t('result.backToHome') }}
         </button>
       </div>
     </div>
