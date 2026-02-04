@@ -42,14 +42,15 @@ my_app.log
 # ============================================
 # Storage & Runtime Data
 # ============================================
+# ============================================
+# Storage & Runtime Data
+# ============================================
 /storage/
-/backend/temp_storage/
-backend/app/storage/
-/data/uploads/
-/data/temp/
-/data/cache/
-temp_video.mp4
-video_test.mp4
+# Keep gitkeep if exists, but generally ignore contents
+!/storage/.gitkeep
+# Ignore local voices/ (if they are large/downloaded models)
+/voices/
+!/voices/speaker_config.json
 
 # Keep test fixtures (important!)
 !/data/fixtures/
