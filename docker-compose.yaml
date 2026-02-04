@@ -4,70 +4,74 @@
 #===============================================================================
 
 services:
-    # #-----------------------------------------------------------------------------
-    # # Backend API Service
-    # #-----------------------------------------------------------------------------
-    # backend:
-    #     build:
-    #         context: .
-    #         dockerfile: Dockerfile
-    #         args:
-    #             PYTHON_BASE: 3.11-slim
+    #-----------------------------------------------------------------------------
+    # Backend API Service
+    #-----------------------------------------------------------------------------
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                PYTHON_BASE: 3.11-slim
 
-    #     image: ai-interview-backend:latest
-    #     container_name: ai-interview-backend
+        image: ai-interview-backend:latest
+        container_name: ai-interview-backend
 
-    #     restart: unless-stopped
+        restart: unless-stopped
 
-    #     ports:
-    #         - "8000:8000"
+        ports:
+            - "8000:8000"
+        
+        volumes:
+            - ./storage:/app/backend/storage
+            - ./voices:/app/backend/voices
 
-    #     environment:
-    #         # Database connection
-    #         - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ai_interview}
+        environment:
+            # Database connection
+            - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ai_interview}
 
-    #         # Application settings (override via .env file)
-    #         - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-    #         - TYPHOON_API_KEY=${TYPHOON_API_KEY:-}
-    #         - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+            # Application settings (override via .env file)
+            - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+            - TYPHOON_API_KEY=${TYPHOON_API_KEY:-}
+            - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
 
-    #     env_file:
-    #         - ./backend/.env
+        env_file:
+            - .env
 
-    #     depends_on:
-    #         db:
-    #             condition: service_healthy
+        depends_on:
+            db:
+                condition: service_healthy
 
-    #     healthcheck:
-    #         test:
-    #             [
-    #                 "CMD-SHELL",
-    #                 'python -c ''import urllib.request; urllib.request.urlopen("http://localhost:8000").read()'' || exit 1',
-    #             ]
-    #         interval: 30s
-    #         timeout: 10s
-    #         retries: 3
-    #         start_period: 40s
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    'python -c ''import urllib.request; urllib.request.urlopen("http://localhost:8000").read()'' || exit 1',
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
 
-    #     networks:
-    #         - ai-interview-network
+        networks:
+            - ai-interview-network
 
-    #     # Resource limits
-    #     deploy:
-    #         resources:
-    #             limits:
-    #                 cpus: "2"
-    #                 memory: 2G
-    #             reservations:
-    #                 cpus: "0.5"
-    #                 memory: 512M
+        # Resource limits
+        deploy:
+            resources:
+                limits:
+                    cpus: "2"
+                    memory: 2G
+                reservations:
+                    cpus: "0.5"
+                    memory: 512M
 
-    #     # Logging configuration
-    #     logging:
-    #         driver: "json-file"
-    #         options:
-    #             max-size: "10m"
-    #             max-file: "3"
+        # Logging configuration
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
     #-----------------------------------------------------------------------------
     # PostgreSQL Database
@@ -79,7 +83,7 @@ services:
         restart: unless-stopped
 
         ports:
-            - "5433:5432"
+            - "5432:5432"
 
         environment:
             - POSTGRES_USER=${POSTGRES_USER:-postgres}
