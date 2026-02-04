@@ -11,7 +11,7 @@ export default defineNuxtRouteMiddleware((to) => {
   // First check if user is authenticated at all
   if (!authStore.isLogin) {
     return navigateTo({
-      path: '/login',
+      path: '/hr/login',
       query: { redirect: to.fullPath }
     })
   }
