@@ -61,8 +61,8 @@ docker-compose*.yml
 Dockerfile*
 
 # Documentation
-README.md
 *.md
+!README.md
 docs/
 
 # Frontend (if building backend only)
@@ -80,5 +80,6 @@ test_*.py
 
 # Storage directories (runtime data)
 storage/
+voices/
 uploads/
 media/
