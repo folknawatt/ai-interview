@@ -9,8 +9,6 @@ Welcome to the AI Interview Platform documentation. This directory contains comp
 Technical architecture and system design documentation
 
 - [System Overview](./architecture/overview.md)
-- [Backend Architecture](./architecture/backend.md)
-- [Frontend Architecture](./architecture/frontend.md)
 
 ### [API](./api/)
 
@@ -20,16 +18,9 @@ API endpoint documentation and examples
 
 ### Setup
 
-Installation and configuration guides are available in the root documentation.
+Installation and configuration guides
 
-- [Main Setup Guide](../../README.md#🚀-quick-start)
-- [Docker Deployment](./setup/deploy/DOCKER_DEPLOYMENT.md)
-
-### [Guides](./guides/)
-
-Development guides and best practices
-
-- [Contributing Guide](../../CONTRIBUTING.md)
+- [Main Setup Guide](../README.md#🚀-quick-start)
 - [Docker Deployment](./setup/deploy/DOCKER_DEPLOYMENT.md)
 
 ## 🚀 Quick Links

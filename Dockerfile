@@ -11,7 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=0 \
-    VIRTUAL_ENV=/opt/venv
+    VIRTUAL_ENV=/opt/venv \
+    UV_PROJECT_ENVIRONMENT=/opt/venv
 
 WORKDIR /build
 
@@ -25,8 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml uv.lock README.md ./
 
 # Install Python Dependencies via UV
-RUN uv venv /opt/venv && \
-    uv sync --frozen
+# --no-install-project: Install only dependencies, not the project itself (source not available yet)
+RUN uv sync --frozen --no-install-project
 #===============================================================================
 # Stage 2: Runtime - เน้นขนาดเล็กและความปลอดภัย
 #===============================================================================
@@ -70,4 +71,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 WORKDIR /app/backend
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/opt/venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

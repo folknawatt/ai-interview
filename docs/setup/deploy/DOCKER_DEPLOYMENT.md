@@ -16,7 +16,7 @@ docker-compose --version
 
 ```bash
 # Copy environment file
-cp .env.docker.example .env
+cp .env.example .env
 
 # Edit .env file with your actual values
 nano .env
@@ -86,17 +86,17 @@ graph TB
 ### Development Mode
 
 ```bash
-# Start with PgAdmin
-docker-compose --profile dev up -d
+# Start all services
+docker compose up -d
 
 # View all logs
-docker-compose logs -f
+docker compose logs -f
 
 # Restart backend only
-docker-compose restart backend
+docker compose restart backend
 
 # Rebuild after code changes
-docker-compose up -d --build backend
+docker compose up -d --build backend
 ```
 
 ### Production Mode
@@ -140,8 +140,7 @@ POSTGRES_PASSWORD=your_secure_password
 POSTGRES_DB=ai_interview
 
 # API Keys
-GEMINI_API_KEY=your_key
-TYPHOON_API_KEY=your_key
+GOOGLE_API_KEY=your_gemini_api_key
 
 # CORS (comma-separated)
 CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
@@ -152,14 +151,9 @@ CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
 Adjust in `docker-compose.yaml`:
 
 ```yaml
-deploy:
-  resources:
-    limits:
-      cpus: "2" # Maximum CPU cores
-      memory: 2G # Maximum RAM
-    reservations:
-      cpus: "0.5" # Reserved CPU
-      memory: 512M # Reserved RAM
+# Memory limits (simple format)
+mem_limit: 1g
+mem_reservation: 512m
 ```
 
 ---
@@ -343,9 +337,8 @@ deploy:
 ### Current Setup
 
 ```
-Backend Image: ~400-500 MB
+Backend Image: ~4-5 GB (includes Python deps + ffmpeg)
 Database Image: ~240 MB (Alpine)
-Total: ~650-750 MB
 ```
 
 ### Build Cache
@@ -466,4 +459,4 @@ For issues:
 
 ---
 
-**Last Updated:** 2025-12-17
+**Last Updated:** 2026-02-05

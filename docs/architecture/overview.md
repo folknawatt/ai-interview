@@ -26,7 +26,7 @@ graph TB
     subgraph "External Services"
         Gemini[Google Gemini AI]
         Whisper[Whisper ASR]
-        TTS[Edge TTS]
+        TTS[Vachana TTS]
     end
 
     subgraph "Storage"
@@ -68,7 +68,7 @@ graph TB
 - **Framework:** FastAPI (Python 3.11+)
 - **AI:** Google Gemini API
 - **Speech Recognition:** OpenAI Whisper / faster-whisper
-- **TTS:** Edge TTS / Google TTS
+- **TTS:** Vachana TTS (Thai support)
 - **Media Processing:** FFmpeg, MoviePy
 
 **Key Features:**
@@ -184,17 +184,14 @@ sequenceDiagram
 ## Security Considerations
 
 1. **API Key Management**
-
    - Environment variables for sensitive keys
    - Never commit keys to version control
 
 2. **CORS Configuration**
-
    - Configurable allowed origins
    - Secure defaults
 
 3. **File Upload Security**
-
    - File type validation
    - Size limits
    - Temporary storage with cleanup
@@ -214,19 +211,16 @@ sequenceDiagram
 ### Future Scalability Options
 
 1. **Horizontal Scaling**
-
    - Containerize with Docker
    - Deploy multiple backend instances
    - Add load balancer
 
 2. **Storage**
-
    - Move to cloud storage (S3, GCS)
    - Implement CDN for static assets
    - Add persistent database
 
 3. **Caching**
-
    - Redis for session management
    - Cache frequently requested questions
    - Cache AI responses where appropriate
@@ -300,13 +294,11 @@ graph LR
 ## Performance Considerations
 
 1. **Audio Processing**
-
    - Use faster-whisper for GPU acceleration
    - Process in chunks for large files
    - Async processing to avoid blocking
 
 2. **AI Request Optimization**
-
    - Batch requests where possible
    - Implement retry logic
    - Add timeout handling
@@ -334,7 +326,4 @@ graph LR
 
 ---
 
-For more detailed information on specific components, see:
-
-- [Backend Architecture](./backend.md)
-- [Frontend Architecture](./frontend.md)
+For more detailed API documentation, visit `http://localhost:8000/docs` when running locally.

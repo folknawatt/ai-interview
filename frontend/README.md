@@ -317,10 +317,6 @@ Services are located in `services/` and use the `useApi()` composable for HTTP r
 4. Ensure all tests pass before submitting PR
 5. Keep PRs focused and atomic
 
-## 📄 License
-
-[Add your license information here]
-
 ## 🐛 Troubleshooting
 
 ### Common Issues
