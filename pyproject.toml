@@ -23,7 +23,6 @@ dependencies = [
     "uvicorn>=0.20.0",
     "sqlmodel>=0.0.14",
     "reportlab>=4.0.0",
-    "psycopg2-binary>=2.9.11",
     "pyarrow>=22.0.0",
     "ml-dtypes>=0.5.4",
     "pymupdf>=1.26.7",
@@ -32,6 +31,9 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "email-validator>=2.3.0",
     "vachanatts>=0.0.7",
+    "asyncpg>=0.31.0",
+    "python-json-logger>=4.0.0",
+    "google-cloud-secret-manager>=2.26.0",
 ]
 
 [project.optional-dependencies]

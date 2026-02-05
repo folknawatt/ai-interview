@@ -4,6 +4,7 @@ Centralized configuration for AI Interview system.
 This module provides application-wide settings using Pydantic for
 environment variable validation and type safety.
 """
+from app.config.secret_manager import _load_secrets_from_secret_manager
 import os
 from pathlib import Path
 from typing import List
@@ -24,6 +25,10 @@ if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 else:
     load_dotenv()
+
+# Load secrets from Google Cloud Secret Manager (if configured)
+# This overrides/augments local .env variables
+_load_secrets_from_secret_manager()
 
 
 class Settings(BaseSettings):
@@ -52,14 +57,15 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Construct database URL from components."""
-        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        # Use postgresql+asyncpg for async connection
+        return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
     # TTS Configuration
-    tts_provider: str = "vachana"  # TTS provider to use: "gemini" or "vachana"
+    tts_provider: str = "vachana"  # TTS provider to use
     tts_max_retries: int = 2
     tts_initial_delay: int = 1
     tts_audio_dir: str = os.path.join("storage", "audio")
-    tts_gemini_voice: str = "kore"  # Gemini voice name
+
     tts_vachana_voice: str = "th_f_1"  # Vachana voice name
     voices_dir: str = "voices"
 
@@ -108,6 +114,28 @@ class Settings(BaseSettings):
         "case_sensitive": False,
         "extra": "ignore"
     }
+
+    def validate_security(self):
+        """
+        Validate security settings for production readiness.
+        Logs warnings if default secrets are used.
+        """
+        import logging
+        logger = logging.getLogger("app.config.settings")
+
+        defaults = [
+            ("jwt_secret_key", "change-this-secret-key-in-production"),
+            ("admin_default_password", "change-me-in-production"),
+            ("postgres_password", "postgres")
+        ]
+
+        for field, unsafe_value in defaults:
+            current_value = getattr(self, field)
+            if current_value == unsafe_value:
+                logger.warning(
+                    f"SECURITY WARNING: Default value used for '{field}'. "
+                    "Change this in production!"
+                )
 
 
 # Global settings instance
