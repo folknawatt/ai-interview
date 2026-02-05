@@ -5,11 +5,11 @@ This module provides a repository pattern for managing interview questions
 stored in the relational database.
 """
 from typing import Any, Dict, List, Optional
-from sqlmodel import Session, select, desc
+from sqlmodel import select, desc
+from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlmodel.ext.asyncio.session import AsyncSession # We use the one that supports exec if using SQLModel
 
 from app.config.logging_config import get_logger
-
-from app.database.db import engine
 from app.database.models import JobRole, Question
 
 logger = get_logger(__name__)
@@ -20,271 +20,226 @@ class QuestionRepository:
 
     def __init__(self):
         """Initialize question repository."""
-        self.engine = engine
+        # Session is now injected per method call
+        pass
 
-    def load_all(self) -> Dict[str, Any]:
+    async def load_all(self, session: AsyncSession) -> Dict[str, Any]:
         """
         Load all roles and questions from the database.
-
-        Returns:
-            Dict[str, Any]: A dictionary where keys are role IDs and values
-                are dictionaries containing 'title' and a list of 'questions'.
-
-                Example:
-                {
-                    "role_id": {
-                        "title": "Role Title",
-                        "questions": ["Question 1", "Question 2"]
-                    }
-                }
         """
+        # SQLModel style: exec(select(...))
+        result = await session.exec(select(JobRole))
+        roles = result.all()
 
-        with Session(self.engine) as session:
-            # SQLModel style: exec(select(...))
-            roles = session.exec(select(JobRole)).all()
-            result = {}
-            for role in roles:
-                # Relationship loading is standard SQLAlchemy/SQLModel behavior
-                # lazy loading should work if session is open
-                # Or explicit query:
-                statement = (
-                    select(Question)
-                    .where(Question.role_id == role.id)
-                    .order_by(Question.order)
-                )
-                questions = session.exec(statement).all()
-
-                result[role.id] = {
-                    "title": role.title,
-                    "questions": [{"id": q.id, "content": q.content} for q in questions]
-                }
-            return result
-
-    def save(self, role_id: str, title: str, questions: List[str]) -> None:
-        """
-        Save questions for a specific role (Create or Update).
-
-        Args:
-            role_id (str): Unique identifier for the job role.
-            title (str): Display title for the role.
-            questions (List[str]): List of question strings to associate
-                with the role.
-
-        Raises:
-            RuntimeError: If the database operation fails.
-        """
-        with Session(self.engine) as session:
-            try:
-                role = session.exec(select(JobRole).where(
-                    JobRole.id == role_id)).first()
-                if not role:
-                    role = JobRole(id=role_id, title=title)
-                    session.add(role)
-                else:
-                    role.title = title
-
-                # Flush to ensure role exists if created
-                session.flush()
-
-                # Clear existing questions to replace
-                statement = select(Question).where(
-                    Question.role_id == role_id
-                )
-                results = session.exec(statement).all()
-                for q in results:
-                    session.delete(q)
-
-                for idx, q_text in enumerate(questions):
-                    q = Question(role_id=role_id, content=q_text, order=idx)
-                    session.add(q)
-
-                session.commit()
-                logger.info(
-                    "Saved role %s with %s questions",
-                    role_id,
-                    len(questions)
-                )
-            except (ValueError, RuntimeError) as e:
-                session.rollback()
-                logger.error("Failed to save role %s: %s", role_id, e)
-                raise RuntimeError(f"Database save failed: {e}") from e
-
-    def get_by_id(self, role_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Retrieves role questions by role ID.
-
-        Args:
-            role_id (str): The role ID to search for.
-
-        Returns:
-            Optional[Dict[str, Any]]: A dictionary with 'title' and 'questions' keys,
-                                      or None if the role is not found.
-        """
-        with Session(self.engine) as session:
-            role = session.exec(select(JobRole).where(
-                JobRole.id == role_id)).first()
-            if not role:
-                return None
-
+        output = {}
+        for role in roles:
+            # Relationship loading
             statement = (
                 select(Question)
                 .where(Question.role_id == role.id)
                 .order_by(Question.order)
             )
-            questions = session.exec(statement).all()
+            q_result = await session.exec(statement)
+            questions = q_result.all()
 
-            return {
+            output[role.id] = {
                 "title": role.title,
                 "questions": [{"id": q.id, "content": q.content} for q in questions]
             }
+        return output
 
-    def delete(self, role_id: str) -> bool:
+    async def save(self, session: AsyncSession, role_id: str, title: str, questions: List[str]) -> None:
+        """
+        Save questions for a specific role (Create or Update).
+        """
+        try:
+            r_result = await session.exec(select(JobRole).where(JobRole.id == role_id))
+            role = r_result.first()
+
+            if not role:
+                role = JobRole(id=role_id, title=title)
+                session.add(role)
+            else:
+                role.title = title
+
+            # Flush to ensure role exists if created (async flush not always strict requirement but good practice)
+            await session.flush()
+
+            # Clear existing questions to replace
+            statement = select(Question).where(
+                Question.role_id == role_id
+            )
+            q_result = await session.exec(statement)
+            results = q_result.all()
+            for q in results:
+                await session.delete(q)
+
+            for idx, q_text in enumerate(questions):
+                q = Question(role_id=role_id, content=q_text, order=idx)
+                session.add(q)
+
+            await session.commit()
+            logger.info(
+                "Saved role %s with %s questions",
+                role_id,
+                len(questions)
+            )
+        except (ValueError, RuntimeError) as e:
+            await session.rollback()
+            logger.error("Failed to save role %s: %s", role_id, e)
+            raise RuntimeError(f"Database save failed: {e}") from e
+
+    async def get_by_id(self, session: AsyncSession, role_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieves role questions by role ID.
+        """
+        r_result = await session.exec(select(JobRole).where(JobRole.id == role_id))
+        role = r_result.first()
+
+        if not role:
+            return None
+
+        statement = (
+            select(Question)
+            .where(Question.role_id == role.id)
+            .order_by(Question.order)
+        )
+        q_result = await session.exec(statement)
+        questions = q_result.all()
+
+        return {
+            "title": role.title,
+            "questions": [{"id": q.id, "content": q.content} for q in questions]
+        }
+
+    async def delete(self, session: AsyncSession, role_id: str) -> bool:
         """
         Delete a role and its associated questions.
-
-        Args:
-            role_id (str): The ID of the role to delete.
-
-        Returns:
-            bool: True if the role was found and deleted, False otherwise.
         """
-        with Session(self.engine) as session:
-            role = session.exec(select(JobRole).where(
-                JobRole.id == role_id)).first()
-            if role:
-                session.delete(role)  # Cascade should handle questions
-                session.commit()
-                return True
-            return False
+        r_result = await session.exec(select(JobRole).where(JobRole.id == role_id))
+        role = r_result.first()
 
-    def exists(self, role_id: str) -> bool:
+        if role:
+            await session.delete(role)  # Cascade should handle questions
+            await session.commit()
+            return True
+        return False
+
+    async def exists(self, session: AsyncSession, role_id: str) -> bool:
         """
         Check if a role exists in the database.
-
-        Args:
-            role_id (str): The role ID to check.
-
-        Returns:
-            bool: True if the role exists, False otherwise.
         """
-        with Session(self.engine) as session:
-            role = session.exec(select(JobRole).where(
-                JobRole.id == role_id)).first()
-            return role is not None
+        r_result = await session.exec(select(JobRole).where(JobRole.id == role_id))
+        role = r_result.first()
+        return role is not None
 
-    def update_role(
-        self, role_id: str, questions: Optional[List[str]] = None, title: Optional[str] = None
+    async def update_role(
+        self,
+        session: AsyncSession,
+        role_id: str,
+        questions: Optional[List[str]] = None,
+        title: Optional[str] = None
     ) -> None:
         """
         Update details (title, questions) for an existing role.
-
-        Args:
-            role_id (str): The ID of the role to update.
-            questions (Optional[List[str]]): List of new question strings. If None, questions are not updated.
-            title (Optional[str]): New title. If None, title is not updated.
-
-        Raises:
-            ValueError: If the role does not exist.
         """
-        with Session(self.engine) as session:
-            try:
-                role = session.exec(select(JobRole).where(
-                    JobRole.id == role_id)).first()
-                if not role:
-                    raise ValueError(f"Role '{role_id}' not found")
+        try:
+            r_result = await session.exec(select(JobRole).where(JobRole.id == role_id))
+            role = r_result.first()
 
-                if title is not None:
-                    role.title = title
-                    session.add(role)
+            if not role:
+                raise ValueError(f"Role '{role_id}' not found")
 
-                if questions is not None:
-                    # Simplistic approach: delete all and recreate
-                    existing_questions = session.exec(
-                        select(Question).where(Question.role_id == role_id)
-                    ).all()
-                    for q in existing_questions:
-                        session.delete(q)
+            if title is not None:
+                role.title = title
+                session.add(role)
 
-                    for idx, q_text in enumerate(questions):
-                        q = Question(role_id=role_id,
-                                     content=q_text, order=idx)
-                        session.add(q)
-
-                session.commit()
-            except ValueError:
-                session.rollback()
-                raise
-            except Exception as e:
-                session.rollback()
-                logger.error(
-                    "Failed to update role %s: %s",
-                    role_id,
-                    e
+            if questions is not None:
+                # Simplistic approach: delete all and recreate
+                q_result = await session.exec(
+                    select(Question).where(Question.role_id == role_id)
                 )
-                raise RuntimeError(
-                    f"Database update failed: {e}"
-                ) from e
+                existing_questions = q_result.all()
 
-    def append_questions(
-        self, role_id: str, questions: List[str]
+                for q in existing_questions:
+                    await session.delete(q)
+
+                for idx, q_text in enumerate(questions):
+                    q = Question(role_id=role_id,
+                                 content=q_text, order=idx)
+                    session.add(q)
+
+            await session.commit()
+        except ValueError:
+            await session.rollback()
+            raise
+        except Exception as e:
+            await session.rollback()
+            logger.error(
+                "Failed to update role %s: %s",
+                role_id,
+                e
+            )
+            raise RuntimeError(
+                f"Database update failed: {e}"
+            ) from e
+
+    async def append_questions(
+        self,
+        session: AsyncSession,
+        role_id: str,
+        questions: List[str]
     ) -> None:
         """
         Append new questions to an existing role (keeps existing questions).
-
-        Args:
-            role_id (str): The ID of the role to append questions to.
-            questions (List[str]): List of new question content strings to add.
-
-        Raises:
-            ValueError: If the role does not exist.
         """
-        with Session(self.engine) as session:
-            try:
-                role = session.exec(select(JobRole).where(
-                    JobRole.id == role_id)).first()
-                if not role:
-                    raise ValueError(f"Role '{role_id}' not found")
+        try:
+            r_result = await session.exec(select(JobRole).where(JobRole.id == role_id))
+            role = r_result.first()
 
-                # Get the current max order to continue from
-                existing_questions = session.exec(
-                    select(Question)
-                    .where(Question.role_id == role_id)
-                    # FIX: Use desc() function matching imports
-                    .order_by(desc(Question.order))
-                ).first()
+            if not role:
+                raise ValueError(f"Role '{role_id}' not found")
 
-                start_order = 0
-                if existing_questions:
-                    start_order = existing_questions.order + 1
+            # Get the current max order to continue from
+            q_result = await session.exec(
+                select(Question)
+                .where(Question.role_id == role_id)
+                .order_by(desc(Question.order))
+            )
+            existing_question = q_result.first()
 
-                # Append new questions after existing ones
-                for idx, q_text in enumerate(questions):
-                    q = Question(
-                        role_id=role_id,
-                        content=q_text,
-                        order=start_order + idx
-                    )
-                    session.add(q)
+            start_order = 0
+            if existing_question:
+                start_order = existing_question.order + 1
 
-                session.commit()
-                logger.info(
-                    "Appended %s questions to role %s",
-                    len(questions),
-                    role_id
+            # Append new questions after existing ones
+            for idx, q_text in enumerate(questions):
+                q = Question(
+                    role_id=role_id,
+                    content=q_text,
+                    order=start_order + idx
                 )
-            except ValueError:
-                session.rollback()
-                raise
-            except Exception as e:
-                session.rollback()
-                logger.error(
-                    "Failed to append questions for role %s: %s",
-                    role_id,
-                    e
-                )
-                raise RuntimeError(
-                    f"Database append failed: {e}"
-                ) from e
+                session.add(q)
+
+            await session.commit()
+            logger.info(
+                "Appended %s questions to role %s",
+                len(questions),
+                role_id
+            )
+        except ValueError:
+            await session.rollback()
+            raise
+        except Exception as e:
+            await session.rollback()
+            logger.error(
+                "Failed to append questions for role %s: %s",
+                role_id,
+                e
+            )
+            raise RuntimeError(
+                f"Database append failed: {e}"
+            ) from e
 
     def duplicate_role(self, base_role_id: str, new_role_id: str, new_title: str) -> None:
         """

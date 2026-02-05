@@ -10,6 +10,9 @@ Provides endpoints for HR users to:
 """
 from typing import Dict, Any
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database.db import get_db
 from app.schemas import JDInput, SaveQuestionsRequest, UpdateQuestionsRequest
 from app.services import HRService
 from app.services.core.role_service import RoleService
@@ -27,6 +30,7 @@ async def generate_questions_api(
     api_key: str = Depends(get_api_key)
 ) -> Dict[str, Any]:
     """Generate interview questions from job description using AI."""
+    # This remains blocking for now, or could be wrapped in threadpool if slow.
     questions = HRService.generate_questions(
         api_key, data.role_title, data.job_description
     )
@@ -34,35 +38,47 @@ async def generate_questions_api(
 
 
 @router.post("/save-questions")
-async def save_questions_api(data: SaveQuestionsRequest) -> Dict[str, str]:
+async def save_questions_api(
+    data: SaveQuestionsRequest,
+    session: AsyncSession = Depends(get_db)
+) -> Dict[str, str]:
     """Save approved interview questions to JSON database."""
-    return HRService.save_role_questions(
-        data.role_id, data.role_title, data.questions
+    return await HRService.save_role_questions(
+        session, data.role_id, data.role_title, data.questions
     )
 
 
 @router.get("/roles")
-def get_roles() -> list[Dict[str, Any]]:
+async def get_roles(
+    session: AsyncSession = Depends(get_db)
+) -> list[Dict[str, Any]]:
     """Get all job roles."""
-    return HRService.get_all_roles()
+    return await HRService.get_all_roles(session)
 
 
 @router.get("/roles/{role_id}")
-def get_role_details(role_id: str) -> Dict[str, Any]:
+async def get_role_details(
+    role_id: str,
+    session: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
     """Get detailed information for a specific role."""
-    return RoleService.get_role_by_id(role_id)
+    return await RoleService.get_role_by_id(session, role_id)
 
 
 @router.put("/roles/{role_id}/questions")
 async def update_role_questions(
     role_id: str,
-    data: UpdateQuestionsRequest
+    data: UpdateQuestionsRequest,
+    session: AsyncSession = Depends(get_db)
 ) -> Dict[str, str]:
     """Update questions for an existing role."""
-    return HRService.update_role_questions(role_id, questions=data.questions, title=data.title)
+    return await HRService.update_role_questions(session, role_id, questions=data.questions, title=data.title)
 
 
 @router.delete("/roles/{role_id}")
-async def delete_role(role_id: str) -> Dict[str, str]:
+async def delete_role(
+    role_id: str,
+    session: AsyncSession = Depends(get_db)
+) -> Dict[str, str]:
     """Delete a role completely."""
-    return HRService.delete_role(role_id)
+    return await HRService.delete_role(session, role_id)

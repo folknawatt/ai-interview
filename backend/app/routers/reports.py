@@ -11,7 +11,7 @@ import io
 from typing import Optional
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_db
 from app.services import ReportService
@@ -24,12 +24,12 @@ router = APIRouter(
 
 
 @router.get("/all", response_model=list[ReportListItem])
-def get_all_reports(
+async def get_all_reports(
     role_id: Optional[str] = None,
     min_score: Optional[float] = None,
     recommendation: Optional[str] = None,
     search_query: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> list[ReportListItem]:
     """
     List all completed interviews with optional filtering.
@@ -40,24 +40,24 @@ def get_all_reports(
     - recommendation: Filter by recommendation (Strong Pass, Pass, Review, Fail)
     - search_query: Search by candidate name
     """
-    return ReportService.get_all_reports(
+    return await ReportService.get_all_reports(
         db, role_id, min_score, recommendation, search_query
     )
 
 
 @router.get("/{session_id}", response_model=InterviewReportResponse)
-def get_report_details(
+async def get_report_details(
     session_id: str,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> InterviewReportResponse:
     """Get detailed report for a specific interview session."""
-    return ReportService.get_report_details(db, session_id)
+    return await ReportService.get_report_details(db, session_id)
 
 
 @router.get("/{session_id}/pdf")
-def download_pdf_report(session_id: str, db: Session = Depends(get_db)):
+async def download_pdf_report(session_id: str, db: AsyncSession = Depends(get_db)):
     """Generate and download PDF report for an interview."""
-    pdf_buffer = ReportService.generate_pdf_report(db, session_id)
+    pdf_buffer = await ReportService.generate_pdf_report(db, session_id)
 
     # Return as streaming response
     return StreamingResponse(
@@ -70,6 +70,6 @@ def download_pdf_report(session_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/statistics/overview")
-def get_statistics(db: Session = Depends(get_db)) -> dict:
+async def get_statistics(db: AsyncSession = Depends(get_db)) -> dict:
     """Get overall statistics for all completed interviews."""
-    return ReportService.get_statistics(db)
+    return await ReportService.get_statistics(db)

@@ -4,7 +4,8 @@ Candidate Service.
 Encapsulates business logic for candidate management.
 """
 from typing import Optional
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Candidate
 from app.exceptions import NotFoundError
@@ -14,8 +15,8 @@ class CandidateService:
     """Service class for handling candidate management business logic."""
 
     @staticmethod
-    def get_or_create(
-        session: Session,
+    async def get_or_create(
+        session: AsyncSession,
         name: str,
         email: Optional[str]
     ) -> Candidate:
@@ -23,7 +24,7 @@ class CandidateService:
         Get existing candidate or create new one.
 
         Args:
-            session: Database session
+            session: Async Database session
             name: Candidate name
             email: Candidate email (optional)
 
@@ -32,9 +33,10 @@ class CandidateService:
         """
         # If email is provided, use it for deduplication
         if email:
-            candidate = session.exec(
+            result = await session.exec(
                 select(Candidate).where(Candidate.email == email)
-            ).first()
+            )
+            candidate = result.first()
             if candidate:
                 return candidate
 
@@ -44,17 +46,18 @@ class CandidateService:
             email=email
         )
         session.add(candidate)
-        session.commit()
-        session.refresh(candidate)
+        await session.commit()
+        await session.refresh(candidate)
 
         return candidate
 
     @staticmethod
-    def get_by_id(session: Session, candidate_id: int) -> Candidate:
+    async def get_by_id(session: AsyncSession, candidate_id: int) -> Candidate:
         """Retrieve candidate by ID."""
-        candidate = session.exec(
+        result = await session.exec(
             select(Candidate).where(Candidate.id == candidate_id)
-        ).first()
+        )
+        candidate = result.first()
         if not candidate:
             raise NotFoundError(f"Candidate {candidate_id} not found")
         return candidate

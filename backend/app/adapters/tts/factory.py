@@ -5,8 +5,7 @@ This module implements the Factory pattern to create appropriate
 TTS provider instances based on configuration.
 """
 from app.adapters.tts.tts_provider import TTSProvider
-from app.adapters.tts.providers.gemini_provider import GeminiTTSProvider
-from app.adapters.tts.providers.edge_provider import EdgeTTSProvider
+from app.adapters.tts.providers.vachana_provider import VachanaTTSProvider
 from app.adapters.tts.exceptions import TTSConfigurationError
 from app.config.logging_config import get_logger
 from app.config.settings import settings
@@ -20,8 +19,7 @@ class TTSProviderFactory:
 
     # Registry of available providers
     _providers = {
-        "gemini": GeminiTTSProvider,
-        "edge": EdgeTTSProvider,
+        "vachana": VachanaTTSProvider,
     }
 
     @classmethod
@@ -34,10 +32,9 @@ class TTSProviderFactory:
         Create a TTS provider instance.
 
         Args:
-            provider_type: Type of provider ("gemini" or "edge")
+            provider_type: Type of provider ("vachana")
             **config: Provider-specific configuration parameters
-                For Gemini: api_key, voice, sample_rate
-                For Edge: voice
+                For Vachana: voice, speed, volume
 
         Returns:
             TTSProvider: Configured TTS provider instance
@@ -47,9 +44,8 @@ class TTSProviderFactory:
 
         Example:
             >>> provider = TTSProviderFactory.create_provider(
-            ...     "gemini",
-            ...     api_key="your-key",
-            ...     voice="kore"
+            ...     "vachana",
+            ...     voice="default"
             ... )
         """
         provider_type = provider_type.lower()
@@ -95,14 +91,9 @@ class TTSProviderFactory:
         provider_type = settings.tts_provider
 
         # Prepare provider-specific configuration
-        if provider_type == "gemini":
+        if provider_type == "vachana":
             config = {
-                "api_key": settings.google_api_key,
-                "voice": settings.tts_gemini_voice,
-            }
-        elif provider_type == "edge":
-            config = {
-                "voice": settings.tts_edge_voice,
+                "voice": settings.tts_vachana_voice,
             }
         else:
             config = {}

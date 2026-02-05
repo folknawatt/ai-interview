@@ -16,6 +16,11 @@ from sqlmodel import Field, Relationship, SQLModel, JSON
 from sqlalchemy import Text
 
 
+def utc_now():
+    """Return current naive UTC timestamp."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class InterviewStatus(str, enum.Enum):
     """Status of an interview session."""
     STARTED = "started"
@@ -44,10 +49,10 @@ class HRUser(SQLModel, table=True):
     role: UserRole = Field(default=UserRole.HR, nullable=False)
     is_active: bool = Field(default=True, nullable=False)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+        default_factory=utc_now, nullable=False)
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=utc_now,
+        sa_column_kwargs={"onupdate": utc_now},
         nullable=False
     )
 
@@ -61,7 +66,7 @@ class JobRole(SQLModel, table=True):
     id: str = Field(primary_key=True, index=True, max_length=100)
     title: str = Field(max_length=255, nullable=False)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc))
+        default_factory=utc_now)
 
     # Relationships
     questions: List["Question"] = Relationship(
@@ -86,7 +91,7 @@ class Question(SQLModel, table=True):
     content: str = Field(sa_type=Text, nullable=False)
     order: int = Field(default=0, nullable=False)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc))
+        default_factory=utc_now)
 
     # Relationships
     role: "JobRole" = Relationship(back_populates="questions")
@@ -105,10 +110,10 @@ class Candidate(SQLModel, table=True):
     email: Optional[str] = Field(
         default=None, max_length=255, nullable=True, index=True)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+        default_factory=utc_now, nullable=False)
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=utc_now,
+        sa_column_kwargs={"onupdate": utc_now},
         nullable=False
     )
 
@@ -145,7 +150,7 @@ class InterviewSession(SQLModel, table=True):
     status: InterviewStatus = Field(
         default=InterviewStatus.STARTED, nullable=False)
     started_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+        default_factory=utc_now, nullable=False)
     completed_at: Optional[datetime] = Field(default=None, nullable=True)
 
     # Relationships
@@ -197,10 +202,10 @@ class QuestionResult(SQLModel, table=True):
 
     # Timestamps
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+        default_factory=utc_now, nullable=False)
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=utc_now,
+        sa_column_kwargs={"onupdate": utc_now},
         nullable=False
     )
 

@@ -8,16 +8,12 @@ from typing import Optional
 
 import bcrypt
 from jose import JWTError, jwt
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.settings import settings
 from app.database.models import HRUser, UserRole
 from app.exceptions import NotFoundError, ValidationError
-
-# JWT Settings
-SECRET_KEY = settings.jwt_secret_key or "your-secret-key-change-in-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
 
 class AuthService:
@@ -46,38 +42,42 @@ class AuthService:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
             expire = datetime.now(timezone.utc) + \
-                timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+                timedelta(minutes=settings.jwt_access_token_expire_minutes)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(
+            to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
         return encoded_jwt
 
     @staticmethod
     def decode_token(token: str) -> dict:
         """Decode and validate a JWT token."""
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[
+                                 settings.jwt_algorithm])
             return payload
         except JWTError as e:
             raise ValidationError(f"Invalid token: {str(e)}") from e
 
     @staticmethod
-    def get_user_by_username(session: Session, username: str) -> Optional[HRUser]:
+    async def get_user_by_username(session: AsyncSession, username: str) -> Optional[HRUser]:
         """Get user by username."""
-        return session.exec(
+        result = await session.exec(
             select(HRUser).where(HRUser.username == username)
-        ).first()
+        )
+        return result.first()
 
     @staticmethod
-    def get_user_by_id(session: Session, user_id: int) -> Optional[HRUser]:
+    async def get_user_by_id(session: AsyncSession, user_id: int) -> Optional[HRUser]:
         """Get user by ID."""
-        return session.exec(
+        result = await session.exec(
             select(HRUser).where(HRUser.id == user_id)
-        ).first()
+        )
+        return result.first()
 
     @staticmethod
-    def authenticate_user(session: Session, username: str, password: str) -> HRUser:
+    async def authenticate_user(session: AsyncSession, username: str, password: str) -> HRUser:
         """Authenticate a user with username and password."""
-        user = AuthService.get_user_by_username(session, username)
+        user = await AuthService.get_user_by_username(session, username)
         if not user:
             raise NotFoundError("User not found")
         if not AuthService.verify_password(password, user.hashed_password):
@@ -87,8 +87,8 @@ class AuthService:
         return user
 
     @staticmethod
-    def create_user(
-        session: Session,
+    async def create_user(
+        session: AsyncSession,
         username: str,
         email: str,
         password: str,
@@ -97,17 +97,17 @@ class AuthService:
     ) -> HRUser:
         """Create a new user."""
         # Check if username already exists
-        existing = session.exec(
+        result_username = await session.exec(
             select(HRUser).where(HRUser.username == username)
-        ).first()
-        if existing:
+        )
+        if result_username.first():
             raise ValidationError("Username already exists")
 
         # Check if email already exists
-        existing_email = session.exec(
+        result_email = await session.exec(
             select(HRUser).where(HRUser.email == email)
-        ).first()
-        if existing_email:
+        )
+        if result_email.first():
             raise ValidationError("Email already exists")
 
         # Create user
@@ -120,22 +120,34 @@ class AuthService:
             is_active=True
         )
         session.add(user)
-        session.commit()
-        session.refresh(user)
+        await session.commit()
+        await session.refresh(user)
         return user
 
     @staticmethod
-    def create_default_admin(session: Session) -> Optional[HRUser]:
-        """Create default admin user if not exists."""
-        existing = AuthService.get_user_by_username(session, "admin")
-        if existing:
-            return None  # Admin already exists
+    async def create_default_admin(session: AsyncSession) -> Optional[HRUser]:
+        """Create or update default admin user."""
+        admin_email = settings.admin_default_email
+        admin_password = settings.admin_default_password
 
-        return AuthService.create_user(
+        # Check by username
+        existing = await AuthService.get_user_by_username(session, "admin")
+
+        if existing:
+            # Update password if exists (Force Reset)
+            new_hash = AuthService.get_password_hash(admin_password)
+            existing.hashed_password = new_hash
+            existing.email = admin_email  # Also update email if it changed in settings
+            session.add(existing)
+            await session.commit()
+            await session.refresh(existing)
+            return existing
+
+        return await AuthService.create_user(
             session=session,
             username="admin",
-            email="admin@ai-interview.com",
-            password="password",  # Change this in production!
+            email=admin_email,
+            password=admin_password,
             full_name="Administrator",
             role=UserRole.ADMIN
         )

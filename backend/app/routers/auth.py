@@ -9,11 +9,12 @@ Provides endpoints for user authentication:
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.config.settings import settings
 
-from app.database import get_db
+from app.database.db import get_db
 from app.database.models import HRUser, UserRole
 from app.exceptions import NotFoundError, ValidationError
 from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, UserResponse
@@ -21,28 +22,45 @@ from app.services.auth import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+# We still keep OAuth2PasswordBearer for Swagger UI support,
+# but we'll make it optional since we primarily use cookies
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    session: Session = Depends(get_db)
+    request: Request,
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
+    session: AsyncSession = Depends(get_db)
 ) -> HRUser:
-    """Dependency to get current authenticated user from JWT token."""
+    """
+    Dependency to get current authenticated user.
+    Prioritizes HttpOnly Cookie, falls back to Bearer token (for testing/Swagger).
+    """
+    # 1. Try to get from Cookie
+    cookie_token = request.cookies.get("access_token")
+
+    # 2. Use cookie token if available, otherwise use Bearer token
+    final_token = cookie_token if cookie_token else token
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not final_token:
+        raise credentials_exception
+
     try:
-        payload = AuthService.decode_token(token)
+        payload = AuthService.decode_token(final_token)
         user_id: int = payload.get("user_id")
         if user_id is None:
             raise credentials_exception
     except ValidationError:
         raise credentials_exception
 
-    user = AuthService.get_user_by_id(session, user_id)
+    user = await AuthService.get_user_by_id(session, user_id)
     if user is None:
         raise credentials_exception
     if not user.is_active:
@@ -67,12 +85,13 @@ def require_role(*roles: UserRole):
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: Session = Depends(get_db)
+    session: AsyncSession = Depends(get_db)
 ):
-    """Authenticate user and return JWT token."""
+    """Authenticate user and set HttpOnly cookies."""
     try:
-        user = AuthService.authenticate_user(
+        user = await AuthService.authenticate_user(
             session, form_data.username, form_data.password
         )
     except (NotFoundError, ValidationError) as e:
@@ -82,31 +101,79 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
-    # Create token
+    # Create access token
     access_token = AuthService.create_access_token(
         data={
             "user_id": user.id,
             "username": user.username,
             "role": user.role.value
-        }
+        },
+        expires_delta=timedelta(
+            minutes=settings.jwt_access_token_expire_minutes)
+    )
+
+    # Create refresh token (can be longer lived)
+    refresh_token = AuthService.create_access_token(
+        data={"user_id": user.id, "type": "refresh"},
+        expires_delta=timedelta(days=settings.jwt_refresh_token_expire_days)
+    )
+
+    # Set HttpOnly Cookies
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        domain=settings.cookie_domain,
+        max_age=settings.jwt_access_token_expire_minutes * 60
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        domain=settings.cookie_domain,
+        max_age=settings.jwt_refresh_token_expire_days * 24 * 60 * 60
     )
 
     return LoginResponse(
-        access_token=access_token,
+        # Token is now in cookie, returning empty string or just "logged_in" to satisfy schema
+        access_token="",
         token_type="bearer",
         user=UserResponse.model_validate(user)
     )
 
 
+@router.post("/logout")
+async def logout(response: Response):
+    """Logout user by clearing cookies."""
+    response.delete_cookie(
+        key="access_token",
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        domain=settings.cookie_domain
+    )
+    response.delete_cookie(
+        key="refresh_token",
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        domain=settings.cookie_domain
+    )
+    return {"message": "Logged out successfully"}
+
+
 @router.post("/register", response_model=UserResponse)
 async def register(
     request: RegisterRequest,
-    session: Session = Depends(get_db),
+    session: AsyncSession = Depends(get_db),
     current_user: HRUser = Depends(require_role(UserRole.ADMIN))
 ):
     """Register a new user. Admin only."""
     try:
-        user = AuthService.create_user(
+        user = await AuthService.create_user(
             session=session,
             username=request.username,
             email=request.email,
@@ -129,9 +196,9 @@ async def get_me(current_user: HRUser = Depends(get_current_user)):
 
 
 @router.post("/init-admin", response_model=UserResponse, include_in_schema=False)
-async def init_admin(session: Session = Depends(get_db)):
+async def init_admin(session: AsyncSession = Depends(get_db)):
     """Initialize default admin user. For initial setup only."""
-    user = AuthService.create_default_admin(session)
+    user = await AuthService.create_default_admin(session)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

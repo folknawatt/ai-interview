@@ -7,6 +7,7 @@ Encapsulates business logic for HR management, including:
 - CRUD operations for roles
 """
 from typing import Dict, Any, List
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.repositories import get_question_repository
 from app.services.interview.question_manager import gen_questions
@@ -25,52 +26,42 @@ class HRService:
     ) -> List[str]:
         """
         Generate interview questions from job description using AI.
+        (Remains sync or can be async enabled if gen_questions supports it.
+         For now, the AI call is likely blocking, so running in threadpool is option,
+         but let's keep it simple if it's external API call. 
+         Wait, gen_questions uses google.generativeai which might be sync. 
+         Ideally this should be wrapped in asyncio.to_thread, but user asked for DB fix principally.
+         However, let's keep it sync for now as it doesn't touch DB, or make it async if we want consistency).
 
-        Args:
-            api_key: API key for AI service
-            role_title: Job role title
-            job_description: Job description text
-
-        Returns:
-            List of generated questions
+         Actually, let's keep it sync for now as it doesn't touch the DB and user didn't request AI refactor.
         """
         response = gen_questions(api_key, role_title, job_description)
         return response.questions
 
     @staticmethod
-    def save_role_questions(
+    async def save_role_questions(
+        session: AsyncSession,
         role_id: str,
         role_title: str,
         questions: List[str]
     ) -> Dict[str, str]:
         """
         Save approved interview questions to database.
-
-        Args:
-            role_id: Unique role identifier
-            role_title: Job role title
-            questions: List of questions
-
-        Returns:
-            Success status and message
         """
         repo = get_question_repository()
-        repo.save(role_id, role_title, questions)
+        await repo.save(session, role_id, role_title, questions)
         return {
             "status": "success",
             "message": f"Saved questions for {role_title}"
         }
 
     @staticmethod
-    def get_all_roles() -> List[Dict[str, Any]]:
+    async def get_all_roles(session: AsyncSession) -> List[Dict[str, Any]]:
         """
         Get all job roles with details.
-
-        Returns:
-            List of roles with id, title, question_count, and questions
         """
         repo = get_question_repository()
-        questions_db = repo.load_all()
+        questions_db = await repo.load_all(session)
         return [
             {
                 "id": k,
@@ -82,94 +73,79 @@ class HRService:
         ]
 
     @staticmethod
-    def update_role_questions(
+    async def update_role_questions(
+        session: AsyncSession,
         role_id: str,
         questions: List[str] | None = None,
         title: str | None = None
     ) -> Dict[str, str]:
         """
         Update details for an existing role.
-
-        Args:
-            role_id: Unique role identifier
-            questions: New list of questions (optional)
-            title: New title (optional)
-
-        Returns:
-            Success status and message
-
-        Raises:
-            NotFoundError: If role not found
         """
         repo = get_question_repository()
 
-        # Check existence via Repo directly (faster/cleaner than Service wrapper)
-        if not repo.exists(role_id):
+        # Check existence via Repo directly
+        exists = await repo.exists(session, role_id)
+        if not exists:
             raise NotFoundError(f"Role '{role_id}' not found")
 
-        repo.update_role(role_id, questions=questions, title=title)
-        role_data = RoleService.get_role_by_id(role_id)
+        await repo.update_role(session, role_id, questions=questions, title=title)
+
+        # RoleService is strictly file based? No. RoleService logic is weirdly circular.
+        # "RoleService.get_role_by_id(role_id)" was used in sync code.
+        # Let's see what RoleService does. If it just reads JSON, it's fine.
+        # But if we are moving to DB, we should read from DB.
+        # In this refactor, we should rely on what we just updated or fetch from repo.
+
+        # Fetched updated role data from Repo strictly to avoid confusion
+        updated_role_data = await repo.get_by_id(session, role_id)
+        current_title = updated_role_data['title'] if updated_role_data else title
 
         return {
             "status": "success",
-            "message": f"Updated details for {role_data['title']}"
+            "message": f"Updated details for {current_title}"
         }
 
     @staticmethod
-    def append_role_questions(
+    async def append_role_questions(
+        session: AsyncSession,
         role_id: str,
         questions: List[str]
     ) -> Dict[str, str]:
         """
         Append new questions to an existing role (keeps existing questions).
-
-        Args:
-            role_id: Unique role identifier
-            questions: List of questions to append
-
-        Returns:
-            Success status and message
-
-        Raises:
-            NotFoundError: If role not found
         """
         repo = get_question_repository()
 
-        if not repo.exists(role_id):
+        exists = await repo.exists(session, role_id)
+        if not exists:
             raise NotFoundError(f"Role '{role_id}' not found")
 
-        repo.append_questions(role_id, questions)
-        role_data = RoleService.get_role_by_id(role_id)
+        await repo.append_questions(session, role_id, questions)
+
+        updated_role_data = await repo.get_by_id(session, role_id)
+        current_title = updated_role_data['title'] if updated_role_data else role_id
 
         return {
             "status": "success",
-            "message": f"Appended {len(questions)} questions to {role_data['title']}"
+            "message": f"Appended {len(questions)} questions to {current_title}"
         }
 
     @staticmethod
-    def delete_role(role_id: str) -> Dict[str, str]:
+    async def delete_role(session: AsyncSession, role_id: str) -> Dict[str, str]:
         """
         Delete a role completely.
-
-        Args:
-            role_id: Unique role identifier
-
-        Returns:
-            Success status and message
-
-        Raises:
-            NotFoundError: If role not found
         """
         repo = get_question_repository()
 
-        # Check existence first
-        if not repo.exists(role_id):
+        # Check existence first, get title for message
+        role_data = await repo.get_by_id(session, role_id)
+        if not role_data:
             raise NotFoundError(f"Role '{role_id}' not found")
 
-        # Get title for success message (fallback to role_id if not found)
-        role_title = RoleService.get_role_title(role_id)
+        role_title = role_data.get('title', role_id)
 
-        repo.delete(role_id)
+        await repo.delete(session, role_id)
 
         return {
             "status": "success",

@@ -7,16 +7,18 @@ Provides endpoints for candidates to:
 - Get interview session summary and results
 """
 import json
-from typing import Dict, Any
+from typing import Any
 from fastapi import APIRouter, UploadFile, File, Form, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_db
 from app.dependencies import get_api_key
 from app.services import InterviewService, QuestionService
 from app.services.core.tts_service import TTSService
+from app.services.core.role_service import RoleService
 from app.services.interview.resume_service import ResumeService
 from app.exceptions import NotFoundError
+from app.schemas.interview import UploadPDFResponse, QuestionResponse
 from app.config.logging_config import get_logger
 
 
@@ -34,8 +36,8 @@ async def upload_pdf(
     role_id: str = Form(..., description="Role ID to add questions to"),
     candidate_name: str = Form(..., description="Candidate Name"),
     candidate_email: str = Form(None, description="Candidate Email"),
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+    db: AsyncSession = Depends(get_db)
+) -> UploadPDFResponse:
     """Upload PDF resume, generate questions, and initialize session (Snapshot Pattern)."""
     # Read file bytes from UploadFile
     pdf_bytes = await file.read()
@@ -54,8 +56,7 @@ async def upload_pdf(
         raise ValueError("AI Service did not return a list of questions")
 
     # Fetch Base Role Questions
-    from app.services.core.role_service import RoleService
-    role_data = RoleService.get_role_by_id(role_id)
+    role_data = await RoleService.get_role_by_id(db, role_id)
     base_questions = [q['content'] for q in role_data.get('questions', [])]
 
     # Combine questions (Base first, then Custom)
@@ -63,21 +64,26 @@ async def upload_pdf(
 
     # Initialize Session with Questions (Snapshot)
     # This prevents creating duplicate "Candidate Roles"
-    session_id = InterviewService.init_session_with_questions(
+    session_id = await InterviewService.init_session_with_questions(
         db, role_id, all_questions, candidate_name, candidate_email
     )
 
-    return {
-        "session_id": session_id,
-        "role_id": role_id,  # Base Role ID
-        "questions": all_questions
-    }
+    return UploadPDFResponse(
+        session_id=session_id,
+        role_id=role_id,
+        questions=all_questions
+    )
 
 
 @router.get("/question/{role_id}/{index}")
-async def get_interview_question(role_id: str, index: int) -> Dict[str, Any]:
+async def get_interview_question(
+    role_id: str,
+    index: int,
+    db: AsyncSession = Depends(get_db)
+) -> QuestionResponse:
     """Get interview question by role and index (Legacy/Standard Flow)."""
-    result = QuestionService.get_next_question(role_id, index)
+    # Note: QuestionService.get_next_question involves RoleService (file-based), so it remains sync
+    result = await QuestionService.get_next_question(db, role_id, index)
     if not result:
         raise NotFoundError(f"Role '{role_id}' not found")
 
@@ -96,8 +102,8 @@ async def get_session_question(
     session_id: str,
     index: int,
     skip_tts: bool = False,
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+    db: AsyncSession = Depends(get_db)
+) -> QuestionResponse:
     """Get interview question from a specific session (Snapshot Flow).
 
     Args:
@@ -105,7 +111,7 @@ async def get_session_question(
         index: Question index (0-based)
         skip_tts: If True, skip TTS audio generation (for checking next question without audio)
     """
-    result = QuestionService.get_session_question(db, session_id, index)
+    result = await QuestionService.get_session_question(db, session_id, index)
 
     if not result:
         # If no questions found in session, likely invalid session
@@ -133,8 +139,8 @@ async def upload_and_analyze(
     candidate_name: str = Form(...),
     candidate_email: str = Form(None),
     api_key: str = Depends(get_api_key),
-    session: Session = Depends(get_db)
-) -> Dict[str, Any]:
+    session: AsyncSession = Depends(get_db)
+) -> dict[str, Any]:
     """Upload video answer and analyze with AI evaluation."""
     candidate_data = {
         "session_id": session_id,
@@ -149,18 +155,18 @@ async def upload_and_analyze(
 
 
 @router.post("/complete/{session_id}")
-def complete_interview(
+async def complete_interview(
     session_id: str,
-    session: Session = Depends(get_db)
-) -> Dict[str, Any]:
+    session: AsyncSession = Depends(get_db)
+) -> dict[str, Any]:
     """Mark interview as complete and calculate aggregated scores."""
-    return InterviewService.complete_interview(session, session_id)
+    return await InterviewService.complete_interview(session, session_id)
 
 
 @router.get("/summary/{session_id}")
-def get_summary(
+async def get_summary(
     session_id: str,
-    session: Session = Depends(get_db)
-) -> Dict[str, Any]:
+    session: AsyncSession = Depends(get_db)
+) -> dict[str, Any]:
     """Get interview summary from database."""
-    return InterviewService.get_summary(session, session_id)
+    return await InterviewService.get_summary(session, session_id)

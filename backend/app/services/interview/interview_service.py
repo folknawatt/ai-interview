@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from fastapi import UploadFile
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.logging_config import get_logger
 from app.config.settings import settings
@@ -42,7 +43,7 @@ logger = get_logger(__name__)
 TEMP_DIR = Path(settings.temp_storage_dir)
 
 
-VIDEO_DIR = Path("storage/videos")
+VIDEO_DIR = Path(settings.base_storage_dir) / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -51,7 +52,7 @@ class InterviewService:
 
     @staticmethod
     async def process_answer(
-        session: Session,
+        session: AsyncSession,
         api_key: str,
         file: UploadFile,
         question_id: int,
@@ -62,7 +63,7 @@ class InterviewService:
         Upload video, extract audio, transcribe, and evaluate.
 
         Args:
-            session: Database session.
+            session: Async Database session.
             api_key: API key for evaluation service.
             file: Uploaded video file.
             question: The interview question text.
@@ -77,10 +78,10 @@ class InterviewService:
         email = candidate_data.get("email")
 
         # Get or create candidate
-        candidate = CandidateService.get_or_create(session, name, email)
+        candidate = await CandidateService.get_or_create(session, name, email)
 
         # Get or create interview session
-        InterviewService._get_or_create_session(
+        await InterviewService._get_or_create_session(
             session, session_id, candidate.id, role_id
         )
 
@@ -114,50 +115,10 @@ class InterviewService:
                 evaluate_candidate, api_key, question, transcript, role_title
             )
 
-            # Save result using Mapper
-            # Logic: Check if snapshot exists first to avoid duplicates
-            existing_qr = session.exec(
-                select(QuestionResult)
-                .where(QuestionResult.session_id == session_id)
-                .where(QuestionResult.question == question)
-            ).first()
-
-            if existing_qr:
-                # Update existing snapshot
-                existing_qr.transcript = transcript
-                existing_qr.communication_score = evaluation.scores.communication
-                existing_qr.relevance_score = evaluation.scores.relevance
-                existing_qr.logical_thinking_score = evaluation.scores.logical_thinking
-                existing_qr.pass_prediction = evaluation.pass_prediction
-
-                if video_url:
-                    existing_qr.video_url = video_url
-
-                # Feedback needs to be Dict for JSON storage
-                existing_qr.feedback = {
-                    "strengths": evaluation.feedback.strengths,
-                    "weaknesses": evaluation.feedback.weaknesses,
-                    "summary": evaluation.feedback.summary
-                }
-
-                # Note: question_id from frontend is actually question_result_id (for Snapshot Pattern)
-                # We don't set the question_id FK since session questions aren't in the 'questions' table
-                # The existing_qr.question_id should remain None for Snapshot Pattern
-
-                session.add(existing_qr)
-                question_result = existing_qr
-            else:
-                # Fallback: Create new if not found (should not happen in snapshot flow)
-                # Note: InterviewMapper.to_orm_question_result handles the mapping internally
-                # We need to make sure it also handles the nested object correctly if we use it
-                question_result = InterviewMapper.to_orm_question_result(
-                    session_id, question_id, question, transcript, evaluation
-                )
-                if video_url:
-                    question_result.video_url = video_url
-                session.add(question_result)
-            session.commit()
-            session.refresh(question_result)
+            # Save result using Helper Method
+            question_result = await InterviewService._save_question_result(
+                session, session_id, question_id, question, transcript, evaluation, video_url
+            )
 
             # Use a flag to prevent cleanup of the successfully processed video
             cleanup_needed = False
@@ -190,12 +151,12 @@ class InterviewService:
                 StorageService.cleanup([file_location])
 
     @classmethod
-    def complete_interview(cls, session: Session, session_id: str) -> Dict[str, Any]:
+    async def complete_interview(cls, session: AsyncSession, session_id: str) -> Dict[str, Any]:
         """
         Finalize interview and calculate scores.
 
         Args:
-            session: Database session.
+            session: Async Database session.
             session_id: The ID of the session to complete.
 
         Returns:
@@ -203,18 +164,20 @@ class InterviewService:
         """
         logger.info("Completing interview for session: %s", session_id)
 
-        interview_session = session.exec(
+        result_session = await session.exec(
             select(InterviewSession)
             .where(InterviewSession.session_id == session_id)
-        ).first()
+        )
+        interview_session = result_session.first()
 
         if not interview_session:
             raise NotFoundError("Interview session not found")
 
-        question_results = session.exec(
+        result_qs = await session.exec(
             select(QuestionResult)
             .where(QuestionResult.session_id == session_id)
-        ).all()
+        )
+        question_results = result_qs.all()
 
         if not question_results:
             logger.warning(
@@ -222,8 +185,6 @@ class InterviewService:
             raise ValidationError("No question results found for this session")
 
         # Get total questions
-        # Using Snapshot Pattern: The number of QuestionResult rows IS the total questions for this session.
-        # This naturally handles custom questions added via Resume Upload.
         total_questions = len(question_results)
 
         # Convert ORM models to domain models
@@ -233,7 +194,7 @@ class InterviewService:
         )
 
         # Save or update aggregated score
-        cls._save_aggregated_score(
+        await cls._save_aggregated_score(
             session, interview_session.session_id, aggregated_score_result
         )
 
@@ -241,7 +202,7 @@ class InterviewService:
         interview_session.status = InterviewStatus.COMPLETED
         interview_session.completed_at = datetime.now(timezone.utc)
         session.add(interview_session)  # Ensure it's in session
-        session.commit()
+        await session.commit()
 
         return {
             "message": "Interview completed successfully",
@@ -251,8 +212,8 @@ class InterviewService:
         }
 
     @staticmethod
-    def init_session_with_questions(
-        session: Session,
+    async def init_session_with_questions(
+        session: AsyncSession,
         role_id: str,
         questions: list[str],
         candidate_name: str = "Anonymous",
@@ -263,7 +224,7 @@ class InterviewService:
         Creates/Retrieves candidate and persists questions to QuestionResult.
         """
         # 1. Create/Get Candidate
-        candidate = CandidateService.get_or_create(
+        candidate = await CandidateService.get_or_create(
             session, candidate_name, candidate_email)
 
         # 2. Generate Session ID
@@ -292,41 +253,37 @@ class InterviewService:
             )
             session.add(qr)
 
-        session.commit()
+        await session.commit()
         return session_id
 
     @staticmethod
-    def get_summary(session: Session, session_id: str) -> Dict[str, Any]:
+    async def get_summary(session: AsyncSession, session_id: str) -> Dict[str, Any]:
         """
         Retrieve interview summary with question results and aggregated scores.
-
-        Args:
-            session: Database session.
-            session_id: The session ID to retrieve.
-
-        Returns:
-            Dict containing the full summary.
         """
-        interview_session = session.exec(
+        result_session = await session.exec(
             select(InterviewSession)
             .where(InterviewSession.session_id == session_id)
-        ).first()
+        )
+        interview_session = result_session.first()
 
         if not interview_session:
             raise NotFoundError("Session not found")
 
-        question_results = session.exec(
+        result_qs = await session.exec(
             select(QuestionResult)
             .where(QuestionResult.session_id == session_id)
-        ).all()
+        )
+        question_results = result_qs.all()
 
         results = [InterviewMapper.to_dict(qr) for qr in question_results]
 
         # Get aggregated score if exists
-        aggregated_score = session.exec(
+        result_agg = await session.exec(
             select(AggregatedScore)
             .where(AggregatedScore.session_id == session_id)
-        ).first()
+        )
+        aggregated_score = result_agg.first()
 
         aggregated_data = None
         if aggregated_score:
@@ -348,14 +305,69 @@ class InterviewService:
         }
 
     @staticmethod
-    def _get_or_create_session(
-        session: Session, session_id: str, candidate_id: int, role_id: str
+    async def _save_question_result(
+        session: AsyncSession,
+        session_id: str,
+        question_id: int,
+        question: str,
+        transcript: Optional[str],
+        evaluation: Any,
+        video_url: Optional[str]
+    ) -> QuestionResult:
+        """
+        Helper: Save or update the question result snapshot in the database.
+        """
+        # Logic: Check if snapshot exists first to avoid duplicates
+        result_qr = await session.exec(
+            select(QuestionResult)
+            .where(QuestionResult.session_id == session_id)
+            .where(QuestionResult.question == question)
+        )
+        existing_qr = result_qr.first()
+
+        if existing_qr:
+            # Update existing snapshot
+            existing_qr.transcript = transcript
+            existing_qr.communication_score = evaluation.scores.communication
+            existing_qr.relevance_score = evaluation.scores.relevance
+            existing_qr.logical_thinking_score = evaluation.scores.logical_thinking
+            existing_qr.pass_prediction = evaluation.pass_prediction
+
+            if video_url:
+                existing_qr.video_url = video_url
+
+            # Feedback needs to be Dict for JSON storage
+            existing_qr.feedback = {
+                "strengths": evaluation.feedback.strengths,
+                "weaknesses": evaluation.feedback.weaknesses,
+                "summary": evaluation.feedback.summary
+            }
+
+            session.add(existing_qr)
+            question_result = existing_qr
+        else:
+            # Fallback: Create new if not found (should not happen in snapshot flow)
+            question_result = InterviewMapper.to_orm_question_result(
+                session_id, question_id, question, transcript, evaluation
+            )
+            if video_url:
+                question_result.video_url = video_url
+            session.add(question_result)
+
+        await session.commit()
+        await session.refresh(question_result)
+        return question_result
+
+    @staticmethod
+    async def _get_or_create_session(
+        session: AsyncSession, session_id: str, candidate_id: int, role_id: str
     ) -> InterviewSession:
         """Helper to get or create an interview session."""
-        interview_session = session.exec(
+        result = await session.exec(
             select(InterviewSession)
             .where(InterviewSession.session_id == session_id)
-        ).first()
+        )
+        interview_session = result.first()
 
         if not interview_session:
             interview_session = InterviewSession(
@@ -365,19 +377,20 @@ class InterviewService:
                 status=InterviewStatus.IN_PROGRESS,
             )
             session.add(interview_session)
-            session.commit()
+            await session.commit()
 
         return interview_session
 
     @staticmethod
-    def _save_aggregated_score(
-        session: Session, session_id: str, new_score: AggregatedScore
+    async def _save_aggregated_score(
+        session: AsyncSession, session_id: str, new_score: AggregatedScore
     ) -> None:
         """Save or update the aggregated score in the database."""
-        existing_score = session.exec(
+        result = await session.exec(
             select(AggregatedScore)
             .where(AggregatedScore.session_id == session_id)
-        ).first()
+        )
+        existing_score = result.first()
 
         if existing_score:
             existing_score.average_score = new_score.average_score
@@ -390,9 +403,9 @@ class InterviewService:
             existing_score.total_questions = new_score.total_questions
             session.add(existing_score)
         else:
-            # Ensure session_id is set (new_score might not have it if created in aggregator)
+            # Ensure session_id is set
             new_score.session_id = session_id
             session.add(new_score)
 
         # CRITICAL: Commit to persist aggregated score to database
-        session.commit()
+        await session.commit()

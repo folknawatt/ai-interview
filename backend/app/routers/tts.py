@@ -40,7 +40,7 @@ async def generate_tts_endpoint(
     """
     try:
         # Create provider using factory
-        # Note: request.provider should be "gemini" or "edge"
+        # Note: request.provider should be "gemini" or "vachana"
         provider = TTSProviderFactory.create_provider(
             request.provider,
             api_key=api_key
