@@ -61,7 +61,7 @@ export interface Role {
   id: string;
   title: string;
   question_count?: number;
-  questions?: string[];
+  questions?: string[] | { id: number | string; content: string }[];
 }
 
 export interface Question {
@@ -116,17 +116,19 @@ export interface SessionSummary {
 export interface JDInput {
   role_title: string;
   job_description: string;
+  [key: string]: unknown; // Index signature for ApiRequestBody compatibility
 }
 
 export interface SaveQuestionsRequest {
   role_id: string;
   role_title: string;
   questions: string[];
+  [key: string]: unknown; // Index signature for ApiRequestBody compatibility
 }
 
 export interface TTSRequest {
   text: string;
-  provider?: 'gemini' | 'edge';
+  provider?: 'gemini' | 'vachana';
 }
 
 export interface GenerateQuestionsResponse {

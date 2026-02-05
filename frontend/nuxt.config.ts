@@ -12,12 +12,13 @@ export default defineNuxtConfig({
 
     // i18n Configuration
     i18n: {
+        lazy: true,
+        langDir: 'locales',
         locales: [
             { code: 'th', name: 'ภาษาไทย', file: 'th.json' },
             { code: 'en', name: 'English', file: 'en.json' }
         ],
         defaultLocale: 'th',
-        langDir: 'locales/',
         strategy: 'no_prefix',
         detectBrowserLanguage: {
             useCookie: true,

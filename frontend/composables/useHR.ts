@@ -15,7 +15,7 @@ export const useHR = () => {
       job_description: jobDescription,
     };
 
-    return await post<GenerateQuestionsResponse>('/hr/generate-questions', data);
+    return await post<GenerateQuestionsResponse>('/hr/generate-questions', data as any);
   };
 
   /**
@@ -28,7 +28,7 @@ export const useHR = () => {
       questions,
     };
 
-    return await post('/hr/save-questions', data);
+    return await post('/hr/save-questions', data as any);
   };
 
   /**

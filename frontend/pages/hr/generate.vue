@@ -279,10 +279,10 @@ const saveQuestionsToDb = async () => {
     // Ensure all elements are strings
     questionsArray = questionsArray.map(q => String(q));
     
-    console.log('Saving questions:', { roleId, roleTitle: roleTitle.value, questions: questionsArray });
+    // Preparing to save questions to database
     
     const response = await saveQuestions(roleId, roleTitle.value, questionsArray);
-    console.log('Save response:', response);
+    // Questions saved successfully
     
     step.value = 3;
   } catch (err: any) {

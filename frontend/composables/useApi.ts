@@ -3,6 +3,8 @@
  * Provides centralized error handling and base URL configuration
  */
 import { useAuth } from '@/store/auth'
+import type { ApiError, ApiRequestBody } from '@/types/errors'
+import { getErrorMessage } from '@/types/errors'
 
 export const useApi = () => {
   const config = useRuntimeConfig()
@@ -12,68 +14,32 @@ export const useApi = () => {
   /**
    * Centralized error handling helper
    */
-  const handleError = (error: any, endpoint: string) => {
+  const handleError = (error: unknown, endpoint: string) => {
     console.error(`API Error [${endpoint}]:`, error)
     
     // Log detailed error structure for debugging
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && typeof error === 'object' && error !== null) {
+      const apiError = error as ApiError
       console.dir({
-        data: error.data,
-        message: error.message,
-        statusCode: error.statusCode,
-        statusMessage: error.statusMessage,
+        data: apiError.data,
+        message: apiError.message,
+        statusCode: apiError.statusCode,
       }, { depth: null })
     }
 
-    let errorMessage = 'API request failed'
-
-    if (error.data) {
-      if (typeof error.data === 'string') {
-        errorMessage = error.data
-      } else if (error.data.detail) {
-        errorMessage = typeof error.data.detail === 'string' 
-          ? error.data.detail 
-          : JSON.stringify(error.data.detail)
-      } else if (error.data.message) {
-        errorMessage = typeof error.data.message === 'string'
-          ? error.data.message
-          : JSON.stringify(error.data.message)
-      } else {
-        errorMessage = JSON.stringify(error.data)
-      }
-    } else if (error.message) {
-      // Sanitize "Failed to fetch" or weird network errors which might expose URLs
-      if (error.message.includes('Failed to fetch') || error.message.includes('<no response>')) {
-        errorMessage = 'Unable to connect to server. Please check your internet connection or try again later.'
-      } else {
-        errorMessage = error.message
-      }
-    } else if (error.statusMessage) {
-      errorMessage = error.statusMessage
-    }
-
+    const errorMessage = getErrorMessage(error)
     throw new Error(errorMessage)
   }
 
   /**
-   * Get authorization headers if user is logged in
-   */
-  const getAuthHeaders = (): Record<string, string> => {
-    const headers: Record<string, string> = {}
-    if (authStore.isLogin && authStore.tokenAuth) {
-      headers['Authorization'] = `Bearer ${authStore.tokenAuth}`
-    }
-    return headers
-  }
-
-  /**
    * Generic API call wrapper
+   * Browser automatically handles cookies/headers
    */
   const apiCall = async <T>(
     endpoint: string,
     options: {
       method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
-      body?: any
+      body?: ApiRequestBody
       headers?: Record<string, string>
       skipAuth?: boolean
     } = {}
@@ -81,13 +47,14 @@ export const useApi = () => {
     try {
       return await $fetch<T>(`${apiBase}${endpoint}`, {
         ...options,
+        credentials: 'include', // Required for cross-origin cookies (localhost:3000 -> localhost:8000)
+        // Important: credentials mode is handled by Nuxt/Fetch automatically for same-origin or configured domains
         headers: {
           'Content-Type': 'application/json',
-          ...(options.skipAuth ? {} : getAuthHeaders()),
           ...options.headers,
         },
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleError(error, endpoint)
       throw error // Unreachable due to handleError throwing, but keeps TS happy
     }
@@ -103,7 +70,7 @@ export const useApi = () => {
         body: formData,
         // Content-Type is handled automatically by browser for FormData
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleError(error, endpoint)
       throw error
     }
@@ -111,8 +78,8 @@ export const useApi = () => {
 
   return {
     get: <T>(endpoint: string) => apiCall<T>(endpoint, { method: 'GET' }),
-    post: <T>(endpoint: string, body?: any) => apiCall<T>(endpoint, { method: 'POST', body }),
-    put: <T>(endpoint: string, body?: any) => apiCall<T>(endpoint, { method: 'PUT', body }),
+    post: <T>(endpoint: string, body?: ApiRequestBody) => apiCall<T>(endpoint, { method: 'POST', body }),
+    put: <T>(endpoint: string, body?: ApiRequestBody) => apiCall<T>(endpoint, { method: 'PUT', body }),
     del: <T>(endpoint: string) => apiCall<T>(endpoint, { method: 'DELETE' }),
     uploadFile,
     apiBase,

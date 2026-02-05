@@ -172,7 +172,7 @@ const isActiveRoute = (path: string) => {
 
 // Handle logout
 const handleLogout = () => {
-  authStore.clearToken()
+  authStore.logout()
   router.push('/login')
 }
 </script>

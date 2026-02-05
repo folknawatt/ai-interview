@@ -147,7 +147,7 @@
         <div class="relative bg-interview-bg w-full max-w-3xl rounded-3xl border border-interview-surface-border shadow-2xl flex flex-col max-h-[85vh]">
           
           <!-- Header -->
-          <div class="p-6 border-b border-interview-surface-border flex items-center justify-between bg-interview-surface/50">
+          <div class="p-6 border-b border-interview-surface-border flex items-center justify-between bg-interview-bg-secondary/30 backdrop-blur-xl">
             <div>
               <h2 class="text-2xl font-bold text-white flex items-center gap-2">
                 <PencilSquareIcon class="w-6 h-6 text-interview-primary" />
@@ -205,7 +205,7 @@
           </div>
 
           <!-- Footer -->
-          <div class="p-6 border-t border-interview-surface-border bg-interview-surface/50 flex justify-end gap-3 rounded-b-3xl">
+          <div class="p-6 border-t border-interview-surface-border bg-interview-bg-secondary/30 backdrop-blur-xl flex justify-end gap-3 rounded-b-3xl">
             <button 
               @click="cancelEdit"
               class="px-6 py-2.5 rounded-xl border border-interview-surface-border text-interview-text-primary hover:bg-interview-surface-hover transition-colors font-medium"

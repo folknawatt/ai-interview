@@ -7,28 +7,12 @@ import { defineStore } from 'pinia'
 import type { User } from '@/types'
 
 export const useAuth = defineStore('auth', () => {
-  // State - using useCookie for SSR support
-  const tokenAuth = useCookie<string | null>('auth_token', {
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    sameSite: 'lax'
-  })
-  
-  const refreshTokenAuth = useCookie<string | null>('auth_refresh_token', {
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-    sameSite: 'lax'
-  })
-  
-  const userData = useCookie<User | null>('auth_user', {
-    maxAge: 60 * 60 * 24 * 7,
-    sameSite: 'lax'
-  })
+  // State - User data only (Tokens handled by HttpOnly cookies)
+  const userData = useState<User | null>('auth_user', () => null)
+  const loading = useState<boolean>('auth_loading', () => false)
 
   // Getters
-  const isLogin = computed(() => !!tokenAuth.value)
-  
-  const bearerToken = computed(() => {
-    return tokenAuth.value ? `Bearer ${tokenAuth.value}` : ''
-  })
+  const isLogin = computed(() => !!userData.value)
 
   const currentUser = computed(() => userData.value)
   const userRole = computed(() => userData.value?.role)
@@ -38,11 +22,33 @@ export const useAuth = defineStore('auth', () => {
   }
 
   // Actions
-  const signInAuth = (token: string, refreshToken: string, user?: User) => {
-    tokenAuth.value = token
-    refreshTokenAuth.value = refreshToken
-    if (user) {
+  const fetchUser = async () => {
+    try {
+      loading.value = true
+      const { get } = useApi()
+      const user = await get<User>('/auth/me')
       userData.value = user
+      return user
+    } catch (error) {
+      userData.value = null
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const logout = async () => {
+    try {
+      loading.value = true
+      const { post } = useApi()
+      await post('/auth/logout')
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      userData.value = null
+      loading.value = false
+      const router = useRouter()
+      router.push('/login')
     }
   }
 
@@ -50,27 +56,19 @@ export const useAuth = defineStore('auth', () => {
     userData.value = user
   }
 
-  const clearToken = () => {
-    tokenAuth.value = null
-    refreshTokenAuth.value = null
-    userData.value = null
-  }
-
   return {
     // State
-    tokenAuth,
-    refreshTokenAuth,
     currentUser,
     userRole,
+    loading,
     
     // Getters
     isLogin,
-    bearerToken,
     hasRole,
     
     // Actions
-    signInAuth,
-    setUser,
-    clearToken
+    fetchUser,
+    logout,
+    setUser
   }
 })

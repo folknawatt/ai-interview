@@ -44,7 +44,7 @@
           </div>
         </div>
         <!-- Decorative bg icon */ -->
-        <CpuChipIcon class="absolute -bottom-8 -right-8 w-48 h-48 text-interview-surface-border opacity-10 rotate-[-15deg] group-hover:rotate-0 transition-all duration-700" />
+        <CpuChipIcon class="absolute -bottom-8 -right-8 w-48 h-48 text-interview-surface-border opacity-35 rotate-[-15deg] group-hover:rotate-0 transition-all duration-700" />
       </NuxtLink>
 
       <!-- Roles Stat Card -->
