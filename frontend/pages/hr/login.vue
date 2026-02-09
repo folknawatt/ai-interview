@@ -150,7 +150,7 @@ const handleSubmitHR = async () => {
 
     // Redirect to HR Dashboard
     const redirectPath = (router.currentRoute.value.query.redirect as string) || '/hr/dashboard'
-    router.push(redirectPath)
+    await navigateTo(redirectPath, { replace: true })
   } catch (error: any) {
     console.error('Login error:', error)
     if (error.data?.detail) {

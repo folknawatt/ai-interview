@@ -5,14 +5,19 @@
  */
 import { useAuth } from '@/store/auth'
 
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(to => {
   const authStore = useAuth()
+
+  // Skip middleware checks while auth is loading to prevent race conditions
+  if (authStore.loading) {
+    return
+  }
 
   // First check if user is authenticated at all
   if (!authStore.isLogin) {
     return navigateTo({
       path: '/hr/login',
-      query: { redirect: to.fullPath }
+      query: { redirect: to.fullPath },
     })
   }
 
@@ -21,4 +26,3 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo('/403')
   }
 })
-
