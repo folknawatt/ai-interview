@@ -19,8 +19,8 @@ class TTSRequest(BaseModel):
         description="Text to convert to speech"
     )
     provider: str = Field(
-        default="gemini",
-        pattern="^(gemini|edge)$",
+        default="vachana",
+        pattern="^(gemini|vachana)$",
         description="TTS provider"
     )
 
@@ -74,3 +74,37 @@ class InterviewEvaluationResponse(BaseModel):
     scores: Scores
     feedback: Feedback
     pass_prediction: bool
+
+
+# ===== Response Schemas for Interview Endpoints =====
+
+class UploadPDFResponse(BaseModel):
+    """Response for PDF upload and session creation."""
+
+    session_id: str = Field(..., description="Created interview session ID")
+    role_id: str = Field(..., description="Base role ID")
+    questions: list[str] = Field(..., description="Combined list of questions")
+
+
+class QuestionResponse(BaseModel):
+    """Response for getting interview question."""
+
+    status: str = Field(..., description="'continue' or 'completed'")
+    question: str | None = Field(None, description="Question text")
+    question_id: int | None = Field(None, description="Question ID")
+    index: int = Field(..., description="Current question index")
+    total: int = Field(..., description="Total number of questions")
+    audio_path: str | None = Field(None, description="Path to TTS audio file")
+
+
+class InterviewSummaryResponse(BaseModel):
+    """Response for interview summary."""
+
+    session_id: str = Field(..., description="Interview session ID")
+    status: str = Field(..., description="Interview status")
+    candidate_name: str | None = Field(None, description="Candidate name")
+    role_name: str | None = Field(None, description="Role name")
+    total_questions: int = Field(..., description="Total questions answered")
+    aggregated_scores: Scores | None = Field(
+        None, description="Aggregated scores")
+    feedback: str | None = Field(None, description="Overall feedback")

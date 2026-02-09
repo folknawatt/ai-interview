@@ -10,10 +10,9 @@ import asyncio
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from fastapi import UploadFile
-from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.logging_config import get_logger
@@ -24,6 +23,8 @@ from app.database.models import (
     InterviewStatus,
     QuestionResult,
 )
+from app.repositories.candidate_repository import CandidateRepository
+from app.repositories.interview_repository import InterviewRepository
 from app.services.scoring.aggregator import calculate_aggregated_score
 from app.services.scoring.evaluator import evaluate_candidate
 from app.exceptions import (
@@ -32,7 +33,6 @@ from app.exceptions import (
     ServiceUnavailableError,
     BadGatewayError,
 )
-from app.services.interview.candidate_service import CandidateService
 from app.services.core.mappers import InterviewMapper
 from app.services.core.media_service import MediaService
 from app.services.core.role_service import RoleService
@@ -60,93 +60,85 @@ class InterviewService:
         candidate_data: Dict[str, str],
     ) -> Dict[str, Any]:
         """
-        Upload video, extract audio, transcribe, and evaluate.
-
-        Args:
-            session: Async Database session.
-            api_key: API key for evaluation service.
-            file: Uploaded video file.
-            question: The interview question text.
-            candidate_data: Dictionary containing candidate and session info.
-
-        Returns:
-            Dict containing the question result details.
+        Complete pipeline for processing candidate video answer.
         """
         session_id = candidate_data["session_id"]
         role_id = candidate_data["role_id"]
         name = candidate_data["name"]
         email = candidate_data.get("email")
 
-        # Get or create candidate
-        candidate = await CandidateService.get_or_create(session, name, email)
+        # Repositories
+        candidate_repo = CandidateRepository(session)
+        interview_repo = InterviewRepository(session)
 
-        # Get or create interview session
-        await InterviewService._get_or_create_session(
-            session, session_id, candidate.id, role_id
-        )
+        # Get or create candidate using Repository
+        candidate = await candidate_repo.get_or_create(name, email)
+
+        # Get or create session
+        # Using repository to get, but creation logic involves specific status/fields
+        interview_session = await interview_repo.get_by_session_id(session_id)
+        if not interview_session:
+            interview_session = InterviewSession(
+                session_id=session_id,
+                candidate_id=candidate.id,
+                role_id=role_id,
+                status=InterviewStatus.IN_PROGRESS,
+            )
+            await interview_repo.create(interview_session)
 
         file_location: Optional[Path] = None
-        cleanup_needed = True  # Flag to track if cleanup is needed
+        cleanup_needed = True
         video_url: Optional[str] = None
 
         try:
-            # Save video file
+            # Save video with unique filename
             file_ext = Path(file.filename).suffix
             unique_filename = f"{uuid.uuid4()}{file_ext}"
             file.filename = unique_filename
 
-            # Save to permanent storage
             file_location = await StorageService.save_upload(file, VIDEO_DIR)
-
-            # Construct public URL
             video_url = f"/videos/{unique_filename}"
 
-            # Fetch role title
-            role_title = RoleService.get_role_title(role_id)
-
-            # Process media (Video -> Audio -> Transcript)
+            # Get role title and process video to transcript
+            role_title = await RoleService.get_role_title(session, role_id)
             transcript = await MediaService.process_video_to_transcript(
                 str(file_location)
             )
 
-            # Evaluate Candidate Answer
-            # Run CPU-bound/network-bound synchronous evaluation in a thread
+            # Evaluate answer with AI
             evaluation = await asyncio.to_thread(
                 evaluate_candidate, api_key, question, transcript, role_title
             )
 
-            # Save result using Helper Method
-            question_result = await InterviewService._save_question_result(
-                session, session_id, question_id, question, transcript, evaluation, video_url
+            # Save results to database using Repository
+            # We need to reimplement _save_question_result logic using Repository
+            question_result = await InterviewService._save_question_result_with_repo(
+                interview_repo, session_id, question_id, question, transcript, evaluation, video_url
             )
 
-            # Use a flag to prevent cleanup of the successfully processed video
+            # Success - keep video for HR review
             cleanup_needed = False
 
             return InterviewMapper.to_dict(question_result)
 
         except ValueError as e:
-            # Input error (empty transcript or bad format)
-            logger.warning("Validation error in process_answer: %s", e)
+            logger.warning("Validation error: %s", e)
             raise ValidationError(str(e)) from e
 
         except ConnectionError as e:
-            # External service unavailable
-            logger.error("Connection error in process_answer: %s", e)
-            raise ServiceUnavailableError(
-                "AI Service temporarily unavailable") from e
+            logger.error("Connection error: %s", e)
+            raise ServiceUnavailableError("AI Service unavailable") from e
 
         except RuntimeError as e:
-            # External service error
-            logger.error("Runtime error in process_answer: %s", e)
-            raise BadGatewayError("AI Service returned an error") from e
+            logger.error("Runtime error: %s", e)
+            raise BadGatewayError("AI Service error") from e
 
         except Exception as e:
             logger.error("Error processing answer: %s", e)
             raise
 
         finally:
-            # Centralized cleanup - always runs regardless of success/failure
+            # Delete video only on failure
             if cleanup_needed and file_location:
                 StorageService.cleanup([file_location])
 
@@ -154,30 +146,16 @@ class InterviewService:
     async def complete_interview(cls, session: AsyncSession, session_id: str) -> Dict[str, Any]:
         """
         Finalize interview and calculate scores.
-
-        Args:
-            session: Async Database session.
-            session_id: The ID of the session to complete.
-
-        Returns:
-            Dict containing completion status and aggregated scores.
         """
         logger.info("Completing interview for session: %s", session_id)
 
-        result_session = await session.exec(
-            select(InterviewSession)
-            .where(InterviewSession.session_id == session_id)
-        )
-        interview_session = result_session.first()
+        interview_repo = InterviewRepository(session)
 
+        interview_session = await interview_repo.get_by_session_id(session_id)
         if not interview_session:
             raise NotFoundError("Interview session not found")
 
-        result_qs = await session.exec(
-            select(QuestionResult)
-            .where(QuestionResult.session_id == session_id)
-        )
-        question_results = result_qs.all()
+        question_results = await interview_repo.get_question_results(session_id)
 
         if not question_results:
             logger.warning(
@@ -193,16 +171,30 @@ class InterviewService:
             question_results, total_questions
         )
 
-        # Save or update aggregated score
-        await cls._save_aggregated_score(
-            session, interview_session.session_id, aggregated_score_result
-        )
+        # Save or update aggregated score using Repo
+        # Helper logic needed as calculate_aggregated_score returns a non-ORM object or detached ORM?
+        # It returns AggregatedScore ORM object usually.
+        # We need to check if it exists first.
+        existing_score = await interview_repo.get_aggregated_score(session_id)
+
+        if existing_score:
+            existing_score.average_score = aggregated_score_result.average_score
+            existing_score.communication_avg = aggregated_score_result.communication_avg
+            existing_score.relevance_avg = aggregated_score_result.relevance_avg
+            existing_score.logical_thinking_avg = aggregated_score_result.logical_thinking_avg
+            existing_score.pass_rate = aggregated_score_result.pass_rate
+            existing_score.overall_recommendation = aggregated_score_result.overall_recommendation
+            existing_score.questions_answered = aggregated_score_result.questions_answered
+            existing_score.total_questions = aggregated_score_result.total_questions
+            await interview_repo.update(existing_score)
+        else:
+            aggregated_score_result.session_id = session_id
+            await interview_repo.create(aggregated_score_result)
 
         # Mark session as completed
         interview_session.status = InterviewStatus.COMPLETED
         interview_session.completed_at = datetime.now(timezone.utc)
-        session.add(interview_session)  # Ensure it's in session
-        await session.commit()
+        await interview_repo.update(interview_session)
 
         return {
             "message": "Interview completed successfully",
@@ -221,11 +213,13 @@ class InterviewService:
     ) -> str:
         """
         Initialize a new interview session with specific questions (Snapshot Pattern).
-        Creates/Retrieves candidate and persists questions to QuestionResult.
         """
         # 1. Create/Get Candidate
-        candidate = await CandidateService.get_or_create(
-            session, candidate_name, candidate_email)
+        candidate_repo = CandidateRepository(session)
+        candidate = await candidate_repo.get_or_create(
+            candidate_name, candidate_email)
+
+        interview_repo = InterviewRepository(session)
 
         # 2. Generate Session ID
         session_id = f"sess_{uuid.uuid4().hex[:12]}"
@@ -237,7 +231,7 @@ class InterviewService:
             role_id=role_id,  # Link to Base Role (e.g., 'marketing')
             status=InterviewStatus.STARTED
         )
-        session.add(interview_session)
+        await interview_repo.create(interview_session)
 
         # 4. Snapshot Questions to QuestionResult
         for idx, q_text in enumerate(questions):
@@ -251,9 +245,10 @@ class InterviewService:
                 pass_prediction=False,
                 feedback={}
             )
-            session.add(qr)
+            # We can use batch create if available, or just add to session
+            # using save_question_result from repo
+            await interview_repo.save_question_result(qr)
 
-        await session.commit()
         return session_id
 
     @staticmethod
@@ -261,29 +256,17 @@ class InterviewService:
         """
         Retrieve interview summary with question results and aggregated scores.
         """
-        result_session = await session.exec(
-            select(InterviewSession)
-            .where(InterviewSession.session_id == session_id)
-        )
-        interview_session = result_session.first()
+        interview_repo = InterviewRepository(session)
 
+        interview_session = await interview_repo.get_by_session_id(session_id)
         if not interview_session:
             raise NotFoundError("Session not found")
 
-        result_qs = await session.exec(
-            select(QuestionResult)
-            .where(QuestionResult.session_id == session_id)
-        )
-        question_results = result_qs.all()
-
+        question_results = await interview_repo.get_question_results(session_id)
         results = [InterviewMapper.to_dict(qr) for qr in question_results]
 
         # Get aggregated score if exists
-        result_agg = await session.exec(
-            select(AggregatedScore)
-            .where(AggregatedScore.session_id == session_id)
-        )
-        aggregated_score = result_agg.first()
+        aggregated_score = await interview_repo.get_aggregated_score(session_id)
 
         aggregated_data = None
         if aggregated_score:
@@ -305,8 +288,8 @@ class InterviewService:
         }
 
     @staticmethod
-    async def _save_question_result(
-        session: AsyncSession,
+    async def _save_question_result_with_repo(
+        interview_repo: InterviewRepository,
         session_id: str,
         question_id: int,
         question: str,
@@ -315,15 +298,10 @@ class InterviewService:
         video_url: Optional[str]
     ) -> QuestionResult:
         """
-        Helper: Save or update the question result snapshot in the database.
+        Helper: Save or update the question result snapshot in the database using Repository.
         """
         # Logic: Check if snapshot exists first to avoid duplicates
-        result_qr = await session.exec(
-            select(QuestionResult)
-            .where(QuestionResult.session_id == session_id)
-            .where(QuestionResult.question == question)
-        )
-        existing_qr = result_qr.first()
+        existing_qr = await interview_repo.get_question_result(session_id, question)
 
         if existing_qr:
             # Update existing snapshot
@@ -343,8 +321,7 @@ class InterviewService:
                 "summary": evaluation.feedback.summary
             }
 
-            session.add(existing_qr)
-            question_result = existing_qr
+            return await interview_repo.update(existing_qr)
         else:
             # Fallback: Create new if not found (should not happen in snapshot flow)
             question_result = InterviewMapper.to_orm_question_result(
@@ -352,60 +329,5 @@ class InterviewService:
             )
             if video_url:
                 question_result.video_url = video_url
-            session.add(question_result)
 
-        await session.commit()
-        await session.refresh(question_result)
-        return question_result
-
-    @staticmethod
-    async def _get_or_create_session(
-        session: AsyncSession, session_id: str, candidate_id: int, role_id: str
-    ) -> InterviewSession:
-        """Helper to get or create an interview session."""
-        result = await session.exec(
-            select(InterviewSession)
-            .where(InterviewSession.session_id == session_id)
-        )
-        interview_session = result.first()
-
-        if not interview_session:
-            interview_session = InterviewSession(
-                session_id=session_id,
-                candidate_id=candidate_id,
-                role_id=role_id,
-                status=InterviewStatus.IN_PROGRESS,
-            )
-            session.add(interview_session)
-            await session.commit()
-
-        return interview_session
-
-    @staticmethod
-    async def _save_aggregated_score(
-        session: AsyncSession, session_id: str, new_score: AggregatedScore
-    ) -> None:
-        """Save or update the aggregated score in the database."""
-        result = await session.exec(
-            select(AggregatedScore)
-            .where(AggregatedScore.session_id == session_id)
-        )
-        existing_score = result.first()
-
-        if existing_score:
-            existing_score.average_score = new_score.average_score
-            existing_score.communication_avg = new_score.communication_avg
-            existing_score.relevance_avg = new_score.relevance_avg
-            existing_score.logical_thinking_avg = new_score.logical_thinking_avg
-            existing_score.pass_rate = new_score.pass_rate
-            existing_score.overall_recommendation = new_score.overall_recommendation
-            existing_score.questions_answered = new_score.questions_answered
-            existing_score.total_questions = new_score.total_questions
-            session.add(existing_score)
-        else:
-            # Ensure session_id is set
-            new_score.session_id = session_id
-            session.add(new_score)
-
-        # CRITICAL: Commit to persist aggregated score to database
-        await session.commit()
+            return await interview_repo.save_question_result(question_result)

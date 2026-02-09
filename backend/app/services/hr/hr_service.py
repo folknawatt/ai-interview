@@ -9,7 +9,7 @@ Encapsulates business logic for HR management, including:
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.repositories import get_question_repository
+from app.repositories.question_repository import get_question_repository
 from app.services.interview.question_manager import gen_questions
 from app.services.core.role_service import RoleService
 from app.exceptions import NotFoundError

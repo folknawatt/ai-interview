@@ -78,17 +78,10 @@ class QuestionService:
             session_id: Session ID
             index: Question index (0-based)
         """
-        from app.database.models import QuestionResult
-        from sqlmodel import select
+        from app.repositories.interview_repository import InterviewRepository
 
-        # Fetch all questions for this session ordered by ID (creation order)
-        # Note: We assume ID order matches the generated order.
-        result = await session.exec(
-            select(QuestionResult)
-            .where(QuestionResult.session_id == session_id)
-            .order_by(QuestionResult.id)
-        )
-        results = result.all()
+        interview_repo = InterviewRepository(session)
+        results = await interview_repo.get_session_questions_ordered(session_id)
 
         if not results:
             return None

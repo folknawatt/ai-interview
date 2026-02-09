@@ -7,7 +7,7 @@ between HRService and QuestionService.
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.repositories import get_question_repository
+from app.repositories.question_repository import get_question_repository
 from app.exceptions import NotFoundError
 
 

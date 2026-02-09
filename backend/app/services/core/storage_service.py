@@ -13,23 +13,36 @@ logger = get_logger(__name__)
 
 
 class StorageService:
-    """Service for abstracting file storage operations."""
+    """
+    Service for file storage operations.
+
+    Provides abstraction layer for saving uploads and cleaning up temporary files.
+    Uses async file I/O (aiofiles) for non-blocking file operations.
+    """
 
     @staticmethod
     async def save_upload(file: UploadFile, directory: Path) -> Path:
         """
-        Save an uploaded file to the specified directory.
+        Save uploaded file to disk asynchronously.
+
+        Security: File validation should be done before calling this method.
+        The caller is responsible for:
+        - Validating file type/extension
+        - Sanitizing filename
+        - Checking file size limits
 
         Args:
-            file: The uploaded file object.
-            directory: The target directory path.
+            file: FastAPI UploadFile object (includes sanitized filename)
+            directory: Target directory for saving file
 
         Returns:
-            Path: The absolute path to the saved file.
+            Absolute path to the saved file
         """
+        # Ensure directory exists (create if needed)
         directory.mkdir(parents=True, exist_ok=True)
         file_path = directory / file.filename
 
+        # Use async file I/O to avoid blocking event loop during write
         async with aiofiles.open(file_path, 'wb') as out_file:
             content = await file.read()
             await out_file.write(content)
@@ -39,10 +52,13 @@ class StorageService:
     @staticmethod
     def cleanup(files: List[Union[str, Path]]) -> None:
         """
-        Remove specified files from the filesystem.
+        Remove temporary files from filesystem.
+
+        This method is fail-safe - errors are logged but don't crash the application.
+        Used for cleanup in finally blocks to prevent disk space accumulation.
 
         Args:
-            files: List of file paths to remove.
+            files: List of file paths (str or Path) to remove
         """
         for file_path in files:
             try:
@@ -50,5 +66,7 @@ class StorageService:
                     path = Path(file_path)
                     if path.exists():
                         os.remove(path)
+                        logger.debug("Cleaned up file: %s", file_path)
             except OSError as e:
+                # Log but don't raise - cleanup should be fault-tolerant
                 logger.error("Error cleaning up file %s: %s", file_path, e)

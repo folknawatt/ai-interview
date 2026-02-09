@@ -38,14 +38,25 @@ async def upload_pdf(
     candidate_email: str = Form(None, description="Candidate Email"),
     db: AsyncSession = Depends(get_db)
 ) -> UploadPDFResponse:
-    """Upload PDF resume, generate questions, and initialize session (Snapshot Pattern)."""
-    # Read file bytes from UploadFile
+    """
+    Upload PDF resume, generate custom questions, and initialize interview session.
+
+    This endpoint implements the "Snapshot Pattern":
+    1. Extract text from PDF resume
+    2. Generate AI-powered custom questions based on resume
+    3. Combine base role questions + custom resume questions
+    4. Create interview session with snapshot of all questions
+
+    The snapshot ensures questions don't change even if the role's base questions are updated later.
+    """
+    # Read uploaded PDF file into memory
     pdf_bytes = await file.read()
 
-    # Extract text from PDF and generate questions via AI
+    # Generate AI questions from PDF resume
     service = ResumeService()
     result_json_str = service.generate_questions_from_pdf(
-        pdf_bytes=pdf_bytes, num_questions=2)
+        pdf_bytes=pdf_bytes, num_questions=2  # Generate 2 custom questions from resume
+    )
 
     try:
         questions_list = json.loads(result_json_str)
@@ -55,15 +66,14 @@ async def upload_pdf(
     if not isinstance(questions_list, list):
         raise ValueError("AI Service did not return a list of questions")
 
-    # Fetch Base Role Questions
+    # Fetch base role questions
     role_data = await RoleService.get_role_by_id(db, role_id)
     base_questions = [q['content'] for q in role_data.get('questions', [])]
 
-    # Combine questions (Base first, then Custom)
+    # Combine: base questions first, then custom
     all_questions = base_questions + questions_list
 
-    # Initialize Session with Questions (Snapshot)
-    # This prevents creating duplicate "Candidate Roles"
+    # Create session with question snapshot
     session_id = await InterviewService.init_session_with_questions(
         db, role_id, all_questions, candidate_name, candidate_email
     )
@@ -104,12 +114,19 @@ async def get_session_question(
     skip_tts: bool = False,
     db: AsyncSession = Depends(get_db)
 ) -> QuestionResponse:
-    """Get interview question from a specific session (Snapshot Flow).
+    """
+    Get interview question from session snapshot.
+
+    Uses the question snapshot saved during session initialization.
+    This ensures questions remain consistent throughout the interview.
 
     Args:
         session_id: Interview session ID
-        index: Question index (0-based)
-        skip_tts: If True, skip TTS audio generation (for checking next question without audio)
+        index: Question index (0-based, starts at 0)
+        skip_tts: If True, skip TTS generation (useful for pre-checking next question)
+
+    Returns:
+        QuestionResponse with question text, question_id, status, and optional audio_path
     """
     result = await QuestionService.get_session_question(db, session_id, index)
 
@@ -117,7 +134,7 @@ async def get_session_question(
         # If no questions found in session, likely invalid session
         raise NotFoundError(f"Session '{session_id}' not found")
 
-    # Only generate TTS if not skipped
+    # Generate TTS audio if needed
     if result.get("status") == "continue" and "question" in result and not skip_tts:
         result["audio_path"] = TTSService.generate_question_audio(
             text=result["question"],

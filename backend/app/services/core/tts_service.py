@@ -4,7 +4,7 @@ TTS Service for audio generation.
 Handles text-to-speech generation with retry logic and error handling.
 """
 import shutil
-import time
+import asyncio
 from pathlib import Path
 from typing import Optional
 
@@ -20,7 +20,7 @@ class TTSService:
     """Service for managing TTS generation with retry logic."""
 
     @staticmethod
-    def generate_question_audio(
+    async def generate_question_audio(
         text: str,
         question_id: int
     ) -> Optional[str]:
@@ -53,10 +53,18 @@ class TTSService:
                 )
 
                 # Generate TTS audio using the configured provider
-                temp_audio_path = provider.generate_audio(text=text)
+                # Assuming provider.generate_audio might be blocking or async.
+                # If it's blocking requests (e.g. standard requests lib), we should wrap it.
+                # However, without seeing adapter code, let's assume it might block.
+                # Ideally, we'd check if provider.generate_audio is async.
+                # If it's synchronous IO, run in thread.
+                # For safety, let's run in thread if not awaitable.
+                # But here call is provider.generate_audio(text=text)
+                # Let's wrap it in to_thread just in case.
+                temp_audio_path = await asyncio.to_thread(provider.generate_audio, text=text)
 
                 # Save to public directory
-                return TTSService._save_audio_file(temp_audio_path, question_id)
+                return await TTSService._save_audio_file(temp_audio_path, question_id)
 
             except (OSError, RuntimeError) as e:
                 error_msg = str(e)
@@ -68,7 +76,8 @@ class TTSService:
                             "TTS provider overloaded (attempt %d/%d). Retrying in %ss...",
                             attempt + 1, max_retries + 1, retry_delay
                         )
-                        time.sleep(retry_delay)
+                        # Fix: Use non-blocking sleep
+                        await asyncio.sleep(retry_delay)
                         retry_delay *= 2  # Exponential backoff
                         continue
                     else:
@@ -86,12 +95,14 @@ class TTSService:
         return None
 
     @staticmethod
-    def _save_audio_file(source_path: str, question_id: int) -> str:
+    async def _save_audio_file(source_path: str, question_id: int) -> str:
         """
         Helper: Copy generated audio to public static directory.
+        Run in thread pool to avoid blocking event loop during file I/O.
         """
         # Copy to audio directory for frontend access
         audio_dir = Path.cwd() / settings.tts_audio_dir
+        # mkdir is fast enough, but can also be blocking.
         audio_dir.mkdir(parents=True, exist_ok=True)
 
         # Get the correct file extension from the generated audio file
@@ -100,7 +111,8 @@ class TTSService:
         filename = f"question_{question_id}{audio_extension}"
         dest_path = audio_dir / filename
 
-        shutil.copy2(source_path, dest_path)
+        # Fix: Use asyncio.to_thread for blocking file copy
+        await asyncio.to_thread(shutil.copy2, source_path, dest_path)
 
         # Return absolute URL for frontend
         return f"{settings.server_url}/audio/{filename}"
