@@ -1,7 +1,6 @@
 """
 FastAPI backend for AI Interview System.
 """
-import logging
 from pathlib import Path
 from typing import Dict
 from contextlib import asynccontextmanager
@@ -12,26 +11,43 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config.settings import settings
+from app.config.logging_config import configure_logging, get_logger
 from app.exceptions import AppException, convert_exception
 from app.database.db import init_db
 from app.routers import auth, hr, interview, reports, tts
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Configure logging immediately
+configure_logging(json_format=True)
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(_application: FastAPI):
-    """Application lifespan management - startup and shutdown."""
-    # Startup
+    """
+    Application lifespan management - handles startup and shutdown events.
+
+    Startup sequence:
+    1. Validate security configuration (warns if using default secrets)
+    2. Initialize database (create tables, seed data)
+    3. Ready to serve requests
+
+    Shutdown: Cleanup resources if needed
+    """
+    # ========== Startup ==========
+    logger.info("Starting application...")
+
+    # Validate security settings (logs warnings for production unsafe configs)
+    settings.validate_security()
+
+    # Initialize database: create tables and seed initial data
     logger.info("Initializing database...")
-    init_db()
+    await init_db()
     logger.info("Database initialized successfully")
-    yield
-    # Shutdown (cleanup if needed)
+
+    yield  # Application runs here
+
+    # ========== Shutdown ==========
+    # Cleanup resources (connections, temp files, etc.)
     logger.info("Application shutdown")
 
 
@@ -66,36 +82,34 @@ async def general_exception_handler(_request: Request, exc: Exception):
     )
 
 
-# CORS middleware
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_credentials=True,  # Required for HttpOnly cookies
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
+    expose_headers=["Content-Disposition"],  # For file downloads
 )
 
-# Create audio directory if it doesn't exist
-AUDIO_DIR = Path("audio")
-AUDIO_DIR.mkdir(exist_ok=True)
-
-# Mount static files for audio
+# Static File Serving
+AUDIO_DIR = Path(settings.tts_audio_dir)
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")
 
-# Create videos directory if it doesn't exist
-VIDEO_DIR = Path("storage/videos")
+VIDEO_DIR = Path(settings.base_storage_dir) / "videos"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
-
-# Mount static files for videos
 app.mount("/videos", StaticFiles(directory=str(VIDEO_DIR)), name="videos")
 
-# Include routers
-app.include_router(auth.router)
-app.include_router(hr.router)
-app.include_router(interview.router)
-app.include_router(tts.router)
-app.include_router(reports.router)
+# ============================================================================
+# API Routers
+# ============================================================================
+# Register all API endpoint routers
+app.include_router(auth.router)       # Authentication & authorization
+app.include_router(hr.router)          # HR management (roles, questions)
+app.include_router(interview.router)  # Candidate interview flow
+app.include_router(tts.router)         # Text-to-speech generation
+app.include_router(reports.router)    # Interview reports & analytics
 
 
 @app.get("/")

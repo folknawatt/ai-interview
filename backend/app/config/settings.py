@@ -4,10 +4,11 @@ Centralized configuration for AI Interview system.
 This module provides application-wide settings using Pydantic for
 environment variable validation and type safety.
 """
-from app.config.secret_manager import _load_secrets_from_secret_manager
 import os
+import logging
 from pathlib import Path
 from typing import List
+from app.config.secret_manager import _load_secrets_from_secret_manager
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
@@ -50,9 +51,9 @@ class Settings(BaseSettings):
     # Database Configuration
     postgres_host: str = "localhost"
     postgres_port: int = 5432
-    postgres_user: str = "postgres"
-    postgres_password: str = "postgres"
-    postgres_db: str = "ai_interview"
+    postgres_user: str
+    postgres_password: str
+    postgres_db: str
 
     @property
     def database_url(self) -> str:
@@ -100,8 +101,8 @@ class Settings(BaseSettings):
     cookie_domain: str | None = None
 
     # Admin Configuration
-    admin_default_email: str = "admin@ai-interview.com"
-    admin_default_password: str = "change-me-in-production"
+    admin_default_email: str
+    admin_default_password: str
 
     @property
     def cors_origins_list(self) -> List[str]:
@@ -120,7 +121,7 @@ class Settings(BaseSettings):
         Validate security settings for production readiness.
         Logs warnings if default secrets are used.
         """
-        import logging
+
         logger = logging.getLogger("app.config.settings")
 
         defaults = [
@@ -133,8 +134,9 @@ class Settings(BaseSettings):
             current_value = getattr(self, field)
             if current_value == unsafe_value:
                 logger.warning(
-                    f"SECURITY WARNING: Default value used for '{field}'. "
-                    "Change this in production!"
+                    "SECURITY WARNING: Default value used for '%s'. "
+                    "Change this in production!",
+                    field
                 )
 
 
