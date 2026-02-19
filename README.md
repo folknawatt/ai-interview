@@ -1,79 +1,77 @@
-- include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
-  1: # 🎯 AI Interview Platform
-  2:
-  3:
-  4: [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-  5: [![Nuxt 3](https://img.shields.io/badge/Nuxt-3-00DC82.svg)](https://nuxt.com)
-  6: [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com)
-  7: [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
-  8:
-  9: An AI-powered interview platform that combines intelligent question generation with automated candidate evaluation, streamlining the hiring process for HR teams and providing a seamless experience for candidates.
-  10:
-  11: ## ✨ Features
-  12:
-  13: ### For HR Teams
-  14:
-  15: - 🤖 **AI-Generated Questions**: Automatically generate role-specific interview questions using Google Gemini AI
-  16: - 📊 **Role Management**: Create and manage different job roles with customized question sets
-  17: - 🎯 **Intelligent Evaluation**: Automated candidate assessment based on responses
-  18: - 📈 **Dashboard**: Centralized view of all interviews and candidates
-  19:
-  20: ### For Candidates
-  21:
-  22: - 🎤 **Video/Audio Recording**: Record interview responses directly in the browser
-  23: - 🔊 **Text-to-Speech**: Questions read aloud using natural-sounding TTS
-  24: - 📝 **Transcription**: Automatic speech-to-text conversion using Whisper AI
-  25: - ✅ **Instant Feedback**: Get evaluation results immediately after interview completion
-  26:
-  27: ## 🏗️ Architecture
-  28:
-  29: ### System Overview
-  30:
-  31: `mermaid
-32: graph TD
-33:     subgraph "Client Layer"
-34:         Candidate[Candidate Interface]
-35:         HR[HR Dashboard]
-36:     end
-37:
-38:     subgraph "Application Layer"
-39:         Nuxt[Frontend (Nuxt 3)]
-40:         FastAPI[Backend (FastAPI)]
-41:     end
-42:
-43:     subgraph "Data & AI Layer"
-44:         DB[(PostgreSQL)]
-45:         Gemini[Google Gemini AI]
-46:         Whisper[Whisper ASR]
-47:         TTS[Edge TTS]
-48:     end
-49:
-50:     Candidate & HR -->|HTTPS| Nuxt
-51:     Nuxt -->|REST API| FastAPI
-52:     FastAPI -->|SQL| DB
-53:     FastAPI -->|GenAI| Gemini
-54:     FastAPI -->|Transcribe| Whisper
-55:     FastAPI -->|Speech| TTS
-56: `
-  57:
-  58: ### User Flow
-  59:
-  60: `mermaid
-61: sequenceDiagram
-62:     participant U as User
-63:     participant F as Frontend
-64:     participant B as Backend
-65:     participant A as AI Services
-66:
-67:     U->>F: Request Interview/Role
-68:     F->>B: API Call
-69:     B->>A: Generate/Process
-70:     A-->>B: AI Result
-71:     B-->>F: JSON Response
-72:     F-->>U: Render UI
-73: `
-  74:
-  75: ### Tech Stack
+# 🎯 AI Interview Platform
+
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Nuxt 3](https://img.shields.io/badge/Nuxt-3-00DC82.svg)](https://nuxt.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
+
+An AI-powered interview platform that combines intelligent question generation with automated candidate evaluation, streamlining the hiring process for HR teams and providing a seamless experience for candidates.
+
+## ✨ Features
+
+### For HR Teams
+
+- 🤖 **AI-Generated Questions**: Automatically generate role-specific interview questions using Google Gemini AI
+- 📊 **Role Management**: Create and manage different job roles with customized question sets
+- 🎯 **Intelligent Evaluation**: Automated candidate assessment based on responses
+- 📈 **Dashboard**: Centralized view of all interviews and candidates
+
+### For Candidates
+
+- 🎤 **Video/Audio Recording**: Record interview responses directly in the browser
+- 🔊 **Text-to-Speech**: Questions read aloud using natural-sounding TTS
+- 📝 **Transcription**: Automatic speech-to-text conversion using Whisper AI
+- ✅ **Instant Feedback**: Get evaluation results immediately after interview completion
+
+## 🏗️ Architecture
+
+### System Overview
+
+```mermaid
+graph TD
+    subgraph "Client Layer"
+        Candidate[Candidate Interface]
+        HR[HR Dashboard]
+    end
+
+    subgraph "Application Layer"
+        Nuxt[Frontend (Nuxt 3)]
+        FastAPI[Backend (FastAPI)]
+    end
+
+    subgraph "Data & AI Layer"
+        DB[(PostgreSQL)]
+        Gemini[Google Gemini AI]
+        Whisper[Whisper ASR]
+        TTS[Edge TTS]
+    end
+
+    Candidate & HR -->|HTTPS| Nuxt
+    Nuxt -->|REST API| FastAPI
+    FastAPI -->|SQL| DB
+    FastAPI -->|GenAI| Gemini
+    FastAPI -->|Transcribe| Whisper
+    FastAPI -->|Speech| TTS
+```
+
+### User Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant A as AI Services
+
+    U->>F: Request Interview/Role
+    F->>B: API Call
+    B->>A: Generate/Process
+    A-->>B: AI Result
+    B-->>F: JSON Response
+    F-->>U: Render UI
+```
+
+### Tech Stack
 
 **Backend:**
 
@@ -176,12 +174,15 @@ npm run dev
 ai-interview/
 ├── backend/               # FastAPI backend
 │   ├── app/
-│   │   ├── core/          # Business logic (AI, audio, TTS)
+│   │   ├── adapters/      # External service adapters (AI, TTS, Audio)
+│   │   ├── config/        # Configuration management
+│   │   ├── database/      # Database connection
+│   │   ├── repositories/  # Data access layer (BaseRepository pattern)
 │   │   ├── routers/       # API endpoints
-│   │   ├── models.py      # Pydantic models
-│   │   └── main.py        # FastAPI app
-│   ├── config/            # Configuration
-│   └── tests/             # Backend tests
+│   │   ├── schemas/       # Pydantic request/response models
+│   │   ├── services/      # Business logic
+│   │   └── main.py        # FastAPI app entry point
+│   └── scripts/           # Utility scripts
 │
 ├── frontend/              # Nuxt 3 frontend
 │   ├── components/        # Vue components
@@ -190,7 +191,7 @@ ai-interview/
 │   ├── store/             # Pinia stores
 │   └── types/             # TypeScript types
 │
-└── tests/                 # Integration tests
+└── docs/                  # Project documentation
 ```
 
 ## 🔧 Configuration
@@ -270,15 +271,19 @@ Once the backend is running, visit:
 
 ## 🛠️ Development
 
-### Development Workflow
-
 ### Helper Scripts
 
 Utility scripts are located in `backend/scripts/`.
 
 ```bash
+# Create admin user
+python backend/scripts/create_admin.py
+
 # Debug Authentication
 python backend/scripts/debug_auth.py
+
+# Reset database
+python backend/scripts/reset_db.py
 ```
 
 ### Code Quality Tools
