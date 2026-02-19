@@ -99,7 +99,7 @@ async def get_interview_question(
 
     # Generate TTS audio for the question if status is "continue"
     if result.get("status") == "continue" and "question" in result:
-        result["audio_path"] = TTSService.generate_question_audio(
+        result["audio_path"] = await TTSService.generate_question_audio(
             text=result["question"],
             question_id=result["question_id"]
         )
@@ -136,7 +136,7 @@ async def get_session_question(
 
     # Generate TTS audio if needed
     if result.get("status") == "continue" and "question" in result and not skip_tts:
-        result["audio_path"] = TTSService.generate_question_audio(
+        result["audio_path"] = await TTSService.generate_question_audio(
             text=result["question"],
             question_id=result["question_id"]
         )
