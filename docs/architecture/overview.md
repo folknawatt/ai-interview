@@ -6,7 +6,7 @@ The AI Interview Platform is built as a modern, decoupled full-stack application
 
 ```mermaid
 graph TB
-    subgraph "Frontend - Nuxt 3"
+    subgraph "Frontend - Nuxt 4"
         UI[Vue Components]
         Store[Pinia Store]
         Composables[Composables]
@@ -44,11 +44,11 @@ graph TB
 
 ## Component Overview
 
-### Frontend (Nuxt 3)
+### Frontend (Nuxt 4)
 
 **Technology Stack:**
 
-- **Framework:** Nuxt 3 (Vue 3 + SSR capabilities)
+- **Framework:** Nuxt 4 (Vue 3 + SSR capabilities)
 - **State Management:** Pinia
 - **Styling:** Tailwind CSS
 - **Type Safety:** TypeScript
@@ -135,47 +135,61 @@ sequenceDiagram
 
 ### Backend Core Modules
 
-**`core/ai_evaluator.py`**
+**`services/auth/`**
+
+- Handles user authentication and JWT management
+- Manages user roles and permissions
+
+**`services/scoring/`** & **`adapters/ai/`**
 
 - Evaluates candidate responses using Gemini AI
 - Provides scoring and feedback
 
-**`core/audio_processor.py`**
+**`services/core/media_service.py`**
 
 - Processes audio/video files
 - Extracts audio from video
 - Handles audio format conversions
 
-**`core/question_generator.py`**
+**`services/hr/`**
 
 - Generates role-specific interview questions
 - Uses Gemini AI for intelligent question creation
 
-**`core/tts_generator.py`**
+**`services/core/tts_service.py`**
 
 - Converts text questions to speech
-- Supports multiple TTS engines
-
-**`core/split_audio.py`**
-
-- Splits long audio into manageable chunks
-- Handles transcription of large files
+- Supports multiple TTS engines (Edge TTS, Google TTS)
 
 ## API Structure
 
 ```
 /api/
+├── /auth/
+│   ├── POST /login
+│   ├── POST /logout
+│   ├── POST /register
+│   └── GET  /me
+│
 ├── /hr/
 │   ├── POST /generate-questions
 │   ├── GET  /roles
 │   ├── POST /save-questions
-│   └── GET  /roles/{id}
+│   ├── GET  /roles/{id}
+│   ├── PUT  /roles/{id}/questions
+│   └── DELETE /roles/{id}
 │
 ├── /interview/
 │   ├── POST /upload-video
 │   ├── POST /evaluate
 │   ├── GET  /result/{id}
 │   └── GET  /questions/{role_id}
+│
+├── /reports/
+│   ├── GET /all
+│   ├── GET /{session_id}
+│   ├── GET /{session_id}/pdf
+│   └── GET /statistics/overview
 │
 └── /tts/
     └── POST /generate
@@ -269,7 +283,7 @@ graph LR
 - Type safety with Pydantic
 - Easy integration with AI libraries
 
-### Why Nuxt 3?
+### Why Nuxt 4?
 
 - Vue 3 with Composition API
 - SSR/SSG capabilities

@@ -7,7 +7,52 @@
 
 ## Authentication
 
-Currently, the API does not require authentication. This should be implemented before production deployment.
+Authentication is handled via JWT tokens stored in HttpOnly cookies. There is no need to manually attach tokens to requests, as the browser handles cookies automatically.
+
+### Login
+
+Authenticate a user and set strict HttpOnly cookies.
+
+**Endpoint:** `POST /auth/login`
+
+**Content-Type:** `application/x-www-form-urlencoded`
+
+**Form Data:**
+
+- `username`: User's username
+- `password`: User's password
+
+**Response:** `200 OK` (with Set-Cookie headers)
+
+```json
+{
+  "access_token": "",
+  "token_type": "bearer",
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "email": "admin@example.com",
+    "role": "admin",
+    "full_name": "System Admin"
+  }
+}
+```
+
+### Logout
+
+Clear authentication cookies.
+
+**Endpoint:** `POST /auth/logout`
+
+**Response:** `200 OK`
+
+### Get Current User
+
+Get information about the currently logged-in user.
+
+**Endpoint:** `GET /auth/me`
+
+**Response:** `200 OK`
 
 ## HR Endpoints
 
@@ -44,6 +89,28 @@ Generate AI-powered interview questions for a specific role.
   "generated_at": "2025-12-09T01:00:00Z"
 }
 ```
+
+],
+"role": "Software Engineer",
+"generated_at": "2025-12-09T01:00:00Z"
+}
+
+````
+
+### Delete Role
+
+Delete a role completely.
+
+**Endpoint:** `DELETE /hr/roles/{role_id}`
+
+**Response:** `200 OK`
+
+```json
+{
+  "status": "success",
+  "message": "Role deleted successfully"
+}
+````
 
 ### List Roles
 
@@ -90,6 +157,23 @@ Save approved questions for a role.
   "message": "Saved questions for Software Engineer"
 }
 ```
+
+### Update Questions
+
+Update or reorder questions for an existing role.
+
+**Endpoint:** `PUT /hr/roles/{role_id}/questions`
+
+**Request Body:**
+
+```json
+{
+  "title": "Senior Software Engineer",
+  "questions": ["New Question 1", "New Question 2"]
+}
+```
+
+**Response:** `200 OK`
 
 ## Interview Endpoints
 
@@ -204,6 +288,39 @@ Convert text to speech.
   "format": "mp3"
 }
 ```
+
+## Reports Endpoints
+
+### List Reports
+
+List all completed interview sessions with optional filtering.
+
+**Endpoint:** `GET /reports/all`
+
+**Query Parameters:**
+
+- `role_id`: Filter by role
+- `min_score`: Filter by minimum score
+- `recommendation`: Filter by recommendation (Strong Pass, Pass, Review, Fail)
+- `search_query`: Search by candidate name
+
+### Get Report Details
+
+Get full details of a specific interview session.
+
+**Endpoint:** `GET /reports/{session_id}`
+
+### Download PDF
+
+Download a PDF version of the interview report.
+
+**Endpoint:** `GET /reports/{session_id}/pdf`
+
+### Statistics
+
+Get overall platform statistics.
+
+**Endpoint:** `GET /reports/statistics/overview`
 
 ## Error Responses
 

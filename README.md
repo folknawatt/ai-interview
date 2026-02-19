@@ -1,8 +1,8 @@
 # 🎯 AI Interview Platform
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Nuxt 3](https://img.shields.io/badge/Nuxt-3-00DC82.svg)](https://nuxt.com)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com)
+[![Nuxt 4](https://img.shields.io/badge/Nuxt-4-00DC82.svg)](https://nuxt.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
 
 An AI-powered interview platform that combines intelligent question generation with automated candidate evaluation, streamlining the hiring process for HR teams and providing a seamless experience for candidates.
@@ -35,8 +35,8 @@ graph TD
     end
 
     subgraph "Application Layer"
-        Nuxt[Frontend (Nuxt 3)]
-        FastAPI[Backend (FastAPI)]
+        Nuxt["Frontend (Nuxt 4)"]
+        FastAPI["Backend (FastAPI)"]
     end
 
     subgraph "Data & AI Layer"
@@ -83,7 +83,7 @@ sequenceDiagram
 
 **Frontend:**
 
-- Nuxt 3 (Vue 3 Framework)
+- Nuxt 4 (Vue 3 Framework)
 - TypeScript
 - Tailwind CSS
 - Pinia (State Management)
@@ -127,7 +127,7 @@ For developers who want to run services individually.
 #### Prerequisites
 
 - Python 3.11+ (Recommended: Install via `uv`)
-- Node.js 18+
+- Node.js 20+
 - FFmpeg (Required for audio processing)
 - Key.json (Required for Vachana TTS) -> Place in `voices/`
 
@@ -184,7 +184,7 @@ ai-interview/
 │   │   └── main.py        # FastAPI app entry point
 │   └── scripts/           # Utility scripts
 │
-├── frontend/              # Nuxt 3 frontend
+├── frontend/              # Nuxt 4 frontend
 │   ├── components/        # Vue components
 │   ├── composables/       # Composable functions
 │   ├── pages/             # Route pages
@@ -253,6 +253,13 @@ Once the backend is running, visit:
 
 ### Main Endpoints
 
+**Auth Routes** (`/auth`)
+
+- `POST /auth/login` - Authenticate user and receive JWT via HttpOnly cookie
+- `POST /auth/logout` - Clear session cookies
+- `POST /auth/register` - Register a new HR user (Admin only)
+- `GET /auth/me` - Get current authenticated user info
+
 **HR Routes** (`/hr`)
 
 - `POST /hr/generate-questions` - Generate interview questions for a role
@@ -268,6 +275,13 @@ Once the backend is running, visit:
 **TTS Routes** (`/tts`)
 
 - `POST /tts/generate` - Generate speech from text
+
+**Reports Routes** (`/reports`)
+
+- `GET /reports/all` - List all completed interviews (with filtering)
+- `GET /reports/{session_id}` - Get detailed report for an interview
+- `GET /reports/{session_id}/pdf` - Download PDF report
+- `GET /reports/statistics/overview` - Get overall interview statistics
 
 ## 🛠️ Development
 

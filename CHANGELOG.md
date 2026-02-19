@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial project structure with backend (FastAPI) and frontend (Nuxt 3)
+- Initial project structure with backend (FastAPI) and frontend (Nuxt 4)
 - AI-powered question generation using Google Gemini
 - Automated candidate evaluation
 - Video/audio recording and transcription using Whisper AI
@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Frontend Features
 
-- Nuxt 3 with TypeScript
+- Nuxt 4 with TypeScript
 - Vue 3 Composition API
 - Pinia state management
 - Tailwind CSS styling
