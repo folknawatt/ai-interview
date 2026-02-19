@@ -133,14 +133,6 @@ For developers who want to run services individually.
 - FFmpeg (Required for audio processing)
 - Key.json (Required for Vachana TTS) -> Place in `voices/`
 
-#### Automated Setup (Windows)
-
-You can start both Backend and Frontend servers in new windows using:
-
-```batch
-.\dev.bat
-```
-
 #### Manual Setup
 
 **1. Backend Setup:**

@@ -13,17 +13,34 @@ The following is a set of guidelines for contributing to **AI Interview Platform
    cd ai-interview
    ```
 
-2. **Run Setup Script (Windows)**
+2. **Backend Setup**
 
-   ```powershell
-   .\scripts\setup.ps1
+   ```bash
+   cd backend
+   uv sync
    ```
 
-   This will install Python dependencies (`uv`), Node.js dependencies (`npm`), and setup pre-commit hooks.
+3. **Frontend Setup**
 
-3. **Start Development**
-   ```powershell
-   .\scripts\dev.ps1
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+4. **Start Development**
+
+   Terminal 1 (Backend):
+
+   ```bash
+   cd backend
+   uv run uvicorn app.main:app --reload
+   ```
+
+   Terminal 2 (Frontend):
+
+   ```bash
+   cd frontend
+   npm run dev
    ```
 
 ## 🧪 Testing

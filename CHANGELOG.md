@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Project structure improvements and automation scripts
-- Development workflow automation (setup.ps1, dev.ps1, clean.ps1)
+- Project structure improvements
 - `.editorconfig` for consistent code formatting
 - `.node-version` for Node.js version management
 - LICENSE file (MIT)
@@ -21,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardized dependency management to use only `pyproject.toml` (removed `requirements.txt`)
 - Standardized frontend package manager to npm (removed `pnpm-lock.yaml`)
 - Fixed `.gitignore` overly broad 'tests' pattern
+- Refactored database repositories to use BaseRepository pattern
+- Updated dependencies (uv.lock)
 
 ### Removed
 
