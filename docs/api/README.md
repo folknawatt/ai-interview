@@ -54,6 +54,34 @@ Get information about the currently logged-in user.
 
 **Response:** `200 OK`
 
+### Register User
+
+Register a new user. Restricted to Admins.
+
+**Endpoint:** `POST /auth/register`
+
+**Request Body:**
+
+```json
+{
+  "username": "newuser",
+  "email": "user@example.com",
+  "password": "securepassword",
+  "full_name": "New User",
+  "role": "hr"
+}
+```
+
+**Response:** `200 OK`
+
+### Initialize Admin
+
+Initialize the default admin user. Only works if no admin exists.
+
+**Endpoint:** `POST /auth/init-admin`
+
+**Response:** `200 OK`
+
 ## HR Endpoints
 
 ### Generate Questions
@@ -133,6 +161,28 @@ Get all available job roles.
 }
 ```
 
+### Get Role Details
+
+Get detailed information for a specific role.
+
+**Endpoint:** `GET /hr/roles/{role_id}`
+
+**Response:** `200 OK`
+
+```json
+{
+  "id": "role1",
+  "name": "Software Engineer",
+  "description": "Backend development role",
+  "questions": [
+    {
+      "id": "q1",
+      "content": "Question text..."
+    }
+  ]
+}
+```
+
 ### Save Questions
 
 Save approved questions for a role.
@@ -177,87 +227,129 @@ Update or reorder questions for an existing role.
 
 ## Interview Endpoints
 
-### Upload Video
+### Upload PDF Resume (Snapshot Flow)
 
-Upload candidate's video/audio response.
+Upload a candidate's resume (PDF) to generate custom questions and initialize an interview session. Default flow.
 
-**Endpoint:** `POST /interview/upload-video`
+**Endpoint:** `POST /interview/upload-pdf`
 
 **Content-Type:** `multipart/form-data`
 
 **Form Data:**
 
-```
-video: (binary file data)
-question_id: "q1"
-candidate_id: "cand123"
-```
+- `file`: PDF file
+- `role_id`: Role ID
+- `candidate_name`: Candidate's name
+- `candidate_email`: Candidate's email (optional)
 
 **Response:** `200 OK`
 
 ```json
 {
-  "upload_id": "upload123",
-  "transcription": "My answer to the question...",
-  "duration": 120.5,
-  "status": "completed"
+  "session_id": "sess_12345",
+  "role_id": "role_1",
+  "questions": ["Base question 1", "Base question 2", "Custom question from resume 1", "Custom question from resume 2"]
 }
 ```
 
-### Evaluate Interview
+### Get Session Question
 
-Evaluate all candidate responses.
+Get a question for an active interview session from the frozen snapshot.
 
-**Endpoint:** `POST /interview/evaluate`
+**Endpoint:** `GET /interview/session/{session_id}/question/{index}`
 
-**Request Body:**
+**Query Parameters:**
 
-```json
-{
-  "candidate_id": "cand123",
-  "responses": [
-    {
-      "question_id": "q1",
-      "transcript": "My answer to question 1...",
-      "upload_id": "upload123"
-    }
-  ]
-}
-```
+- `skip_tts`: `true` or `false` (default: `false`) - Skip audio generation for pre-fetching.
 
 **Response:** `200 OK`
 
 ```json
 {
-  "evaluation_id": "eval456",
-  "candidate_id": "cand123",
-  "overall_score": 85,
-  "feedback": "Strong technical knowledge...",
-  "question_scores": [
-    {
-      "question_id": "q1",
-      "score": 90,
-      "feedback": "Excellent system design approach"
-    }
-  ],
-  "evaluated_at": "2025-12-09T01:00:00Z"
+  "question_id": 1,
+  "question": "Tell me about yourself.",
+  "audio_path": "/audio/sess_12345_0.mp3",
+  "total_questions": 5,
+  "current_index": 0
 }
 ```
 
-### Get Result
+### Upload Answer & Analyze
 
-Get evaluation results for a candidate.
+Upload a video answer for a specific question and immediately trigger AI analysis.
 
-**Endpoint:** `GET /interview/result/{evaluation_id}`
+**Endpoint:** `POST /interview/upload-answer`
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+
+- `file`: Video file (webm/mp4)
+- `question`: Question text
+- `question_id`: Question ID (index)
+- `session_id`: Session ID
+- `role_id`: Role ID
+- `candidate_name`: Candidate Name
+- `candidate_email`: Candidate Email
 
 **Response:** `200 OK`
 
 ```json
 {
-  "evaluation_id": "eval456",
-  "overall_score": 85,
-  "feedback": "Strong candidate...",
-  "question_scores": [...]
+  "id": "result_123",
+  "session_id": "sess_12345",
+  "question": "Tell me about yourself",
+  "transcript": "I am a software engineer...",
+  "communication_score": 85.0,
+  "relevance_score": 90.0,
+  "logical_thinking_score": 88.0,
+  "pass_prediction": true,
+  "feedback": {
+    "strengths": ["Clear communication"],
+    "weaknesses": ["Could be more concise"],
+    "summary": "Good introduction."
+  },
+  "video_url": "/videos/uuid.webm"
+}
+```
+
+### Complete Interview
+
+Finalize the interview session and calculate aggregated scores.
+
+**Endpoint:** `POST /interview/complete/{session_id}`
+
+**Response:** `200 OK`
+
+```json
+{
+  "message": "Interview completed successfully",
+  "session_id": "sess_12345",
+  "recommendation": "Strong Pass",
+  "average_score": 88.5
+}
+```
+
+### Get Interview Summary
+
+Get full details and results of a completed interview.
+
+**Endpoint:** `GET /interview/summary/{session_id}`
+
+**Response:** `200 OK`
+
+```json
+{
+  "total_questions": 5,
+  "details": [ ...list of question results... ],
+  "aggregated_score": {
+    "average_score": 88.5,
+    "communication_avg": 85.0,
+    "relevance_avg": 90.0,
+    "logical_thinking_avg": 90.5,
+    "pass_rate": 100.0,
+    "overall_recommendation": "Strong Pass"
+  }
 }
 ```
 
@@ -288,6 +380,14 @@ Convert text to speech.
   "format": "mp3"
 }
 ```
+
+### Get Audio File
+
+Retrieve a generated audio file.
+
+**Endpoint:** `GET /tts/audio/{filename}`
+
+**Response:** Audio file stream (audio/mpeg)
 
 ## Reports Endpoints
 

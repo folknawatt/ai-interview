@@ -108,27 +108,38 @@ sequenceDiagram
     participant Whisper
     participant Gemini
 
-    Candidate->>Frontend: Start Interview
-    Frontend->>API: GET /interview/questions
-    API-->>Frontend: Question list
+    Candidate->>Frontend: Upload Resume (PDF)
+    Frontend->>API: POST /interview/upload-pdf
+    API->>Gemini: Extract & Generate Questions
+    Gemini-->>API: Custom Questions
+    API-->>Frontend: Session Created (Snapshot)
 
-    Frontend->>API: POST /tts/generate
-    API->>TTS: Generate speech
-    TTS-->>API: Audio file
-    API-->>Frontend: Audio stream
-    Frontend-->>Candidate: Play question audio
+    loop Every Question
+        Frontend->>API: GET /interview/session/{id}/question/{i}
+        API-->>Frontend: Question Text
 
-    Candidate->>Frontend: Record answer (video/audio)
-    Frontend->>API: POST /interview/upload-video
-    API->>Whisper: Transcribe audio
-    Whisper-->>API: Transcript text
-    API-->>Frontend: Transcription complete
+        Frontend->>API: POST /tts/generate (optional)
+        API->>TTS: Generate speech
+        TTS-->>API: Audio file
+        API-->>Frontend: Audio stream
+        Frontend-->>Candidate: Play question audio
 
-    Frontend->>API: POST /interview/evaluate
-    API->>Gemini: Evaluate answers
-    Gemini-->>API: Evaluation results
-    API-->>Frontend: Results JSON
-    Frontend-->>Candidate: Display evaluation
+        Candidate->>Frontend: Record answer (video)
+        Frontend->>API: POST /interview/upload-answer
+
+        par Parallel Processing
+            API->>Whisper: Transcribe audio
+        and
+            API->>Gemini: Evaluate Answer
+        end
+
+        Gemini-->>API: Evaluation Result
+        API-->>Frontend: Real-time Feedback
+        Frontend-->>Candidate: Display Feedback
+    end
+
+    Frontend->>API: POST /interview/complete/{id}
+    API-->>Frontend: Final Score & Summary
 ```
 
 ## Core Modules
@@ -169,6 +180,7 @@ sequenceDiagram
 │   ├── POST /login
 │   ├── POST /logout
 │   ├── POST /register
+│   ├── POST /init-admin
 │   └── GET  /me
 │
 ├── /hr/
@@ -180,10 +192,11 @@ sequenceDiagram
 │   └── DELETE /roles/{id}
 │
 ├── /interview/
-│   ├── POST /upload-video
-│   ├── POST /evaluate
-│   ├── GET  /result/{id}
-│   └── GET  /questions/{role_id}
+│   ├── POST /upload-pdf (Resume & Init)
+│   ├── GET  /session/{id}/question/{index}
+│   ├── POST /upload-answer (Upload + Evaluate)
+│   ├── POST /complete/{id}
+│   └── GET  /summary/{id}
 │
 ├── /reports/
 │   ├── GET /all
@@ -192,7 +205,8 @@ sequenceDiagram
 │   └── GET /statistics/overview
 │
 └── /tts/
-    └── POST /generate
+    ├── POST /generate
+    └── GET  /audio/{filename}
 ```
 
 ## Security Considerations
