@@ -51,6 +51,13 @@ class BadRequestError(AppException):
     default_detail = "Bad request"
 
 
+class ForbiddenError(AppException):
+    """Permission denied (403)."""
+
+    status_code = 403
+    default_detail = "Permission denied"
+
+
 class ServiceUnavailableError(AppException):
     """External service unavailable (503)."""
 
@@ -133,7 +140,7 @@ def convert_exception(exc: Exception) -> AppException:
         elif status_code == 404:
             return NotFoundError(detail)
         elif status_code == 403:
-            return BadRequestError(detail)
+            return ForbiddenError(detail)
 
     # Default to internal server error
     logger.error("Unhandled exception: %s", exc, exc_info=True)
