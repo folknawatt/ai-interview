@@ -1,32 +1,29 @@
-"""
-Text-to-Speech API routes.
+"""Text-to-Speech API routes.
 
 Provides endpoints for:
 - Generating speech audio from text using various TTS providers
 - Retrieving generated audio files
 """
+
 import os
+from pathlib import Path
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
-from app.schemas import TTSRequest
-from app.adapters.tts.factory import TTSProviderFactory
-from app.adapters.tts.exceptions import TTSError, TTSConfigurationError
-from app.exceptions import BadRequestError, NotFoundError, ServiceUnavailableError
-from app.dependencies import get_api_key
 
-router = APIRouter(
-    prefix="/tts",
-    tags=["Text to Speech"]
-)
+from app.adapters.tts.exceptions import TTSConfigurationError, TTSError
+from app.adapters.tts.factory import TTSProviderFactory
+from app.config.settings import settings
+from app.dependencies import get_api_key
+from app.exceptions import BadRequestError, NotFoundError, ServiceUnavailableError
+from app.schemas import TTSRequest
+
+router = APIRouter(prefix="/tts", tags=["Text to Speech"])
 
 
 @router.post("/generate")
-async def generate_tts_endpoint(
-    request: TTSRequest,
-    api_key: str = Depends(get_api_key)
-) -> dict:
-    """
-    Generate text-to-speech audio from provided text.
+async def generate_tts_endpoint(request: TTSRequest, api_key: str = Depends(get_api_key)) -> dict:
+    """Generate text-to-speech audio from provided text.
 
     Args:
         request: TTS request containing text and provider information
@@ -41,29 +38,19 @@ async def generate_tts_endpoint(
     try:
         # Create provider using factory
         # Note: request.provider should be "gemini" or "vachana"
-        provider = TTSProviderFactory.create_provider(
-            request.provider,
-            api_key=api_key
-        )
+        provider = TTSProviderFactory.create_provider(request.provider, api_key=api_key)
 
         # Generate audio (synchronous call)
-        audio_path = provider.generate_audio(
-            text=request.text
-        )
+        audio_path = provider.generate_audio(text=request.text)
 
-        return {
-            "success": True,
-            "audio_path": audio_path,
-            "filename": os.path.basename(audio_path)
-        }
+        return {"success": True, "audio_path": audio_path, "filename": os.path.basename(audio_path)}
     except (TTSError, TTSConfigurationError) as e:
         raise ServiceUnavailableError(f"TTS generation failed: {e}") from e
 
 
 @router.get("/audio/{filename}")
 async def get_tts_file(filename: str) -> FileResponse:
-    """
-    Retrieve a generated TTS audio file.
+    """Retrieve a generated TTS audio file.
 
     Args:
         filename: Name of the audio file to retrieve
@@ -78,8 +65,15 @@ async def get_tts_file(filename: str) -> FileResponse:
     if ".." in filename or "/" in filename or "\\" in filename:
         raise BadRequestError("Invalid filename")
 
-    possible_path = os.path.abspath(filename)
-    if os.path.exists(possible_path):
-        return FileResponse(possible_path)
+    # Resolve the audio directory and the requested file path
+    audio_dir = Path(settings.tts_audio_dir).resolve()
+    file_path = (audio_dir / filename).resolve()
+
+    # Ensure the resolved path is strictly within the audio directory (prevent path traversal)
+    if not str(file_path).startswith(str(audio_dir)):
+        raise BadRequestError("Invalid filename")
+
+    if file_path.exists():
+        return FileResponse(file_path)
 
     raise NotFoundError("Audio file not found")

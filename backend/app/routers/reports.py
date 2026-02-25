@@ -1,5 +1,4 @@
-"""
-HR Reporting API routes.
+"""HR Reporting API routes.
 
 Provides endpoints for HR to:
 - List all completed interviews with filtering
@@ -7,32 +6,29 @@ Provides endpoints for HR to:
 - Download PDF reports
 - View overall statistics
 """
+
 import io
-from typing import Optional
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_db
-from app.services import ReportService
 from app.schemas import InterviewReportResponse, ReportListItem
+from app.services import ReportService
 
-router = APIRouter(
-    prefix="/reports",
-    tags=["HR Reports"]
-)
+router = APIRouter(prefix="/reports", tags=["HR Reports"])
 
 
 @router.get("/all", response_model=list[ReportListItem])
 async def get_all_reports(
-    role_id: Optional[str] = None,
-    min_score: Optional[float] = None,
-    recommendation: Optional[str] = None,
-    search_query: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    role_id: str | None = None,
+    min_score: float | None = None,
+    recommendation: str | None = None,
+    search_query: str | None = None,
+    db: AsyncSession = Depends(get_db),
 ) -> list[ReportListItem]:
-    """
-    List all completed interviews with optional filtering.
+    """List all completed interviews with optional filtering.
 
     Query Parameters:
     - role_id: Filter by role ID
@@ -40,15 +36,18 @@ async def get_all_reports(
     - recommendation: Filter by recommendation (Strong Pass, Pass, Review, Fail)
     - search_query: Search by candidate name
     """
-    return await ReportService.get_all_reports(
-        db, role_id, min_score, recommendation, search_query
-    )
+    return await ReportService.get_all_reports(db, role_id, min_score, recommendation, search_query)
+
+
+@router.get("/statistics/overview")
+async def get_statistics(db: AsyncSession = Depends(get_db)) -> dict:
+    """Get overall statistics for all completed interviews."""
+    return await ReportService.get_statistics(db)
 
 
 @router.get("/{session_id}", response_model=InterviewReportResponse)
 async def get_report_details(
-    session_id: str,
-    db: AsyncSession = Depends(get_db)
+    session_id: str, db: AsyncSession = Depends(get_db)
 ) -> InterviewReportResponse:
     """Get detailed report for a specific interview session."""
     return await ReportService.get_report_details(db, session_id)
@@ -63,13 +62,5 @@ async def download_pdf_report(session_id: str, db: AsyncSession = Depends(get_db
     return StreamingResponse(
         io.BytesIO(pdf_buffer),
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"attachment; filename=interview_report_{session_id}.pdf"
-        }
+        headers={"Content-Disposition": f"attachment; filename=interview_report_{session_id}.pdf"},
     )
-
-
-@router.get("/statistics/overview")
-async def get_statistics(db: AsyncSession = Depends(get_db)) -> dict:
-    """Get overall statistics for all completed interviews."""
-    return await ReportService.get_statistics(db)
