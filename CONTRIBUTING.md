@@ -1,12 +1,10 @@
 # Contributing to AI Interview Platform
 
-First off, thanks for taking the time to contribute! 🎉
-
-The following is a set of guidelines for contributing to **AI Interview Platform**. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+First off, thank you for considering contributing to the **AI Interview Platform**!
 
 ## 🛠️ Development Setup
 
-1. **Clone the repo**
+1. **Clone the repository**
 
    ```bash
    git clone <repository_url>
@@ -18,70 +16,37 @@ The following is a set of guidelines for contributing to **AI Interview Platform
    ```bash
    cd backend
    uv sync
-   ```
-
-3. **Frontend Setup**
-
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-4. **Start Development**
-
-   Terminal 1 (Backend):
-
-   ```bash
-   cd backend
    uv run uvicorn app.main:app --reload
    ```
 
-   Terminal 2 (Frontend):
-
+3. **Frontend Setup**
    ```bash
    cd frontend
+   npm install
    npm run dev
    ```
 
 ## 🧪 Testing
 
-Before submitting a Pull Request, please ensure all tests pass.
+Please ensure all tests pass before submitting a Pull Request:
 
-- **Backend**:
-
-  ```bash
-  cd backend
-  uv run pytest
-  ```
-
-- **Frontend**:
-  ```bash
-  cd frontend
-  npm run test
-  ```
+- **Backend**: `cd backend && uv run pytest`
+- **Frontend**: `cd frontend && npm run test`
 
 ## 📝 Code Style
 
-We enforce code style using `pre-commit` hooks.
+We enforce code style using `pre-commit` hooks:
 
 - **Python**: `black`, `ruff`, `mypy`
 - **Frontend**: `eslint`, `prettier`
 
-If you commit and the hooks fail, the commit will be blocked. Fix the issues (or let the tools auto-fix them) and commit again.
-
 ## 🔀 Pull Request Process
 
-1. Create a branch from `main` (`git checkout -b feature/amazing-feature`).
-2. Implement your changes.
-3. Add tests if applicable.
-4. Ensure all tests and linting checks pass.
-5. Create a Pull Request against `main`.
-6. Describe your changes detailedly.
+1. Create a new branch from `main` (e.g., `feature/amazing-feature`).
+2. Implement your changes and add necessary tests.
+3. Ensure all CI/Linting checks pass.
+4. Submit a Pull Request to `main` with a clear description of the changes.
 
 ## 🐛 Bug Reports
 
-Open an issue and include:
-
-- A clear title and description.
-- Steps to reproduce the error.
-- Environment details (OS, Browser, etc.).
+If you find a bug, please open an Issue with a clear title, reproduction steps, and environment details (OS, Browser, etc.).
