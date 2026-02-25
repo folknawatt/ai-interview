@@ -1,16 +1,17 @@
-"""
-Centralized configuration for AI Interview system.
+"""Centralized configuration for AI Interview system.
 
 This module provides application-wide settings using Pydantic for
 environment variable validation and type safety.
 """
-import os
+
 import logging
+import os
 from pathlib import Path
-from typing import List
-from app.config.secret_manager import _load_secrets_from_secret_manager
-from pydantic_settings import BaseSettings
+
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
+
+from app.config.secret_manager import _load_secrets_from_secret_manager
 
 # Robustly find and load .env file
 env_path = Path(".env")
@@ -65,14 +66,13 @@ class Settings(BaseSettings):
     tts_provider: str = "vachana"  # TTS provider to use
     tts_max_retries: int = 2
     tts_initial_delay: int = 1
-    tts_audio_dir: str = os.path.join("storage", "audio")
+    tts_audio_dir: str = os.path.join("storage", "public", "audio")
 
     tts_vachana_voice: str = "th_f_1"  # Vachana voice name
     voices_dir: str = "voices"
 
     # Storage Configuration
-    questions_file_path: str = os.path.join(
-        os.path.dirname(__file__), "questions_db.json")
+    questions_file_path: str = os.path.join(os.path.dirname(__file__), "questions_db.json")
 
     # Use 'storage' at project root (or CWD in backend)
     base_storage_dir: str = "storage"
@@ -105,7 +105,7 @@ class Settings(BaseSettings):
     admin_default_password: str
 
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         """Parse CORS origins from comma-separated string."""
         return [origin.strip() for origin in self.cors_origins.split(",")]
 
@@ -113,30 +113,27 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": False,
-        "extra": "ignore"
+        "extra": "ignore",
     }
 
     def validate_security(self):
-        """
-        Validate security settings for production readiness.
+        """Validate security settings for production readiness.
         Logs warnings if default secrets are used.
         """
-
         logger = logging.getLogger("app.config.settings")
 
         defaults = [
             ("jwt_secret_key", "change-this-secret-key-in-production"),
             ("admin_default_password", "change-me-in-production"),
-            ("postgres_password", "postgres")
+            ("postgres_password", "postgres"),
         ]
 
         for field, unsafe_value in defaults:
             current_value = getattr(self, field)
             if current_value == unsafe_value:
                 logger.warning(
-                    "SECURITY WARNING: Default value used for '%s'. "
-                    "Change this in production!",
-                    field
+                    "SECURITY WARNING: Default value used for '%s'. Change this in production!",
+                    field,
                 )
 
 

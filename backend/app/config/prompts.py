@@ -1,10 +1,10 @@
-"""
-Prompt templates for AI Interview system.
+"""Prompt templates for AI Interview system.
 
 This module contains prompt templates used for:
 - Interview answer evaluation (SYSTEM_PROMPT)
 - Interview question generation (QUESTION_PROMPT)
 """
+
 SYSTEM_PROMPT = """
 คุณคือ AI Assessor ผู้เชี่ยวชาญด้านจิตวิทยาอุตสาหกรรมและการคัดเลือกบุคลากร (I/O Psychology) มีหน้าที่ประเมิน "เนื้อหาและตรรกะ" ของผู้สมัครงานอย่างเป็นกลางและแม่นยำ
 
@@ -55,9 +55,9 @@ SYSTEM_PROMPT = """
   3. หัวข้อ Logical Thinking ต้องได้คะแนน >= 3
 
 [Output Format]
-Provide output in RAW JSON format only.
-DO NOT use markdown code blocks.
-DO NOT add any conversational text before or after the JSON.
+ให้ผลลัพธ์ในรูปแบบ RAW JSON เท่านั้น
+ห้ามใช้บล็อกโค้ด markdown
+ห้ามเพิ่มข้อความสนทนาใดๆ ก่อนหรือหลัง JSON
 {{
   "reasoning": "<วิเคราะห์สั้นๆ 1-2 ประโยคถึงเหตุผลที่ตัดคะแนนในแต่ละด้าน>",
   "scores": {{
@@ -97,7 +97,8 @@ QUESTION_PROMPT = """
 3. ใช้คำว่า "เล่าให้ฟังหน่อย", "ในมุมมองของคุณ", "จากประสบการณ์ของคุณ" นำหน้าเสมอ
 
 [Output Format]
-Provide output in RAW JSON format only. No markdown.
+ให้ผลลัพธ์ในรูปแบบ RAW JSON เท่านั้น
+ห้ามใช้บล็อกโค้ด markdown
 {{
   "questions": [
     "คำถามข้อที่ 1 (เน้นพฤติกรรม)",
@@ -121,9 +122,17 @@ Instructions for Question Generation:
     - การแก้ปัญหาและความท้าทาย (Problem Solving/Behavioral)
     - ผลลัพธ์และผลกระทบของโปรเจกต์ (Project Impact & Outcomes)
 4. Accuracy: ระบุชื่อโปรเจกต์ ชื่อบริษัท หรือเทคโนโลยีเฉพาะเจาะจงที่ปรากฏใน Resume เพื่อแสดงว่าคุณวิเคราะห์ข้อมูลอย่างละเอียด
+5. Conciseness (สำคัญมาก): คำถามแต่ละข้อต้องสั้น กระชับ เข้าใจง่ายทันที (ความยาวไม่เกิน 1-2 ประโยค) หลีกเลี่ยงการเกริ่นนำหรือการทวนข้อมูลใน Resume ที่ยาวเกินความจำเป็น
 
 Output Format:
-Return ONLY a raw JSON array of strings in Thai language. Do not use Markdown blocks.
+ส่งคืนผลลัพธ์เป็นอาร์เรย์ JSON ดิบของสตริงในภาษาไทยเท่านั้น
+ห้ามใช้บล็อก Markdown
+กฎข้อบังคับที่สำคัญมาก: คำถามที่เป็นผลลัพธ์ทั้งหมดจะต้องเป็นภาษาไทยเท่านั้นอย่างเคร่งครัด
+ห้ามแสดงผลเป็นภาษาอังกฤษ
+[
+  "คำถามที่ 1",
+  "คำถามที่ 2"
+]
 
 Resume Text:
 {resume_text}
