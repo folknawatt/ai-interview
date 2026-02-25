@@ -275,3 +275,7 @@ cython_debug/
 *.pt
 *.pth
 *.onnx
+
+
+
+speaker_config.json
