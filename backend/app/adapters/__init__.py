@@ -1,5 +1,4 @@
-"""
-Adapters package for external services.
+"""Adapters package for external services.
 
 This package contains adapters for:
 - AI services (Gemini, Typhoon ASR)
