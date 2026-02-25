@@ -2,8 +2,7 @@ import pymupdf
 
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    """
-    Extract text from PDF bytes using PyMuPDF.
+    """Extract text from PDF bytes using PyMuPDF.
 
     Args:
         pdf_bytes: PDF file content as bytes.

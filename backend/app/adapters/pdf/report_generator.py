@@ -1,11 +1,11 @@
-"""
-PDF Report Generator for AI Interview System.
+"""PDF Report Generator for AI Interview System.
 
 Generates professional PDF reports containing:
 - Candidate information
 - Score summary
 - Detailed question-by-question results with feedback
 """
+
 from io import BytesIO
 from pathlib import Path
 
@@ -15,7 +15,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont, TTFError
+from reportlab.pdfbase.ttfonts import TTFError, TTFont
 from reportlab.platypus import (
     PageBreak,
     Paragraph,
@@ -25,10 +25,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.schemas import InterviewReportResponse
-
-
 from app.config.logging_config import get_logger
+from app.schemas import InterviewReportResponse
 
 logger = get_logger(__name__)
 
@@ -42,11 +40,9 @@ def _register_thai_fonts():
         leelawadee_bold = windows_fonts / "LeelaUIb.ttf"
 
         if leelawadee_regular.exists():
-            pdfmetrics.registerFont(
-                TTFont('ThaiFont', str(leelawadee_regular)))
+            pdfmetrics.registerFont(TTFont("ThaiFont", str(leelawadee_regular)))
             if leelawadee_bold.exists():
-                pdfmetrics.registerFont(
-                    TTFont('ThaiFont-Bold', str(leelawadee_bold)))
+                pdfmetrics.registerFont(TTFont("ThaiFont-Bold", str(leelawadee_bold)))
             return True
     except (OSError, TTFError) as e:
         logger.warning(f"Could not register Thai fonts: {e}")
@@ -58,16 +54,15 @@ _THAI_FONT_AVAILABLE = _register_thai_fonts()
 
 # Font names to use.
 if _THAI_FONT_AVAILABLE:
-    FONT_REGULAR = 'ThaiFont'
-    FONT_BOLD = 'ThaiFont-Bold'
+    FONT_REGULAR = "ThaiFont"
+    FONT_BOLD = "ThaiFont-Bold"
 else:
-    FONT_REGULAR = 'Helvetica'
-    FONT_BOLD = 'Helvetica-Bold'
+    FONT_REGULAR = "Helvetica"
+    FONT_BOLD = "Helvetica-Bold"
 
 
 def generate_pdf_report(report: InterviewReportResponse) -> bytes:
-    """
-    Generate a PDF report from interview data.
+    """Generate a PDF report from interview data.
 
     Args:
         report: InterviewReportResponse containing all interview data
@@ -82,7 +77,7 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
         rightMargin=0.75 * inch,
         leftMargin=0.75 * inch,
         topMargin=1 * inch,
-        bottomMargin=0.75 * inch
+        bottomMargin=0.75 * inch,
     )
 
     # Container for PDF elements
@@ -91,31 +86,27 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
 
     # Custom styles
     title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
+        "CustomTitle",
+        parent=styles["Heading1"],
         fontName=FONT_BOLD,
         fontSize=24,
-        textColor=colors.HexColor('#1a1a1a'),
+        textColor=colors.HexColor("#1a1a1a"),
         spaceAfter=30,
-        alignment=TA_CENTER
+        alignment=TA_CENTER,
     )
 
     heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
+        "CustomHeading",
+        parent=styles["Heading2"],
         fontName=FONT_BOLD,
         fontSize=16,
-        textColor=colors.HexColor('#333333'),
+        textColor=colors.HexColor("#333333"),
         spaceAfter=12,
-        spaceBefore=12
+        spaceBefore=12,
     )
 
     # Normal style with Thai font
-    normal_style = ParagraphStyle(
-        'CustomNormal',
-        parent=styles['Normal'],
-        fontName=FONT_REGULAR
-    )
+    normal_style = ParagraphStyle("CustomNormal", parent=styles["Normal"], fontName=FONT_REGULAR)
 
     # Title
     story.append(Paragraph("AI Interview Report", title_style))
@@ -125,29 +116,30 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
     story.append(Paragraph("Candidate Information", heading_style))
 
     candidate_data = [
-        ['Name:', report.candidate.name],
-        ['Email:', report.candidate.email or 'N/A'],
-        ['Session ID:', report.candidate.session_id],
-        ['Role:', report.candidate.role_id],
-        ['Interview Date:', report.candidate.interview_date],
+        ["Name:", report.candidate.name],
+        ["Email:", report.candidate.email or "N/A"],
+        ["Session ID:", report.candidate.session_id],
+        ["Role:", report.candidate.role_id],
+        ["Interview Date:", report.candidate.interview_date],
     ]
 
-    candidate_table = Table(
-        candidate_data,
-        colWidths=[1.5 * inch, 4.5 * inch]
+    candidate_table = Table(candidate_data, colWidths=[1.5 * inch, 4.5 * inch])
+    candidate_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f0f0f0")),
+                ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                ("ALIGN", (1, 0), (1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (0, -1), FONT_BOLD),
+                ("FONTNAME", (1, 0), (1, -1), FONT_REGULAR),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ]
+        )
     )
-    candidate_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), FONT_BOLD),
-        ('FONTNAME', (1, 0), (1, -1), FONT_REGULAR),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-    ]))
     story.append(candidate_table)
     story.append(Spacer(1, 0.3 * inch))
 
@@ -167,35 +159,35 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
             rec_color = colors.blue
 
         score_data = [
-            ['Overall Recommendation:', agg.overall_recommendation],
-            ['Average Score:', f"{agg.average_score:.2f} / 10"],
-            ['Communication Score:', f"{agg.communication_avg:.2f} / 10"],
-            ['Relevance Score:', f"{agg.relevance_avg:.2f} / 10"],
-            ['Logical Thinking Score:',
-                f"{agg.logical_thinking_avg:.2f} / 10"],
-            ['Pass Rate:', f"{agg.pass_rate:.1f}%"],
-            [
-                'Questions Answered:',
-                f"{agg.questions_answered} / {agg.total_questions}"
-            ],
+            ["Overall Recommendation:", agg.overall_recommendation],
+            ["Average Score:", f"{agg.average_score:.2f} / 10"],
+            ["Communication Score:", f"{agg.communication_avg:.2f} / 10"],
+            ["Relevance Score:", f"{agg.relevance_avg:.2f} / 10"],
+            ["Logical Thinking Score:", f"{agg.logical_thinking_avg:.2f} / 10"],
+            ["Pass Rate:", f"{agg.pass_rate:.1f}%"],
+            ["Questions Answered:", f"{agg.questions_answered} / {agg.total_questions}"],
         ]
 
         score_table = Table(score_data, colWidths=[2 * inch, 4 * inch])
-        score_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
-            ('BACKGROUND', (1, 0), (1, 0), rec_color),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('TEXTCOLOR', (1, 0), (1, 0), colors.white),
-            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), FONT_BOLD),
-            ('FONTNAME', (1, 0), (1, 0), FONT_BOLD),
-            ('FONTNAME', (1, 1), (1, -1), FONT_REGULAR),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ]))
+        score_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f0f0f0")),
+                    ("BACKGROUND", (1, 0), (1, 0), rec_color),
+                    ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                    ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                    ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                    ("ALIGN", (1, 0), (1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (0, -1), FONT_BOLD),
+                    ("FONTNAME", (1, 0), (1, 0), FONT_BOLD),
+                    ("FONTNAME", (1, 1), (1, -1), FONT_REGULAR),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ]
+            )
+        )
         story.append(score_table)
         story.append(Spacer(1, 0.3 * inch))
 
@@ -206,12 +198,12 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
     for idx, q in enumerate(report.questions, 1):
         # Question header
         q_header_style = ParagraphStyle(
-            'QuestionHeader',
-            parent=styles['Heading3'],
+            "QuestionHeader",
+            parent=styles["Heading3"],
             fontName=FONT_BOLD,
             fontSize=12,
-            textColor=colors.HexColor('#0066cc'),
-            spaceAfter=6
+            textColor=colors.HexColor("#0066cc"),
+            spaceAfter=6,
         )
         story.append(Paragraph(f"Question {idx}", q_header_style))
 
@@ -222,35 +214,38 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
 
         # Scores table
         q_scores_data = [
-            ['Communication', 'Relevance', 'Logical Thinking', 'Average', 'Pass'],
+            ["Communication", "Relevance", "Logical Thinking", "Average", "Pass"],
             [
                 f"{q.communication_score}/10",
                 f"{q.relevance_score}/10",
                 f"{q.logical_thinking_score}/10",
                 f"{q.average_score}/10",
-                "PASS" if q.pass_prediction else "FAIL"
-            ]
+                "PASS" if q.pass_prediction else "FAIL",
+            ],
         ]
 
         q_scores_table = Table(q_scores_data, colWidths=[1.1 * inch] * 5)
-        q_scores_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4a90e2')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), FONT_BOLD),
-            ('FONTNAME', (0, 1), (-1, 1), FONT_REGULAR),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            (
-                'BACKGROUND',
-                (4, 1),
-                (4, 1),
-                colors.lightgreen if q.pass_prediction
-                else colors.lightcoral
-            ),
-        ]))
+        q_scores_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4a90e2")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                    ("FONTNAME", (0, 1), (-1, 1), FONT_REGULAR),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    (
+                        "BACKGROUND",
+                        (4, 1),
+                        (4, 1),
+                        colors.lightgreen if q.pass_prediction else colors.lightcoral,
+                    ),
+                ]
+            )
+        )
         story.append(q_scores_table)
         story.append(Spacer(1, 0.1 * inch))
 
@@ -258,12 +253,12 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
         if q.transcript:
             story.append(Paragraph("<b>Answer:</b>", normal_style))
             transcript_style = ParagraphStyle(
-                'Transcript',
-                parent=styles['Normal'],
+                "Transcript",
+                parent=styles["Normal"],
                 fontName=FONT_REGULAR,
                 fontSize=9,
                 leftIndent=20,
-                textColor=colors.HexColor('#555555')
+                textColor=colors.HexColor("#555555"),
             )
             story.append(Paragraph(q.transcript, transcript_style))
             story.append(Spacer(1, 0.1 * inch))
@@ -272,21 +267,14 @@ def generate_pdf_report(report: InterviewReportResponse) -> bytes:
         if q.feedback:
             feedback = q.feedback
             if isinstance(feedback, dict):
-                if 'strengths' in feedback and feedback['strengths']:
-                    strengths_text = (
-                        f"<b>Strengths:</b> {feedback['strengths']}"
-                    )
+                if "strengths" in feedback and feedback["strengths"]:
+                    strengths_text = f"<b>Strengths:</b> {feedback['strengths']}"
                     story.append(Paragraph(strengths_text, normal_style))
-                if 'weaknesses' in feedback and feedback['weaknesses']:
-                    weaknesses_text = (
-                        f"<b>Areas for Improvement:</b> "
-                        f"{feedback['weaknesses']}"
-                    )
+                if "weaknesses" in feedback and feedback["weaknesses"]:
+                    weaknesses_text = f"<b>Areas for Improvement:</b> {feedback['weaknesses']}"
                     story.append(Paragraph(weaknesses_text, normal_style))
-                if 'summary' in feedback and feedback['summary']:
-                    summary_text = (
-                        f"<b>Summary:</b> {feedback['summary']}"
-                    )
+                if "summary" in feedback and feedback["summary"]:
+                    summary_text = f"<b>Summary:</b> {feedback['summary']}"
                     story.append(Paragraph(summary_text, normal_style))
 
         story.append(Spacer(1, 0.2 * inch))
