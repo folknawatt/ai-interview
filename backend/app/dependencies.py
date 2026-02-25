@@ -1,20 +1,21 @@
-"""
-FastAPI dependency injection utilities.
+"""FastAPI dependency injection utilities.
 
 Provides reusable dependencies for:
 - Settings access
 - API key validation
 - Common configurations
 """
+
 from functools import lru_cache
+
 from fastapi import Depends, HTTPException
+
 from app.config.settings import Settings, settings
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
-    """
-    Get cached application settings instance.
+    """Get cached application settings instance.
 
     Returns singleton to avoid repeated environment parsing (FastAPI best practice).
     """
@@ -22,8 +23,7 @@ def get_settings() -> Settings:
 
 
 def get_api_key(app_settings: Settings = Depends(get_settings)) -> str:
-    """
-    Get validated Google API key from settings.
+    """Get validated Google API key from settings.
 
     This dependency ensures the API key is configured before processing requests
     that require Gemini AI access (e.g., candidate evaluation, question generation).
@@ -42,7 +42,15 @@ def get_api_key(app_settings: Settings = Depends(get_settings)) -> str:
     # Validate API key is present before allowing AI operations
     if not app_settings.google_api_key:
         raise HTTPException(
-            status_code=500,
-            detail="Google API key not configured"
-        )
+            status_code=500, detail="Google API key not configured")
     return app_settings.google_api_key
+
+
+def get_candidate_repo(session=Depends(get_db)):
+    from app.repositories.candidate_repository import CandidateRepository
+    return CandidateRepository(session)
+
+
+def get_interview_repo(session=Depends(get_db)):
+    from app.repositories.interview_repository import InterviewRepository
+    return InterviewRepository(session)

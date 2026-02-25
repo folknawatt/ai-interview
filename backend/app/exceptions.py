@@ -1,12 +1,10 @@
-"""
-Centralized exception handling for AI Interview system.
+"""Centralized exception handling for AI Interview system.
 
 This module provides:
 - Custom exception classes with built-in HTTP status codes
 - Automatic exception-to-HTTP-status mapping
 - Clean separation of business logic from error handling
 """
-from typing import Optional
 
 from app.config.logging_config import get_logger
 
@@ -14,8 +12,7 @@ logger = get_logger(__name__)
 
 
 class AppException(Exception):
-    """
-    Base application exception with HTTP status code.
+    """Base application exception with HTTP status code.
 
     All custom exceptions should inherit from this class.
     The global exception handler in main.py will automatically
@@ -25,7 +22,7 @@ class AppException(Exception):
     status_code: int = 500
     default_detail: str = "Internal server error"
 
-    def __init__(self, detail: Optional[str] = None):
+    def __init__(self, detail: str | None = None):
         self.detail = detail or self.default_detail
         super().__init__(self.detail)
 
@@ -115,8 +112,7 @@ EXCEPTION_MAP = {
 
 
 def convert_exception(exc: Exception) -> AppException:
-    """
-    Convert standard Python exceptions to AppException.
+    """Convert standard Python exceptions to AppException.
 
     Args:
         exc: The original exception
