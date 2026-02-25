@@ -1,5 +1,7 @@
 <template>
-  <div class="w-full max-w-4xl bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border shadow-glass animate-fade-in-up">
+  <div
+    class="w-full max-w-4xl bg-interview-surface backdrop-blur-xl p-6 rounded-2xl border border-interview-surface-border shadow-glass animate-fade-in-up"
+  >
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-semibold text-interview-text-primary flex items-center gap-2">
         <VideoCameraIcon class="w-7 h-7 text-interview-primary" />
@@ -16,23 +18,23 @@
     <div
       class="relative aspect-video bg-black rounded-xl overflow-hidden mb-6 border border-interview-surface-border"
     >
-      <video
-        ref="videoRef"
-        autoplay
-        muted
-        playsinline
-        class="w-full h-full object-cover"
-      ></video>
+      <video ref="videoRef" autoplay muted playsinline class="w-full h-full object-cover"></video>
 
       <div
         v-if="!isRecording && !recordedBlob"
-        class="absolute inset-0 flex items-center justify-center bg-black/60"
+        class="absolute inset-0 flex flex-col items-center justify-center bg-black/60"
       >
-        <p class="text-interview-text-muted">กดปุ่ม "เริ่มอัดวิดีโอ" เมื่อพร้อม</p>
+        <div v-if="countdown > 0" class="text-6xl font-bold font-mono text-white animate-pulse mb-4">
+          {{ countdown }}
+        </div>
+        <p class="text-interview-text-muted">วิดีโอจะเริ่มบันทึกอัตโนมัติ</p>
       </div>
 
       <!-- Recording indicator -->
-      <div v-if="isRecording" class="absolute top-4 left-4 flex items-center gap-2 bg-red-500/90 px-3 py-1.5 rounded-full">
+      <div
+        v-if="isRecording"
+        class="absolute top-4 left-4 flex items-center gap-2 bg-red-500/90 px-3 py-1.5 rounded-full"
+      >
         <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
         <span class="text-sm font-medium text-white">REC</span>
       </div>
@@ -41,11 +43,13 @@
     <div class="flex justify-center space-x-4">
       <button
         v-if="!isRecording && !recordedBlob"
-        @click="$emit('start')"
+        @click="startNow"
         class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-bg bg-interview-primary rounded-xl hover:bg-interview-primary-hover focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 shadow-glow-amber hover:shadow-glow-amber-lg group"
       >
-        <VideoCameraIcon class="w-6 h-6 mr-2 transition-transform duration-300 group-hover:scale-110" />
-        เริ่มอัดวิดีโอ
+        <VideoCameraIcon
+          class="w-6 h-6 mr-2 transition-transform duration-300 group-hover:scale-110"
+        />
+        เริ่มอัดเดี๋ยวนี้
       </button>
 
       <button
@@ -63,9 +67,9 @@
         :disabled="isSubmitting"
         class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-bg bg-interview-primary rounded-xl hover:bg-interview-primary-hover focus:outline-none focus:ring-2 focus:ring-interview-primary focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-amber hover:shadow-glow-amber-lg group"
       >
-        <PaperAirplaneIcon 
-          v-if="!isSubmitting" 
-          class="w-6 h-6 mr-2 -rotate-45 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" 
+        <PaperAirplaneIcon
+          v-if="!isSubmitting"
+          class="w-6 h-6 mr-2 -rotate-45 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
         />
         <svg v-else class="animate-spin w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24">
           <circle
@@ -90,7 +94,9 @@
         @click="$emit('reset')"
         class="inline-flex items-center px-6 py-3 text-lg font-semibold text-interview-text-secondary border-2 border-interview-surface-border rounded-xl hover:bg-interview-surface-hover hover:text-interview-text-primary focus:outline-none focus:ring-2 focus:ring-interview-surface-border focus:ring-offset-2 focus:ring-offset-interview-bg transition-all duration-300 group"
       >
-        <ArrowPathIcon class="w-5 h-5 mr-2 transition-transform duration-500 group-hover:rotate-180" />
+        <ArrowPathIcon
+          class="w-5 h-5 mr-2 transition-transform duration-500 group-hover:rotate-180"
+        />
         อัดใหม่
       </button>
     </div>
@@ -105,9 +111,15 @@
 </template>
 
 <script setup lang="ts">
-import { VideoCameraIcon, StopIcon, PaperAirplaneIcon, ArrowPathIcon } from '@heroicons/vue/24/solid'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import {
+  VideoCameraIcon,
+  StopIcon,
+  PaperAirplaneIcon,
+  ArrowPathIcon,
+} from '@heroicons/vue/24/solid'
 
-defineProps<{
+const props = defineProps<{
   isRecording: boolean
   isSubmitting: boolean
   recordedBlob: Blob | null
@@ -119,8 +131,55 @@ defineProps<{
 const videoRef = ref<HTMLVideoElement | null>(null)
 
 defineExpose({
-  videoRef
+  videoRef,
 })
 
-defineEmits(['start', 'stop', 'submit', 'reset'])
+const emit = defineEmits(['start', 'stop', 'submit', 'reset'])
+
+// Auto-start countdown logic
+const countdown = ref(5)
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+const startCountdown = () => {
+  countdown.value = 5
+  if (countdownInterval) clearInterval(countdownInterval)
+  
+  countdownInterval = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearCountdown()
+      emit('start')
+    }
+  }, 1000)
+}
+
+const clearCountdown = () => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+    countdownInterval = null
+  }
+}
+
+const startNow = () => {
+  clearCountdown()
+  emit('start')
+}
+
+onMounted(() => {
+  if (!props.isRecording && !props.recordedBlob) {
+    startCountdown()
+  }
+})
+
+watch(() => [props.isRecording, props.recordedBlob], ([rec, blob]) => {
+  if (!rec && !blob) {
+    startCountdown()
+  } else {
+    clearCountdown()
+  }
+})
+
+onUnmounted(() => {
+  clearCountdown()
+})
 </script>
