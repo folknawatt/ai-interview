@@ -67,6 +67,7 @@ export interface ComparisonMetrics {
 export interface ReportSummary {
   sessionId: string
   candidateName: string
+  roleId: string
   roleTitle: string
   totalScore: number
   recommendation: RecommendationType
