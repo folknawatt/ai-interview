@@ -1,19 +1,19 @@
-"""
-SQLModel database configuration for AI Interview system.
+"""SQLModel database configuration for AI Interview system.
 
 This module provides database session management and engine configuration
 for the database used to store interview data persistently.
 """
-import os
-import json
-from sqlmodel import SQLModel, select
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
 
-from app.config.settings import settings
+import json
+import os
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel, select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
 from app.config.logging_config import get_logger
+from app.config.settings import settings
 
 logger = get_logger(__name__)
 
@@ -23,8 +23,7 @@ SQLALCHEMY_DATABASE_URL = settings.database_url
 
 
 def json_serializer(obj):
-    """
-    Custom JSON serializer for SQLAlchemy.
+    """Custom JSON serializer for SQLAlchemy.
 
     Ensures non-ASCII characters (e.g., Thai, Chinese) are preserved correctly
     in JSON columns instead of being escaped as Unicode sequences.
@@ -40,16 +39,12 @@ def json_serializer(obj):
 # - json_serializer: Custom serializer to properly handle non-ASCII text
 # - future=True: Use SQLAlchemy 2.0 style (required for async)
 engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
-    echo=False,
-    json_serializer=json_serializer,
-    future=True
+    SQLALCHEMY_DATABASE_URL, echo=False, json_serializer=json_serializer, future=True
 )
 
 
 async def get_db():
-    """
-    FastAPI dependency to provide async database sessions.
+    """FastAPI dependency to provide async database sessions.
 
     This is a generator function that yields a session and automatically handles:
     - Session creation from the async engine
@@ -66,8 +61,7 @@ async def get_db():
 
 
 async def seed_db(session: AsyncSession):
-    """
-    Seed database with initial roles and questions from JSON file.
+    """Seed database with initial roles and questions from JSON file.
 
     This runs on application startup to populate the database if it's empty.
     Questions are loaded from a JSON file (questions_db.json) which defines
@@ -94,22 +88,18 @@ async def seed_db(session: AsyncSession):
             return
 
         logger.info("Seeding database from %s", json_path)
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
 
         # Iterate through roles and their questions
         for role_id, role_data in data.items():
             # Create job role (e.g., "marketing", "engineer")
-            role = JobRole(
-                id=role_id,
-                title=role_data.get("title", role_id)
-            )
+            role = JobRole(id=role_id, title=role_data.get("title", role_id))
             session.add(role)
 
             # Create questions for this role in order
             for idx, q_text in enumerate(role_data.get("questions", [])):
-                question = Question(
-                    role_id=role_id, content=q_text, order=idx)
+                question = Question(role_id=role_id, content=q_text, order=idx)
                 session.add(question)
 
         # Persist all roles and questions to database
@@ -127,8 +117,7 @@ async def seed_db(session: AsyncSession):
 
 
 async def seed_users(session: AsyncSession):
-    """
-    Seed default admin user for initial system access.
+    """Seed default admin user for initial system access.
 
     Creates or updates the admin user with credentials from environment variables.
     This ensures there's always an admin account available for system setup.
@@ -144,8 +133,7 @@ async def seed_users(session: AsyncSession):
 
 
 async def init_db():
-    """
-    Initialize database schema on application startup.
+    """Initialize database schema on application startup.
 
     This function:
     1. Creates all tables defined in SQLModel models
@@ -161,5 +149,5 @@ async def init_db():
 
     # Seed initial data using a new session
     async with AsyncSession(engine, expire_on_commit=False) as session:
-        await seed_db(session)       # Seed roles and questions
-        await seed_users(session)    # Seed default admin user
+        await seed_db(session)  # Seed roles and questions
+        await seed_users(session)  # Seed default admin user
