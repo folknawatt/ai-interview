@@ -5,14 +5,14 @@
     >
       <!-- Header -->
       <div
-        class="bg-interview-surface-border/50 px-8 py-6 border-b border-interview-surface-border flex justify-between items-center"
+        class="bg-interview-surface/40 px-8 py-6 border-b border-interview-surface-border flex justify-between items-center"
       >
         <h1 class="text-2xl font-bold flex items-center gap-3">
           <span class="text-interview-primary">AI</span> Interview Privacy Policy
         </h1>
         <NuxtLink
           to="/login"
-          class="text-interview-text-secondary hover:text-interview-primary transition-colors text-sm font-medium"
+          class="text-interview-text-primary hover:text-interview-primary/80 transition-colors text-sm font-medium"
         >
           &larr; กลับสู่หน้าล็อคอิน
         </NuxtLink>

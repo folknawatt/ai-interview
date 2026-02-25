@@ -94,7 +94,7 @@
           <span v-else>{{ $t('hr.login.loginButton') }}</span>
         </button>
 
-        <div class="text-center text-xs text-interview-text-muted mt-4">Default: admin / admin</div>
+
       </form>
     </div>
 
@@ -124,12 +124,19 @@ const hrLoading = ref(false)
 
 const handleSubmitHR = async () => {
   hrError.value = ''
+
+  // Client-side validation before hitting the API
+  if (!hrUsername.value.trim() || !hrPassword.value.trim()) {
+    hrError.value = $t('hr.login.errorInvalidCredentials')
+    return
+  }
+
   hrLoading.value = true
 
   try {
     // Create form data for OAuth2 password flow
     const formData = new URLSearchParams()
-    formData.append('username', hrUsername.value)
+    formData.append('username', hrUsername.value.trim())
     formData.append('password', hrPassword.value)
 
     const config = useRuntimeConfig()

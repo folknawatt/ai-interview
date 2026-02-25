@@ -310,12 +310,8 @@ const handleUploadAndStart = async () => {
     };
     
     // Set role (this triggers a client session ID generation)
+    // Note: uploadResume() already sets sessionId internally, no need to set again
     setSelectedRole(baseRole);
-
-    // 3. Update Session ID from Server
-    if (result.session_id) {
-        sessionId.value = result.session_id;
-    }
     
     router.push('/question');
     

@@ -21,17 +21,17 @@
         <span
           class="bg-interview-primary/10 text-interview-primary text-xs font-medium px-3 py-1.5 rounded-full border border-interview-primary/30"
         >
-          {{ $t('question.title', { current: currentQuestionIndex + 1, total: totalQuestions }) }}
+          {{ $t('question.title', { current: currentQuestionIndex + 1, total: totalQuestions ?? '...' }) }}
         </span>
         <!-- Progress Bar -->
         <div class="w-full max-w-xs h-2 bg-interview-surface-border rounded-full overflow-hidden">
           <div
             class="h-full bg-interview-primary transition-all duration-500 ease-out"
-            :style="{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }"
+            :style="{ width: totalQuestions ? `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` : '0%' }"
             role="progressbar"
             :aria-valuenow="currentQuestionIndex + 1"
             :aria-valuemin="1"
-            :aria-valuemax="totalQuestions"
+            :aria-valuemax="totalQuestions ?? 0"
           ></div>
         </div>
       </div>
@@ -138,7 +138,7 @@ const {
 const router = useRouter()
 
 const timeLeft = ref(30)
-const totalQuestions = ref(5) // Default value, will be updated from API response
+const totalQuestions = ref<number | null>(null) // Set from API response
 const showAudioNotification = ref(false) // Show notification when autoplay blocked
 let timer: ReturnType<typeof setInterval>
 

@@ -28,7 +28,7 @@
         <h1 id="result-title" class="text-3xl font-bold text-interview-text-primary mb-2">
           {{ $t('result.title') }}
         </h1>
-        <p class="text-lg text-interview-text-secondary">Interview Completed</p>
+        <p class="text-lg text-interview-text-secondary">{{ $t('result.subtitle') }}</p>
       </div>
 
       <!-- Thank You Message -->
@@ -39,7 +39,7 @@
       >
         <p class="text-xl text-interview-text-primary mb-4">{{ $t('result.thankYou') }}</p>
         <p class="text-interview-text-secondary">{{ $t('result.message') }}</p>
-      <p class="text-interview-text-secondary mt-2">{{ $t('result.followUp') }}</p>
+        <p class="text-interview-text-secondary mt-2">{{ $t('result.followUp') }}</p>
       </div>
 
       <!-- Action Button -->

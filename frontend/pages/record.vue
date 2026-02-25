@@ -6,7 +6,9 @@
     <div class="fixed inset-0 z-0 bg-interview-bg">
       <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-interview-bg to-black"></div>
       <div class="absolute top-1/4 -left-32 w-96 h-96 bg-red-500/10 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"></div>
+      <div
+        class="absolute bottom-1/4 -right-32 w-96 h-96 bg-interview-primary/10 rounded-full blur-3xl"
+      ></div>
     </div>
 
     <Recorder
@@ -31,7 +33,7 @@ import Recorder from '../components/interview/Recorder.vue'
 import { useMediaRecorder } from '../composables/useMediaRecorder'
 
 definePageMeta({
-  layout: 'blank'
+  layout: 'blank',
 })
 
 const {
@@ -47,17 +49,17 @@ const router = useRouter()
 
 // Use the composable for recording logic
 const {
-    videoPreview,
-    recordedBlob,
-    isRecording,
-    timer,
-    error: recorderError,
-    formatTime,
-    startCamera,
-    stopCamera,
-    startRecording,
-    stopRecording,
-    resetRecording: resetRecorder
+  videoPreview,
+  recordedBlob,
+  isRecording,
+  timer,
+  error: recorderError,
+  formatTime,
+  startCamera,
+  stopCamera,
+  startRecording,
+  stopRecording,
+  resetRecording: resetRecorder,
 } = useMediaRecorder()
 
 const isSubmitting = ref(false)
@@ -65,24 +67,21 @@ const error = ref<string | null>(null)
 const recorderRef = ref<any>(null)
 
 // Sync recorder error to local error, but allow overwriting
-watch(recorderError, (val) => {
-    if (val) error.value = val
+watch(recorderError, val => {
+  if (val) error.value = val
 })
 
-// Sync video ref when component is mounted
+// Sync video ref when component is mounted, then start camera once
 onMounted(() => {
-    startCamera().then(() => {
-         if (recorderRef.value && recorderRef.value.videoRef) {
-             videoPreview.value = recorderRef.value.videoRef
-             // We need to set srcObject again because the element was just mounted
-             startCamera() 
-         }
-    })
+  if (recorderRef.value?.videoRef) {
+    videoPreview.value = recorderRef.value.videoRef
+  }
+  startCamera()
 })
 
 const resetRecording = () => {
-    resetRecorder()
-    error.value = null
+  resetRecorder()
+  error.value = null
 }
 
 const submitRecording = async () => {
@@ -101,7 +100,7 @@ const submitRecording = async () => {
     // Check if there are more questions (skip TTS to avoid playing audio before navigation)
     if (selectedRole.value) {
       const nextIndex = currentQuestionIndex.value + 1
-      const nextQ = await getQuestion(selectedRole.value.id, nextIndex, true)  // skipTts = true
+      const nextQ = await getQuestion(selectedRole.value.id, nextIndex, true) // skipTts = true
 
       if (nextQ.status === 'continue') {
         // More questions available - go to next question
@@ -110,8 +109,8 @@ const submitRecording = async () => {
         // All questions completed - mark interview as complete
         try {
           await completeInterview()
-        } catch (error) {
-          console.error('Failed to complete interview:', error)
+        } catch (completionError) {
+          console.error('Failed to complete interview:', completionError)
           // Proceed to result page anyway
         }
         router.push('/result')

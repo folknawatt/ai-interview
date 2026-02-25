@@ -24,7 +24,7 @@
 
     <!-- Login Card -->
     <div
-      class="relative w-full max-w-md bg-interview-surface backdrop-blur-2xl p-10 rounded-3xl border border-white/5 shadow-glass animate-fade-in-up z-10"
+      class="relative w-full max-w-md bg-white/5 backdrop-blur-2xl p-10 rounded-3xl border border-white/5 shadow-glass animate-fade-in-up z-10"
       role="form"
       aria-labelledby="login-title"
     >

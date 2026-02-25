@@ -199,7 +199,7 @@
               </div>
 
               <!-- Individual Scores -->
-              <div class="flex flex-wrap gap-4 mb-6">
+              <div v-if="question.transcript" class="flex flex-wrap gap-4 mb-6">
                 <div class="bg-interview-surface px-4 py-3 rounded-xl text-center border border-interview-surface-border">
                   <span class="text-xs text-interview-text-secondary block mb-1">Communication</span>
                   <span class="font-bold text-interview-primary">{{ question.communication_score }}/5</span>
@@ -220,6 +220,14 @@
                 <p class="bg-interview-surface p-4 rounded-xl text-interview-text-primary leading-relaxed border border-interview-surface-border">
                   {{ question.transcript }}
                 </p>
+              </div>
+              <div v-else class="mb-6">
+                <div class="bg-interview-surface/50 p-6 rounded-xl border border-interview-surface-border text-center">
+                  <p class="text-interview-text-muted italic flex items-center justify-center gap-2">
+                    <ExclamationTriangleIcon class="w-5 h-5 opacity-70" />
+                    ผู้สมัครไม่ได้ตอบคำถามข้อนี้ หรือข้ามการตอบคำถาม (No answer provided)
+                  </p>
+                </div>
               </div>
 
               <!-- Feedback -->
@@ -256,6 +264,17 @@
                   </h4>
                   <p class="text-interview-text-primary">{{ question.feedback.summary }}</p>
                 </div>
+
+                <div
+                  v-if="question.feedback.reasoning"
+                  class="p-4 bg-interview-primary/10 border-l-4 border-interview-primary rounded-r-xl"
+                >
+                  <h4 class="flex items-center gap-2 font-bold text-interview-primary mb-1">
+                    <MicrophoneIcon class="w-4 h-4" />
+                    เหตุผลการให้คะแนน (Reasoning):
+                  </h4>
+                  <p class="text-interview-text-primary">{{ question.feedback.reasoning }}</p>
+                </div>
               </div>
             </div>
           </Transition>
@@ -273,7 +292,8 @@ import {
   DocumentTextIcon,
   ArrowLeftIcon,
   ChevronDownIcon,
-  VideoCameraIcon
+  VideoCameraIcon,
+  MicrophoneIcon
 } from '@heroicons/vue/24/solid'
 import ScoreCard from '../../../components/charts/ScoreCard.vue'
 import ScoreRadarChart from '../../../components/charts/ScoreRadarChart.vue'
@@ -302,6 +322,7 @@ interface Question {
     strengths?: string;
     weaknesses?: string;
     summary?: string;
+    reasoning?: string;
   };
 }
 
