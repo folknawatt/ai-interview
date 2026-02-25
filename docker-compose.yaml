@@ -1,82 +1,82 @@
 services:
-  # Backend API Service
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        PYTHON_BASE: 3.11-slim
-    
-    image: ai-interview-backend:latest
-    container_name: ai-interview-backend
-    
-    restart: unless-stopped
-    
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
-    
-    volumes:
-      - ./storage:/app/backend/storage
-      - ./voices:/app/backend/voices
-    
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      PYTHONUNBUFFERED: 1
-    
-    env_file:
-      - .env
-    
-    depends_on:
-      db:
-        condition: service_healthy
-    
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    
-    mem_limit: 1g
-    mem_reservation: 512m
-    
-    networks:
-      - ai-interview-network
+    # Backend API Service
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                PYTHON_BASE: 3.11-slim
 
-  # PostgreSQL Database
-  db:
-    image: postgres:16-alpine
-    container_name: ai-interview-db
-    
-    restart: unless-stopped
-    
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-ai_interview}
-    
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    
-    mem_limit: 512m
-    mem_reservation: 256m
-    
-    networks:
-      - ai-interview-network
+        image: ai-interview-backend:latest
+        container_name: ai-interview-backend
+
+        restart: unless-stopped
+
+        ports:
+            - "${BACKEND_PORT:-8000}:8000"
+
+        volumes:
+            - ./backend/storage:/app/backend/storage
+            - ./backend/voices:/app/backend/voices
+
+        environment:
+            POSTGRES_HOST: db
+            POSTGRES_PORT: 5432
+            PYTHONUNBUFFERED: 1
+
+        env_file:
+            - .env
+
+        depends_on:
+            db:
+                condition: service_healthy
+
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+
+        mem_limit: 1g
+        mem_reservation: 512m
+
+        networks:
+            - ai-interview-network
+
+    # PostgreSQL Database
+    db:
+        image: postgres:16-alpine
+        container_name: ai-interview-db
+
+        restart: unless-stopped
+
+        ports:
+            - "${POSTGRES_PORT:-5432}:5432"
+
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-postgres}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+            POSTGRES_DB: ${POSTGRES_DB:-ai_interview}
+
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+        mem_limit: 512m
+        mem_reservation: 256m
+
+        networks:
+            - ai-interview-network
 
 volumes:
-  postgres_data:
+    postgres_data:
 
 networks:
-  ai-interview-network:
-    driver: bridge
+    ai-interview-network:
+        driver: bridge
