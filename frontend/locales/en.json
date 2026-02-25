@@ -42,6 +42,7 @@
   },
   "result": {
     "title": "Interview Complete",
+    "subtitle": "Interview Completed",
     "thankYou": "Thank you for participating in the interview",
     "message": "Your interview results will be sent to the HR team for review",
     "followUp": "We will contact you within 3-5 business days",
