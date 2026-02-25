@@ -1,20 +1,23 @@
-
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional, Type, TypeVar
+from typing import TypeVar
+
 from google import genai
 from google.genai import types
 from pydantic import BaseModel
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
 from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 
 
 def _gemini_retry(func: Callable) -> Callable:
     """Shared retry decorator for Gemini API calls with exponential backoff."""
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
@@ -22,22 +25,22 @@ def _gemini_retry(func: Callable) -> Callable:
         before_sleep=lambda retry_state: logger.warning(
             "Gemini API call failed, retrying in %s seconds... (attempt %d/3)",
             retry_state.next_action.sleep,
-            retry_state.attempt_number
+            retry_state.attempt_number,
         ),
-        reraise=True
+        reraise=True,
     )
     @wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
+
     return wrapper
 
 
 class GeminiClient:
     """Centralized client for Gemini API interactions."""
 
-    def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize GeminiClient.
+    def __init__(self, api_key: str | None = None):
+        """Initialize GeminiClient.
 
         Args:
             api_key: Optional API key. If not provided, uses settings.google_api_key.
@@ -49,13 +52,9 @@ class GeminiClient:
 
     @_gemini_retry
     def generate_content(
-        self,
-        prompt: str,
-        model: Optional[str] = None,
-        temperature: Optional[float] = None
+        self, prompt: str, model: str | None = None, temperature: float | None = None
     ) -> str:
-        """
-        Generate content using Gemini API.
+        """Generate content using Gemini API.
 
         Args:
             prompt: The input prompt.
@@ -73,9 +72,8 @@ class GeminiClient:
                 model=model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    temperature=temperature,
-                    response_mime_type="application/json"
-                )
+                    temperature=temperature, response_mime_type="application/json"
+                ),
             )
             return response.text
         except Exception as e:
@@ -85,12 +83,11 @@ class GeminiClient:
     def generate_structured(
         self,
         prompt: str,
-        response_schema: Type[T],
-        model: Optional[str] = None,
-        temperature: Optional[float] = None
+        response_schema: type[T],
+        model: str | None = None,
+        temperature: float | None = None,
     ) -> T:
-        """
-        Generate structured content using Gemini API with schema validation.
+        """Generate structured content using Gemini API with schema validation.
 
         Args:
             prompt: The input prompt.
@@ -117,13 +114,12 @@ class GeminiClient:
                     "response_mime_type": "application/json",
                     "response_schema": response_schema,
                     "temperature": temperature,
-                }
+                },
             )
             return response.parsed
         except ValueError as e:
             raise ValueError(f"Failed to parse API response: {str(e)}") from e
         except ConnectionError as e:
-            raise ConnectionError(
-                f"Failed to connect to Gemini API: {str(e)}") from e
+            raise ConnectionError(f"Failed to connect to Gemini API: {str(e)}") from e
         except Exception as e:
             raise RuntimeError(f"Gemini API error: {str(e)}") from e

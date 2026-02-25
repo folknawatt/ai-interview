@@ -5,25 +5,23 @@ This module provides core functionality for audio processing tasks including:
 - Audio extraction from video files using ffmpeg
 - Splitting audio files into overlapping chunks for processing
 """
+
 import math
 import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Optional
 
 from typhoon_asr import transcribe
 
 from app.config.logging_config import get_logger
 from app.exceptions import TranscriptionError
 
-
 logger = get_logger(__name__)
 
 
 def transcribe_audio(audio_path: str) -> str:
-    """
-    Transcribes audio using the Typhoon ASR model.
+    """Transcribes audio using the Typhoon ASR model.
 
     Args:
         audio_path (str): Path to the audio file.
@@ -42,8 +40,7 @@ def transcribe_audio(audio_path: str) -> str:
 
     try:
         result_no_timestamps = transcribe(
-            audio_path, with_timestamps=False, device="auto"
-        )
+            audio_path, with_timestamps=False, device="auto")
 
         # Extract text from typhoon_asr result
         # The library can return different formats depending on version/settings
@@ -56,10 +53,10 @@ def transcribe_audio(audio_path: str) -> str:
                     if isinstance(first_item, str):
                         # List of strings - join them
                         text = " ".join(result_no_timestamps)
-                    elif hasattr(first_item, 'text'):
+                    elif hasattr(first_item, "text"):
                         # List of objects with .text attribute
                         text = " ".join(
-                            item.text if hasattr(item, 'text') else str(item)
+                            item.text if hasattr(item, "text") else str(item)
                             for item in result_no_timestamps
                         )
                     else:
@@ -71,7 +68,7 @@ def transcribe_audio(audio_path: str) -> str:
             elif isinstance(result_no_timestamps, dict):
                 # Handle dict format
                 text_value = result_no_timestamps.get("text", "")
-                if hasattr(text_value, 'text'):
+                if hasattr(text_value, "text"):
                     text = text_value.text
                 else:
                     text = str(text_value) if text_value else ""
@@ -80,19 +77,17 @@ def transcribe_audio(audio_path: str) -> str:
                 text = result_no_timestamps
             else:
                 # Fallback: try to get text attribute or convert to string
-                if hasattr(result_no_timestamps, 'text'):
+                if hasattr(result_no_timestamps, "text"):
                     text = result_no_timestamps.text
                 else:
                     text = str(result_no_timestamps)
         except (AttributeError, KeyError, TypeError, IndexError) as e:
             logger.error(
-                "Error accessing transcription result structure: %s", e
-            )
+                "Error accessing transcription result structure: %s", e)
             logger.error("Result type: %s", type(result_no_timestamps))
             logger.error("Result value: %s", result_no_timestamps)
             raise TranscriptionError(
-                f"Failed to extract text from transcription result: "
-                f"{str(e)}"
+                f"Failed to extract text from transcription result: {str(e)}"
             ) from e
 
         if not text or not text.strip():
@@ -116,12 +111,8 @@ def transcribe_audio(audio_path: str) -> str:
         raise TranscriptionError(f"Transcription failed: {str(e)}") from e
 
 
-def extract_audio(
-    video_path: str,
-    output_audio_path: Optional[str] = None
-) -> str:
-    """
-    Extracts audio from a video file using ffmpeg.
+def extract_audio(video_path: str, output_audio_path: str | None = None) -> str:
+    """Extracts audio from a video file using ffmpeg.
 
     Args:
         video_path (str): Path to the input video file.
@@ -149,20 +140,18 @@ def extract_audio(
     command = [
         "ffmpeg",
         "-y",  # Overwrite output file without asking
-        "-i", video_path,
+        "-i",
+        video_path,
         "-vn",  # Disable video recording
-        "-acodec", "libmp3lame",  # Force mp3 encoding
-        "-q:a", "2",  # Good quality
-        output_audio_path
+        "-acodec",
+        "libmp3lame",  # Force mp3 encoding
+        "-q:a",
+        "2",  # Good quality
+        output_audio_path,
     ]
 
     try:
-        subprocess.run(
-            command,
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        subprocess.run(command, check=True, capture_output=True, text=True)  # noqa: S603, S607
         logger.info("Audio extraction successful.")
     except subprocess.CalledProcessError as e:
         logger.error("ffmpeg failed: %s", e.stderr)
@@ -171,8 +160,7 @@ def extract_audio(
     except FileNotFoundError as exc:
         logger.error("ffmpeg not found. Please install ffmpeg.")
         raise RuntimeError(
-            "ffmpeg not found. Please ensure ffmpeg is installed and "
-            "in your PATH."
+            "ffmpeg not found. Please ensure ffmpeg is installed and in your PATH."
         ) from exc
 
     return output_audio_path
@@ -180,9 +168,9 @@ def extract_audio(
 
 # ---------------Audio splitting---------------
 
+
 def get_audio_duration(path: str) -> float:
-    """
-    Get the duration of an audio file in seconds.
+    """Get the duration of an audio file in seconds.
 
     Args:
         path: Path to the audio file.
@@ -210,7 +198,7 @@ def get_audio_duration(path: str) -> float:
             capture_output=True,
             text=True,
             check=True,
-        )
+        )  # noqa: S603, S607
         duration = float(result.stdout.strip())
         logger.info("Audio duration: %s seconds", duration)
         return duration
@@ -219,28 +207,19 @@ def get_audio_duration(path: str) -> float:
         raise
 
 
-def run_ffmpeg_split(cmd: List[str], chunk_index: int):
+def run_ffmpeg_split(cmd: list[str], chunk_index: int):
     """Helper function to execute FFmpeg command."""
     try:
-        subprocess.run(
-            cmd,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603, S607
     except subprocess.CalledProcessError as e:
         logger.error("Failed to create chunk %d: %s", chunk_index, e)
         raise
 
 
 def split_audio_with_overlap(
-    input_path: str,
-    output_dir: str,
-    chunk_len: int = 3600,
-    overlap_len: Optional[float] = None
-) -> List[str]:
-    """
-    Split audio file into overlapping chunks using FFmpeg.
+    input_path: str, output_dir: str, chunk_len: int = 3600, overlap_len: float | None = None
+) -> list[str]:
+    """Split audio file into overlapping chunks using FFmpeg.
 
     This function divides a long audio file into smaller chunks with overlap
     to ensure continuity in transcription. The overlap prevents words from
@@ -259,7 +238,6 @@ def split_audio_with_overlap(
         ValueError: If overlap is too large relative to chunk duration.
         subprocess.CalledProcessError: If FFmpeg fails.
     """
-
     if overlap_len is None:
         overlap_len = chunk_len * 0.05
 
@@ -287,11 +265,10 @@ def split_audio_with_overlap(
 
     logger.info("📂 Total audio duration: %s seconds", total_duration)
     logger.info(
-        "🔪 Splitting into %d chunks of %s seconds "
-        "with %s seconds overlap",
+        "🔪 Splitting into %d chunks of %s seconds with %s seconds overlap",
         num_chunks,
         chunk_len,
-        overlap_len
+        overlap_len,
     )
 
     # Extract base filename and extension
@@ -312,25 +289,25 @@ def split_audio_with_overlap(
 
         # Generate output path
         output_path = os.path.join(
-            output_dir, f"{file_name_base}_overlap_{i:03d}{ext}"
-        )
+            output_dir, f"{file_name_base}_overlap_{i:03d}{ext}")
         chunk_files.append(output_path)
 
-        logger.info(
-            "   [Chunk %03d] Start: %s, Duration: %s",
-            i,
-            start_time,
-            segment_duration
-        )
+        logger.info("   [Chunk %03d] Start: %s, Duration: %s",
+                    i, start_time, segment_duration)
 
         # Build FFmpeg command
         cmd = [
-            "ffmpeg", "-y",
-            "-ss", str(start_time),
-            "-t", str(segment_duration),
-            "-i", input_path,
-            "-c", "copy",
-            output_path
+            "ffmpeg",
+            "-y",
+            "-ss",
+            str(start_time),
+            "-t",
+            str(segment_duration),
+            "-i",
+            input_path,
+            "-c",
+            "copy",
+            output_path,
         ]
 
         # Execute FFmpeg
