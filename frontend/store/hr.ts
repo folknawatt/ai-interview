@@ -34,7 +34,7 @@ export const useHRStore = defineStore('hr', {
       let filtered = state.reports
 
       if (state.filter.roleId) {
-        filtered = filtered.filter(r => r.roleTitle === state.filter.roleId)
+        filtered = filtered.filter(r => r.roleId === state.filter.roleId)
       }
 
       if (state.filter.dateFrom) {
