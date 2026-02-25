@@ -1,10 +1,9 @@
-"""
-Repositories package.
-"""
-from .question_repository import QuestionRepository, get_question_repository
-from .interview_repository import InterviewRepository
-from .candidate_repository import CandidateRepository
+"""Repositories package."""
+
 from .base import BaseRepository
+from .candidate_repository import CandidateRepository
+from .interview_repository import InterviewRepository
+from .question_repository import QuestionRepository, get_question_repository
 
 __all__ = [
     "BaseRepository",
