@@ -215,7 +215,7 @@ export const useInterview = () => {
         message: string
         session_id: string
         recommendation: string
-        total_score: number
+        average_score: number
       }>(`/interview/complete/${sessionId.value}`)
       return response
     } catch (error) {

@@ -9,7 +9,6 @@ import { getErrorMessage } from '@/types/errors'
 export const useApi = () => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBaseUrl || 'http://localhost:8000'
-  const authStore = useAuth()
 
   /**
    * Centralized error handling helper
@@ -68,6 +67,7 @@ export const useApi = () => {
       return await $fetch<T>(`${apiBase}${endpoint}`, {
         method: 'POST',
         body: formData,
+        credentials: 'include', // Required for cross-origin cookies (same as apiCall)
         // Content-Type is handled automatically by browser for FormData
       })
     } catch (error: unknown) {

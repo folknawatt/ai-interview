@@ -56,6 +56,7 @@ export const useMediaRecorder = () => {
     recorder.start()
     mediaRecorder.value = recorder
     isRecording.value = true
+    timer.value = 120 // Always reset before counting down
 
     // Reset timer or set it to initial value if needed, 
     // but usually we count down from 120 so we just ensure it's running
@@ -78,6 +79,7 @@ export const useMediaRecorder = () => {
     recordedBlob.value = null
     recordedChunks.value = []
     timer.value = 120
+    stopCamera() // Stop existing stream before starting a new one to prevent device/memory leak
     startCamera()
   }
 
