@@ -11,6 +11,7 @@ from functools import lru_cache
 from fastapi import Depends, HTTPException
 
 from app.config.settings import Settings, settings
+from app.database.db import get_db
 
 
 @lru_cache
