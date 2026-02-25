@@ -1,11 +1,18 @@
-"""
-Pydantic schemas package.
+"""Pydantic schemas package.
 
 This package contains schemas organized by feature:
 - hr.py: Schemas for HR endpoints
 - interview.py: Schemas for interview endpoints
 - common.py: Shared schemas
 """
+
+from .common import (
+    AggregatedScoreResponse,
+    CandidateInfo,
+    InterviewReportResponse,
+    QuestionResultResponse,
+    ReportListItem,
+)
 from .hr import JDInput, SaveQuestionsRequest, UpdateQuestionsRequest
 from .interview import (
     AnalysisRequest,
@@ -13,13 +20,6 @@ from .interview import (
     InterviewEvaluationResponse,
     Scores,
     TTSRequest,
-)
-from .common import (
-    AggregatedScoreResponse,
-    CandidateInfo,
-    InterviewReportResponse,
-    QuestionResultResponse,
-    ReportListItem,
 )
 
 __all__ = [

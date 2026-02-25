@@ -1,5 +1,4 @@
-"""
-# pylint: disable=too-few-public-methods
+"""# pylint: disable=too-few-public-methods
 Common/shared Pydantic schemas.
 
 Shared schemas used across multiple endpoints:
@@ -8,7 +7,7 @@ Shared schemas used across multiple endpoints:
 - Aggregated scores
 - Reports
 """
-from typing import List
+
 from pydantic import BaseModel
 
 
@@ -71,7 +70,7 @@ class InterviewReportResponse(BaseModel):
     """Complete interview report with candidate, questions, and aggregated score."""
 
     candidate: CandidateInfo
-    questions: List[QuestionResultResponse]
+    questions: list[QuestionResultResponse]
     aggregated_score: AggregatedScoreResponse | None
 
 
@@ -83,4 +82,7 @@ class ReportListItem(BaseModel):
     role_id: str
     interview_date: str
     average_score: float | None
+    communication_avg: float | None = None
+    relevance_avg: float | None = None
+    logical_thinking_avg: float | None = None
     overall_recommendation: str | None
