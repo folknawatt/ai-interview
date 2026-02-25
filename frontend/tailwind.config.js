@@ -27,16 +27,16 @@ export default {
           },
           // Card surfaces (glassmorphism)
           surface: {
-            DEFAULT: 'rgba(255, 255, 255, 0.05)',  // Glass effect
-            hover: 'rgba(255, 255, 255, 0.08)',    // Hover state
-            border: 'rgba(255, 255, 255, 0.05)',    // Subtle border
+            DEFAULT: 'rgb(255 255 255 / 0.05)',
+            hover: 'rgb(255 255 255 / 0.08)',
+            border: 'rgb(255 255 255 / 0.05)',
           },
           // Primary accent - Amber/Orange (InterviewPro signature color)
           primary: {
             DEFAULT: '#FFC428',     // Main amber from palette
             hover: '#E5B024',       // Darker amber for hover
             light: '#FFD93D',       // Light amber for highlights
-            glow: 'rgba(255, 196, 40, 0.3)',  // Glow effect
+            glow: ({ opacityValue }) => opacityValue !== undefined ? `rgba(255, 196, 40, ${opacityValue})` : 'rgba(255, 196, 40, 0.3)',  // Glow effect
           },
           // Text colors
           text: {

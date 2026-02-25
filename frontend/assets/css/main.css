@@ -9,13 +9,14 @@ body {
 .page-enter-active,
 .page-leave-active {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .page-enter-from {
   opacity: 0;
   transform: translateY(20px) scale(0.98);
-  filter: blur(4px);
 }
 
 .page-leave-to {
@@ -27,13 +28,14 @@ body {
 .layout-enter-active,
 .layout-leave-active {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .layout-enter-from,
 .layout-leave-to {
   opacity: 0;
-  filter: blur(8px);
   transform: scale(0.98);
 }
 
@@ -74,6 +76,40 @@ body {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Interview Surface Color Utilities - bypasses Tailwind's --tw-bg-opacity issue */
+.bg-interview-surface {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+.bg-interview-surface\/30 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+.bg-interview-surface\/40 {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+.bg-interview-surface\/50 {
+  background-color: rgba(255, 255, 255, 0.025) !important;
+}
+.bg-interview-surface\/60 {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+.bg-interview-surface\/90 {
+  background-color: rgba(255, 255, 255, 0.09) !important;
+}
+.hover\:bg-interview-surface:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+.bg-interview-surface-hover,
+.hover\:bg-interview-surface-hover:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.bg-interview-surface-border,
+.border-interview-surface-border {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+.bg-interview-surface-border {
+  background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Custom Scrollbar - Global */
