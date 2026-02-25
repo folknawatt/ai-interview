@@ -1,11 +1,12 @@
-"""
-Mappers for converting between Domain models, ORM models, and Dictionaries.
+"""Mappers for converting between Domain models, ORM models, and Dictionaries.
 
 This module provides the InterviewMapper class which handles the transformation
 of data structures used throughout the application, ensuring separation of concerns
 between the data layer, domain logic, and API responses.
 """
-from typing import Dict, Any
+
+from typing import Any
+
 from app.database.models import QuestionResult
 from app.schemas.interview import InterviewEvaluationResponse
 
@@ -19,7 +20,7 @@ class InterviewMapper:
         question_id: int,  # Note: This is actually question_result_id from Snapshot Pattern
         question: str,
         transcript: str,
-        evaluation: InterviewEvaluationResponse
+        evaluation: InterviewEvaluationResponse,
     ) -> QuestionResult:
         """Convert Schema Evaluation to ORM QuestionResult.
 
@@ -39,13 +40,13 @@ class InterviewMapper:
                 "strengths": evaluation.feedback.strengths,
                 "weaknesses": evaluation.feedback.weaknesses,
                 "summary": evaluation.feedback.summary,
-                "reasoning": getattr(evaluation, 'reasoning', "")
+                "reasoning": getattr(evaluation, "reasoning", ""),
             },
-            pass_prediction=evaluation.pass_prediction
+            pass_prediction=evaluation.pass_prediction,
         )
 
     @staticmethod
-    def to_dict(qr: QuestionResult) -> Dict[str, Any]:
+    def to_dict(qr: QuestionResult) -> dict[str, Any]:
         """Convert ORM QuestionResult to dictionary response format."""
         return {
             "question": qr.question,
@@ -54,9 +55,9 @@ class InterviewMapper:
                 "scores": {
                     "communication": qr.communication_score,
                     "relevance": qr.relevance_score,
-                    "logical_thinking": qr.logical_thinking_score
+                    "logical_thinking": qr.logical_thinking_score,
                 },
                 "feedback": qr.feedback,
-                "pass_prediction": qr.pass_prediction
-            }
+                "pass_prediction": qr.pass_prediction,
+            },
         }

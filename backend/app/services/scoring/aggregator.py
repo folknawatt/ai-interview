@@ -1,21 +1,17 @@
-"""
-Score aggregation logic for AI Interview system.
+"""Score aggregation logic for AI Interview system.
 
 This module provides functions to:
 - Calculate aggregated scores from individual question results
 - Generate overall recommendations based on performance metrics
 """
-from typing import List
 
 from app.database.models import AggregatedScore, QuestionResult
 
 
 def calculate_aggregated_score(
-    all_question_results: List[QuestionResult],
-    expected_total_questions: int
+    all_question_results: list[QuestionResult], expected_total_questions: int
 ) -> AggregatedScore:
-    """
-    Calculate aggregated scores from a list of question results.
+    """Calculate aggregated scores from a list of question results.
 
     Args:
         all_question_results: List of QuestionResult ORM models
@@ -33,13 +29,12 @@ def calculate_aggregated_score(
             pass_rate=0.0,
             overall_recommendation="Fail",
             questions_answered=0,
-            total_questions=expected_total_questions
+            total_questions=expected_total_questions,
         )
 
     # Filter for actually answered questions (e.g. valid score or transcript)
     # We use transcript as the flag for "answered"
-    answered_results = [
-        q for q in all_question_results if q.transcript is not None]
+    answered_results = [q for q in all_question_results if q.transcript is not None]
 
     num_answered = len(answered_results)
 
@@ -53,30 +48,20 @@ def calculate_aggregated_score(
             pass_rate=0.0,
             overall_recommendation="Fail",
             questions_answered=0,
-            total_questions=expected_total_questions
+            total_questions=expected_total_questions,
         )
 
     # Calculate averages based on ANSWERED questions only
-    communication_avg = (
-        sum(q.communication_score for q in answered_results) / num_answered
-    )
-    relevance_avg = (
-        sum(q.relevance_score for q in answered_results) / num_answered
-    )
-    logical_thinking_avg = (
-        sum(q.logical_thinking_score for q in answered_results) / num_answered
-    )
+    communication_avg = sum(q.communication_score for q in answered_results) / num_answered
+    relevance_avg = sum(q.relevance_score for q in answered_results) / num_answered
+    logical_thinking_avg = sum(q.logical_thinking_score for q in answered_results) / num_answered
 
     # Calculate total_score as average of the three category averages
-    avg_score = (
-        communication_avg + relevance_avg + logical_thinking_avg
-    ) / 3
+    avg_score = (communication_avg + relevance_avg + logical_thinking_avg) / 3
 
     # Calculate pass rate
     # Note: pass_prediction implies the question was evaluated
-    passed_questions_count = sum(
-        1 for q in answered_results if q.pass_prediction
-    )
+    passed_questions_count = sum(1 for q in answered_results if q.pass_prediction)
     # Pass rate is usually based on answered questions
     passed_percentage = (passed_questions_count / num_answered) * 100
 
@@ -91,13 +76,12 @@ def calculate_aggregated_score(
         pass_rate=round(passed_percentage, 2),
         overall_recommendation=recommendation,
         questions_answered=num_answered,
-        total_questions=expected_total_questions
+        total_questions=expected_total_questions,
     )
 
 
 def generate_recommendation(avg_score: float, pass_rate: float) -> str:
-    """
-    Generate overall recommendation based on average score AND pass rate.
+    """Generate overall recommendation based on average score AND pass rate.
 
     Args:
         avg_score: Average total score (1-5 scale)
@@ -105,6 +89,12 @@ def generate_recommendation(avg_score: float, pass_rate: float) -> str:
 
     Returns:
         Recommendation string: "Strong Pass", "Pass", "Review", or "Fail"
+
+    Logic:
+        - Strong Pass : score >= 80% AND pass_rate >= 80%
+        - Pass        : score >= 60% AND pass_rate >= 60%
+        - Review      : score >= 40% AND pass_rate >= 20%  (needs attention but shows some merit)
+        - Fail        : anything below (including pass_rate = 0%)
     """
     # Convert 1-5 scale to percentage for comparison
     score_percentage = (avg_score / 5) * 100
@@ -114,8 +104,8 @@ def generate_recommendation(avg_score: float, pass_rate: float) -> str:
         return "Strong Pass"
     elif score_percentage >= 60 and pass_rate >= 60:
         return "Pass"
-    # Either metric can trigger Review (needs attention)
-    elif score_percentage >= 40 or pass_rate >= 40:
+    # Review requires BOTH score AND some minimum pass_rate to avoid rewarding 0% pass
+    elif score_percentage >= 40 and pass_rate >= 20:
         return "Review"
     else:
         return "Fail"

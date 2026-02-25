@@ -1,17 +1,15 @@
-"""
-TTS Service for audio generation.
+"""TTS Service for audio generation.
 
 Handles text-to-speech generation with retry logic and error handling.
 """
-import shutil
+
 import asyncio
+import shutil
 from pathlib import Path
-from typing import Optional
 
 from app.adapters.tts.factory import TTSProviderFactory
-from app.config.settings import settings
 from app.config.logging_config import get_logger
-
+from app.config.settings import settings
 
 logger = get_logger(__name__)
 
@@ -20,12 +18,8 @@ class TTSService:
     """Service for managing TTS generation with retry logic."""
 
     @staticmethod
-    async def generate_question_audio(
-        text: str,
-        question_id: int
-    ) -> Optional[str]:
-        """
-        Generate TTS audio for a question with retry logic.
+    async def generate_question_audio(text: str, question_id: int) -> str | None:
+        """Generate TTS audio for a question with retry logic.
 
         Args:
             text: Question text to convert to speech
@@ -49,7 +43,7 @@ class TTSService:
                     "Using TTS provider: %s (attempt %d/%d)",
                     provider.get_provider_name(),
                     attempt + 1,
-                    max_retries + 1
+                    max_retries + 1,
                 )
 
                 # Generate TTS audio using the configured provider
@@ -74,7 +68,9 @@ class TTSService:
                     if attempt < max_retries:
                         logger.warning(
                             "TTS provider overloaded (attempt %d/%d). Retrying in %ss...",
-                            attempt + 1, max_retries + 1, retry_delay
+                            attempt + 1,
+                            max_retries + 1,
+                            retry_delay,
                         )
                         # Fix: Use non-blocking sleep
                         await asyncio.sleep(retry_delay)
@@ -84,7 +80,7 @@ class TTSService:
                         logger.error(
                             "TTS provider still overloaded after %d attempts. "
                             "Continuing without audio.",
-                            max_retries + 1
+                            max_retries + 1,
                         )
                 else:
                     logger.error("Failed to generate TTS: %s", error_msg)
@@ -96,8 +92,7 @@ class TTSService:
 
     @staticmethod
     async def _save_audio_file(source_path: str, question_id: int) -> str:
-        """
-        Helper: Copy generated audio to public static directory.
+        """Helper: Copy generated audio to public static directory.
         Run in thread pool to avoid blocking event loop during file I/O.
         """
         # Copy to audio directory for frontend access

@@ -1,15 +1,14 @@
-"""
-Authentication Service.
+"""Authentication Service.
 
 Handles user authentication, password hashing, and JWT token management.
 """
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 from jose import JWTError, jwt
-from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from app.config.settings import settings
 from app.database.models import HRUser, UserRole
@@ -22,56 +21,50 @@ class AuthService:
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
-        return bcrypt.checkpw(
-            plain_password.encode('utf-8'),
-            hashed_password.encode('utf-8')
-        )
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a password."""
         salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+        return hashed.decode("utf-8")
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
         """Create a JWT access token."""
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + \
-                timedelta(minutes=settings.jwt_access_token_expire_minutes)
+            expire = datetime.now(UTC) + timedelta(minutes=settings.jwt_access_token_expire_minutes)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(
-            to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+            to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
+        )
         return encoded_jwt
 
     @staticmethod
     def decode_token(token: str) -> dict:
         """Decode and validate a JWT token."""
         try:
-            payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[
-                                 settings.jwt_algorithm])
+            payload = jwt.decode(
+                token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
+            )
             return payload
         except JWTError as e:
             raise ValidationError(f"Invalid token: {str(e)}") from e
 
     @staticmethod
-    async def get_user_by_username(session: AsyncSession, username: str) -> Optional[HRUser]:
+    async def get_user_by_username(session: AsyncSession, username: str) -> HRUser | None:
         """Get user by username."""
-        result = await session.exec(
-            select(HRUser).where(HRUser.username == username)
-        )
+        result = await session.exec(select(HRUser).where(HRUser.username == username))
         return result.first()
 
     @staticmethod
-    async def get_user_by_id(session: AsyncSession, user_id: int) -> Optional[HRUser]:
+    async def get_user_by_id(session: AsyncSession, user_id: int) -> HRUser | None:
         """Get user by ID."""
-        result = await session.exec(
-            select(HRUser).where(HRUser.id == user_id)
-        )
+        result = await session.exec(select(HRUser).where(HRUser.id == user_id))
         return result.first()
 
     @staticmethod
@@ -93,20 +86,16 @@ class AuthService:
         email: str,
         password: str,
         full_name: str,
-        role: UserRole = UserRole.HR
+        role: UserRole = UserRole.HR,
     ) -> HRUser:
         """Create a new user."""
         # Check if username already exists
-        result_username = await session.exec(
-            select(HRUser).where(HRUser.username == username)
-        )
+        result_username = await session.exec(select(HRUser).where(HRUser.username == username))
         if result_username.first():
             raise ValidationError("Username already exists")
 
         # Check if email already exists
-        result_email = await session.exec(
-            select(HRUser).where(HRUser.email == email)
-        )
+        result_email = await session.exec(select(HRUser).where(HRUser.email == email))
         if result_email.first():
             raise ValidationError("Email already exists")
 
@@ -117,7 +106,7 @@ class AuthService:
             hashed_password=AuthService.get_password_hash(password),
             full_name=full_name,
             role=role,
-            is_active=True
+            is_active=True,
         )
         session.add(user)
         await session.commit()
@@ -125,7 +114,7 @@ class AuthService:
         return user
 
     @staticmethod
-    async def create_default_admin(session: AsyncSession) -> Optional[HRUser]:
+    async def create_default_admin(session: AsyncSession) -> HRUser | None:
         """Create or update default admin user."""
         admin_email = settings.admin_default_email
         admin_password = settings.admin_default_password
@@ -149,5 +138,5 @@ class AuthService:
             email=admin_email,
             password=admin_password,
             full_name="Administrator",
-            role=UserRole.ADMIN
+            role=UserRole.ADMIN,
         )

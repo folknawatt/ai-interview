@@ -1,9 +1,9 @@
-"""
-Module for generating interview questions using Google Gemini API.
+"""Module for generating interview questions using Google Gemini API.
 
 This module provides functionality to generate role-specific interview
 questions based on job descriptions using Google's Gemini generative AI model.
 """
+
 from pydantic import BaseModel
 
 from app.adapters.ai.gemini_client import GeminiClient
@@ -14,13 +14,8 @@ class Response(BaseModel):
     questions: list[str]
 
 
-def gen_questions(
-    gemini_api_key: str,
-    role: str,
-    description: str
-) -> Response:
-    """
-    Generate questions based on a given job description.
+def gen_questions(gemini_api_key: str, role: str, description: str) -> Response:
+    """Generate questions based on a given job description.
 
     Args:
         gemini_api_key (str): Google Gemini API Key
@@ -39,13 +34,7 @@ def gen_questions(
     client = GeminiClient(api_key=gemini_api_key)
 
     # Prepare Prompt
-    final_prompt = QUESTION_PROMPT.format(
-        role=role,
-        job_description=description
-    )
+    final_prompt = QUESTION_PROMPT.format(role=role, job_description=description)
 
     # Generate structured response
-    return client.generate_structured(
-        prompt=final_prompt,
-        response_schema=Response
-    )
+    return client.generate_structured(prompt=final_prompt, response_schema=Response)

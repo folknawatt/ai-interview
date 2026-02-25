@@ -1,7 +1,8 @@
 """Resume processing service for PDF upload and question generation."""
-from app.config.prompts import GEN_QUESTION_PROMPT
+
 from app.adapters.ai.gemini_client import GeminiClient
 from app.adapters.pdf.pdf_extraction import extract_text_from_pdf
+from app.config.prompts import GEN_QUESTION_PROMPT
 
 
 class ResumeService:
@@ -11,8 +12,7 @@ class ResumeService:
         self.ai_client = GeminiClient()
 
     def generate_questions_from_pdf(self, pdf_bytes: bytes, num_questions: int = 3) -> str:
-        """
-        Extracts text from a PDF resume and generates interview questions.
+        """Extracts text from a PDF resume and generates interview questions.
 
         Args:
             pdf_bytes: PDF file content as bytes.
@@ -26,8 +26,7 @@ class ResumeService:
 
         # 2. Prepare Prompt with simple format placeholders
         formatted_prompt = GEN_QUESTION_PROMPT.format(
-            num_questions=num_questions,
-            resume_text=resume_text
+            num_questions=num_questions, resume_text=resume_text
         )
 
         # 3. Generate Content
