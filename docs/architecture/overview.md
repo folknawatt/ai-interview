@@ -1,8 +1,8 @@
-# System Architecture Overview
+# Architecture Overview
 
-## High-Level Architecture
+## 🏗️ High-Level Architecture
 
-The AI Interview Platform is built as a modern, decoupled full-stack application with a clear separation between frontend and backend.
+The AI Interview Platform is designed as a Decoupled Full-Stack Application, maintaining a strict separation of concerns between the Frontend and Backend layers.
 
 ```mermaid
 graph TB
@@ -18,7 +18,6 @@ graph TB
         API[API Routes]
         Services[Business Logic]
         Core[Core Modules]
-
         API --> Services
         Services --> Core
     end
@@ -26,11 +25,10 @@ graph TB
     subgraph "External Services"
         Gemini[Google Gemini AI]
         Whisper[Whisper ASR]
-        TTS[Vachana TTS]
+        TTS[Vachana TTS / Edge TTS]
     end
 
     subgraph "Storage"
-        TempStorage[Temporary Files]
         Database[(Database)]
     end
 
@@ -39,319 +37,42 @@ graph TB
     Core --> Whisper
     Core --> TTS
     Services --> Database
-    Core --> TempStorage
 ```
 
-## Component Overview
+## 🧩 Component Overview
 
 ### Frontend (Nuxt 4)
 
-**Technology Stack:**
-
-- **Framework:** Nuxt 4 (Vue 3 + SSR capabilities)
+- **Framework:** Nuxt 4 (Vue 3, leveraging SSR Capabilities)
 - **State Management:** Pinia
 - **Styling:** Tailwind CSS
 - **Type Safety:** TypeScript
-- **HTTP Client:** Axios
-
-**Key Features:**
-
-- Auto-imported components and composables
-- File-based routing
-- TypeScript support
-- Responsive design
 
 ### Backend (FastAPI)
 
-**Technology Stack:**
-
 - **Framework:** FastAPI (Python 3.11+)
-- **AI:** Google Gemini API
-- **Speech Recognition:** OpenAI Whisper / faster-whisper
-- **TTS:** Vachana TTS (Thai support)
-- **Media Processing:** FFmpeg, MoviePy
+- **AI Engine:** Google Gemini AI (Question Generation & Evaluation)
+- **Speech Recognition:** Whisper AI / faster-whisper
+- **Text-to-Speech:** Vachana TTS / Edge TTS
 
-**Key Features:**
+## 🔄 Data Flow
 
-- Async/await support
-- Automatic API documentation (Swagger/ReDoc)
-- Type validation with Pydantic
-- Dependency injection
+**Interview Lifecycle:**
 
-## Data Flow
+1. **Preparation:** The candidate uploads their Resume (PDF). The AI analyzes the document to construct personalized questions integrated with the core role questions.
+2. **Interview Execution:**
+   - Questions are presented on-screen accompanied by text-to-speech audio.
+   - The candidate records a video response.
+   - The video is transmitted to the Backend, where the audio is extracted, transcribed via Whisper, and evaluated in real-time by Google Gemini.
+3. **Session Completion:** The system aggregates the individual question scores to yield a final recommendation and holistic feedback.
 
-### HR Question Generation Flow
+## 🔒 Security Best Practices
 
-```mermaid
-sequenceDiagram
-    participant HR as HR User
-    participant Frontend
-    participant API
-    participant Gemini as Gemini AI
+- Strict API Key management via Environment Variables.
+- RESTful endpoints secured by configurable CORS Origins.
+- Secure file upload handling with automated temporary file cleanup.
 
-    HR->>Frontend: Create Role + Generate Questions
-    Frontend->>API: POST /hr/generate-questions
-    API->>Gemini: Request questions based on role
-    Gemini-->>API: Generated questions
-    API-->>Frontend: Questions JSON
-    Frontend-->>HR: Display questions
-```
+## 📈 Scalability Considerations
 
-### Candidate Interview Flow
-
-```mermaid
-sequenceDiagram
-    participant Candidate
-    participant Frontend
-    participant API
-    participant TTS
-    participant Whisper
-    participant Gemini
-
-    Candidate->>Frontend: Upload Resume (PDF)
-    Frontend->>API: POST /interview/upload-pdf
-    API->>Gemini: Extract & Generate Questions
-    Gemini-->>API: Custom Questions
-    API-->>Frontend: Session Created (Snapshot)
-
-    loop Every Question
-        Frontend->>API: GET /interview/session/{id}/question/{i}
-        API-->>Frontend: Question Text
-
-        Frontend->>API: POST /tts/generate (optional)
-        API->>TTS: Generate speech
-        TTS-->>API: Audio file
-        API-->>Frontend: Audio stream
-        Frontend-->>Candidate: Play question audio
-
-        Candidate->>Frontend: Record answer (video)
-        Frontend->>API: POST /interview/upload-answer
-
-        par Parallel Processing
-            API->>Whisper: Transcribe audio
-        and
-            API->>Gemini: Evaluate Answer
-        end
-
-        Gemini-->>API: Evaluation Result
-        API-->>Frontend: Real-time Feedback
-        Frontend-->>Candidate: Display Feedback
-    end
-
-    Frontend->>API: POST /interview/complete/{id}
-    API-->>Frontend: Final Score & Summary
-```
-
-## Core Modules
-
-### Backend Core Modules
-
-**`services/auth/`**
-
-- Handles user authentication and JWT management
-- Manages user roles and permissions
-
-**`services/scoring/`** & **`adapters/ai/`**
-
-- Evaluates candidate responses using Gemini AI
-- Provides scoring and feedback
-
-**`services/core/media_service.py`**
-
-- Processes audio/video files
-- Extracts audio from video
-- Handles audio format conversions
-
-**`services/hr/`**
-
-- Generates role-specific interview questions
-- Uses Gemini AI for intelligent question creation
-
-**`services/core/tts_service.py`**
-
-- Converts text questions to speech
-- Supports multiple TTS engines (Edge TTS, Google TTS)
-
-## API Structure
-
-```
-/api/
-├── /auth/
-│   ├── POST /login
-│   ├── POST /logout
-│   ├── POST /register
-│   ├── POST /init-admin
-│   └── GET  /me
-│
-├── /hr/
-│   ├── POST /generate-questions
-│   ├── GET  /roles
-│   ├── POST /save-questions
-│   ├── GET  /roles/{id}
-│   ├── PUT  /roles/{id}/questions
-│   └── DELETE /roles/{id}
-│
-├── /interview/
-│   ├── POST /upload-pdf (Resume & Init)
-│   ├── GET  /session/{id}/question/{index}
-│   ├── POST /upload-answer (Upload + Evaluate)
-│   ├── POST /complete/{id}
-│   └── GET  /summary/{id}
-│
-├── /reports/
-│   ├── GET /all
-│   ├── GET /{session_id}
-│   ├── GET /{session_id}/pdf
-│   └── GET /statistics/overview
-│
-└── /tts/
-    ├── POST /generate
-    └── GET  /audio/{filename}
-```
-
-## Security Considerations
-
-1. **API Key Management**
-   - Environment variables for sensitive keys
-   - Never commit keys to version control
-
-2. **CORS Configuration**
-   - Configurable allowed origins
-   - Secure defaults
-
-3. **File Upload Security**
-   - File type validation
-   - Size limits
-   - Temporary storage with cleanup
-
-4. **Input Validation**
-   - Pydantic models for all requests
-   - Type checking and validation
-
-## Scalability Considerations
-
-### Current Architecture
-
-- Monolithic backend (suitable for MVP)
-- Client-side rendering with SSR capabilities
-- File-based temporary storage
-
-### Future Scalability Options
-
-1. **Horizontal Scaling**
-   - Containerize with Docker
-   - Deploy multiple backend instances
-   - Add load balancer
-
-2. **Storage**
-   - Move to cloud storage (S3, GCS)
-   - Implement CDN for static assets
-   - Add persistent database
-
-3. **Caching**
-   - Redis for session management
-   - Cache frequently requested questions
-   - Cache AI responses where appropriate
-
-4. **Microservices** (if needed)
-   - Separate TTS service
-   - Separate transcription service
-   - Separate evaluation service
-
-## Deployment Architecture
-
-```mermaid
-graph LR
-    subgraph "Client"
-        Browser
-    end
-
-    subgraph "Frontend Server"
-        Nuxt[Nuxt SSR/Static]
-    end
-
-    subgraph "Backend Server"
-        FastAPI
-        Storage[File Storage]
-    end
-
-    subgraph "External APIs"
-        Gemini[Gemini AI]
-        TTS[TTS Service]
-    end
-
-    Browser --> Nuxt
-    Nuxt --> FastAPI
-    FastAPI --> Storage
-    FastAPI --> Gemini
-    FastAPI --> TTS
-```
-
-## Technology Decisions
-
-### Why FastAPI?
-
-- Fast, modern Python framework
-- Excellent async support
-- Automatic API documentation
-- Type safety with Pydantic
-- Easy integration with AI libraries
-
-### Why Nuxt 4?
-
-- Vue 3 with Composition API
-- SSR/SSG capabilities
-- Auto-imports for better DX
-- Strong TypeScript support
-- Large ecosystem
-
-### Why Gemini AI?
-
-- Powerful language understanding
-- Good question generation
-- Competitive pricing
-- Reliable API
-
-### Why Whisper?
-
-- State-of-the-art speech recognition
-- Supports multiple languages
-- Can run locally (faster-whisper)
-- Open source
-
-## Performance Considerations
-
-1. **Audio Processing**
-   - Use faster-whisper for GPU acceleration
-   - Process in chunks for large files
-   - Async processing to avoid blocking
-
-2. **AI Request Optimization**
-   - Batch requests where possible
-   - Implement retry logic
-   - Add timeout handling
-
-3. **Frontend Optimization**
-   - Code splitting
-   - Lazy loading components
-   - Image optimization
-   - Caching strategies
-
-## Monitoring & Logging
-
-**Current:**
-
-- Python logging module
-- Configurable log levels
-- File-based logs
-
-**Recommended Future:**
-
-- Structured logging (JSON)
-- Log aggregation (ELK, Datadog)
-- Error tracking (Sentry)
-- Performance monitoring (New Relic, Datadog)
-
----
-
-For more detailed API documentation, visit `http://localhost:8000/docs` when running locally.
+- Docker-ready architecture enabling horizontal scaling.
+- Pluggable components facilitating future migration of storage to Cloud Storage (S3/GCS) and caching mechanisms to Redis.

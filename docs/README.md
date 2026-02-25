@@ -1,34 +1,17 @@
 # AI Interview Platform - Documentation
 
-Welcome to the AI Interview Platform documentation. This directory contains comprehensive guides and technical documentation for the project.
+Welcome to the AI Interview Platform documentation center.
 
 ## 📚 Documentation Structure
 
-### [Architecture](./architecture/)
-
-Technical architecture and system design documentation
-
-- [System Overview](./architecture/overview.md)
-
-### [API](./api/)
-
-API endpoint documentation and examples
-
-- [API Overview](./api/README.md)
-
-### Setup
-
-Installation and configuration guides
-
-- [Main Setup Guide](../README.md#🚀-quick-start)
-- [Docker Deployment](./setup/deploy/DOCKER_DEPLOYMENT.md)
+- **[Architecture Overview](./architecture/overview.md)**: High-level system design, components, and data flow.
+- **[API Documentation](./api/README.md)**: Detailed API endpoints and usage guidelines.
+- **[Local Setup Guide](../README.md#🚀-quick-start)**: Instructions for setting up the local development environment.
+- **[Docker Deployment Guide](./setup/deploy/DOCKER_DEPLOYMENT.md)**: Comprehensive guide for deploying the system via Docker.
 
 ## 🚀 Quick Links
 
-- **Getting Started:** See [root README](../README.md) for quick start
-- **API Documentation:** Visit `http://localhost:8000/docs` when running locally
-- **Contributing:** Read [CONTRIBUTING.md](../CONTRIBUTING.md)
+- **Interactive API Docs**: Available at `http://localhost:8000/docs` when the backend is running.
+- **Contributing**: Please review the [CONTRIBUTING.md](../CONTRIBUTING.md) guide if you are a new contributor.
 
-## 📝 Requesting Documentation
-
-If you need documentation for a specific topic that's not covered, please open an issue with the `documentation` label.
+If you find any missing documentation, please open an Issue with the `documentation` label.
