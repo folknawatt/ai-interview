@@ -1,11 +1,10 @@
-"""
-Abstract base class for TTS providers.
+"""Abstract base class for TTS providers.
 
 This module defines the interface that all TTS providers must implement,
 enabling flexible switching between different TTS services.
 """
+
 from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class TTSProvider(ABC):
@@ -16,14 +15,8 @@ class TTSProvider(ABC):
     """
 
     @abstractmethod
-    def generate_audio(
-        self,
-        text: str,
-        output_path: Optional[str] = None,
-        **kwargs
-    ) -> str:
-        """
-        Generate audio from text.
+    def generate_audio(self, text: str, output_path: str | None = None, **kwargs) -> str:
+        """Generate audio from text.
 
         Args:
             text: Text to convert to speech
@@ -40,8 +33,7 @@ class TTSProvider(ABC):
 
     @abstractmethod
     def get_provider_name(self) -> str:
-        """
-        Get the name of the TTS provider.
+        """Get the name of the TTS provider.
 
         Returns:
             str: Provider name (e.g., "gemini", "edge")
@@ -49,8 +41,7 @@ class TTSProvider(ABC):
         raise NotImplementedError
 
     def validate_text(self, text: str) -> None:
-        """
-        Validate input text before processing.
+        """Validate input text before processing.
 
         Args:
             text: Text to validate

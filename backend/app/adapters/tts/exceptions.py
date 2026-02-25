@@ -1,4 +1,5 @@
 """TTS Exceptions."""
+
 from app.exceptions import AppException
 
 

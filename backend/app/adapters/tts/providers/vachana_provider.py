@@ -1,19 +1,17 @@
-"""
-VachanaTTS Provider implementation.
+"""VachanaTTS Provider implementation.
 
 This module provides TTS generation using vachanatts library.
 """
+
 import os
 import time
-from typing import Optional
 
 from vachanatts import TTS
 
-from app.adapters.tts.tts_provider import TTSProvider
-from app.adapters.tts.exceptions import TTSProviderError
 from app.adapters.tts.constants import AUDIO_OUTPUT_DIR
+from app.adapters.tts.exceptions import TTSProviderError
+from app.adapters.tts.tts_provider import TTSProvider
 from app.config.logging_config import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -21,14 +19,8 @@ logger = get_logger(__name__)
 class VachanaTTSProvider(TTSProvider):
     """VachanaTTS provider implementation."""
 
-    def __init__(
-        self,
-        voice: str = "th_f_1",
-        speed: float = 1.0,
-        volume: float = 1.0
-    ):
-        """
-        Initialize VachanaTTS provider.
+    def __init__(self, voice: str = "th_f_1", speed: float = 1.0, volume: float = 1.0):
+        """Initialize VachanaTTS provider.
 
         Args:
             voice: Voice name to use (default: "th_f_1")
@@ -43,14 +35,8 @@ class VachanaTTSProvider(TTSProvider):
         """Get provider name."""
         return "vachana"
 
-    def generate_audio(
-        self,
-        text: str,
-        output_path: Optional[str] = None,
-        **kwargs
-    ) -> str:
-        """
-        Generate audio using VachanaTTS.
+    def generate_audio(self, text: str, output_path: str | None = None, **kwargs) -> str:
+        """Generate audio using VachanaTTS.
 
         Args:
             text: Text to convert to speech
@@ -81,21 +67,13 @@ class VachanaTTSProvider(TTSProvider):
             output_path = os.path.join(audio_dir, filename)
 
         try:
-            logger.info(
-                "Generating VachanaTTS for text: '%s...' (voice: %s)", text[:50], voice)
+            logger.info("Generating VachanaTTS for text: '%s...' (voice: %s)", text[:50], voice)
 
             # vachanatts.TTS seems to be a function that runs immediately
-            TTS(
-                text,
-                voice=voice,
-                output=output_path,
-                volume=self.volume,
-                speed=self.speed
-            )
+            TTS(text, voice=voice, output=output_path, volume=self.volume, speed=self.speed)
 
             if not os.path.exists(output_path):
-                raise TTSProviderError(
-                    "Output file was not created by VachanaTTS")
+                raise TTSProviderError("Output file was not created by VachanaTTS")
 
             logger.info("VachanaTTS generation successful: %s", output_path)
             return output_path
