@@ -1,6 +1,6 @@
 # Text-to-Speech (TTS) Provider Guide
 
-The TTS system utilizes a **Strategy Pattern** architecture, making it seamless to switch between different TTS providers (e.g., Gemini and Edge TTS).
+The TTS system utilizes a **Strategy Pattern** architecture, making it seamless to switch between different TTS providers if needed in the future. Currently, it is natively configured to use **Vachana TTS**.
 
 ## 🚀 Quick Start
 
@@ -16,29 +16,23 @@ audio_url = TTSService.generate_question_audio(
 )
 ```
 
-### Switching Providers
+### Configuration
 
 Edit your `.env` configuration file:
 
 ```env
-# Use Gemini TTS (Default)
-TTS_PROVIDER=gemini
-TTS_GEMINI_VOICE=kore
-GOOGLE_API_KEY=your-api-key
-
-# Or use Edge TTS
-TTS_PROVIDER=edge
-TTS_EDGE_VOICE=th-TH-PremwadeeNeural
+# Use Vachana TTS (Default)
+TTS_PROVIDER=vachana
+TTS_VACHANA_VOICE=th_f_1
 ```
 
 ## ⚙️ Configuration Reference
 
-| Setting            | Default                 | Description                              |
-| ------------------ | ----------------------- | ---------------------------------------- |
-| `tts_provider`     | `gemini`                | Active TTS provider (`gemini` or `edge`) |
-| `tts_gemini_voice` | `kore`                  | Selected Gemini voice                    |
-| `tts_edge_voice`   | `th-TH-PremwadeeNeural` | Selected Edge voice                      |
-| `tts_audio_dir`    | `audio`                 | Output directory for audio files         |
+| Setting             | Default                | Description                               |
+| ------------------- | ---------------------- | ----------------------------------------- |
+| `tts_provider`      | `vachana`              | Active TTS provider (`vachana` supported) |
+| `tts_vachana_voice` | `th_f_1`               | Selected Vachana voice                    |
+| `tts_audio_dir`     | `storage/public/audio` | Output directory for audio files          |
 
 ## ✨ Advantages of this Architecture
 

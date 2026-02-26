@@ -30,7 +30,7 @@ First off, thank you for considering contributing to the **AI Interview Platform
 
 Please ensure all tests pass before submitting a Pull Request:
 
-- **Backend**: `cd backend && uv run pytest`
+- **Backend**: (Tests coming soon)
 - **Frontend**: `cd frontend && npm run test`
 
 ## 📝 Code Style
