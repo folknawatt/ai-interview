@@ -1,6 +1,6 @@
 # AI Interview - Frontend
 
-The front-end client for the AI Interview Platform, engineered with Nuxt 3, TypeScript, and TailwindCSS to deliver a modern, fast, and minimalistic user experience.
+The front-end client for the AI Interview Platform, engineered with Nuxt 4, TypeScript, and TailwindCSS to deliver a modern, fast, and minimalistic user experience.
 
 ## 📋 Key Features
 
@@ -11,7 +11,7 @@ The front-end client for the AI Interview Platform, engineered with Nuxt 3, Type
 
 ## 🏗️ Technology Stack
 
-- **Framework:** Nuxt 3 (Vue 3)
+- **Framework:** Nuxt 4 (Vue 3)
 - **Language:** TypeScript
 - **State Management:** Pinia
 - **Styling:** TailwindCSS
