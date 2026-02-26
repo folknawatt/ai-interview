@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Standardized dependency management using `pyproject.toml` (Backend) and `npm` (Frontend).
 - Improved `.gitignore` configurations.
 - Refactored Database Repositories to use the BaseRepository pattern.
+- Replaced Whisper AI with Typhoon ASR for speech-to-text transcription.
 
 ### Removed
 

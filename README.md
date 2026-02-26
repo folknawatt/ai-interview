@@ -20,7 +20,7 @@ An AI-powered interview platform that seamlessly integrates intelligent question
 
 - 🎤 **Video/Audio Recording**: Record interview responses directly in the browser.
 - 🔊 **Text-to-Speech**: Questions are read aloud naturally.
-- 📝 **Transcription**: Automatic speech-to-text conversion via Whisper AI.
+- 📝 **Transcription**: Automatic speech-to-text conversion via Typhoon ASR.
 - ✅ **Instant Feedback**: Receive preliminary evaluation results immediately after the interview.
 
 ## 🚀 Quick Start
@@ -66,7 +66,7 @@ sequenceDiagram
     participant Frontend as 🖥️ Frontend (Nuxt/Vue)
     participant Backend as ⚙️ Backend (FastAPI)
     participant AI_Gemini as 🧠 AI (Google Gemini)
-    participant AI_Whisper as 🎙️ AI (Whisper/TTS)
+    participant AI_Audio as 🎙️ Audio Services (Typhoon/TTS)
 
     %% 1. Preparation Phase
     rect rgba(0, 150, 255, 0.1)
@@ -82,13 +82,13 @@ sequenceDiagram
     rect rgba(255, 150, 0, 0.1)
         note right of Candidate: 2. Interview Execution
         loop For each question
-            Backend->>AI_Whisper: Generate text-to-speech audio
-            AI_Whisper-->>Frontend: Send audio & question text
+            Backend->>AI_Audio: Generate text-to-speech audio
+            AI_Audio-->>Frontend: Send audio & question text
             Frontend->>Candidate: Display and read question
             Candidate->>Frontend: Record video response
             Frontend->>Backend: Send video/audio (Real-time)
-            Backend->>AI_Whisper: Transcribe audio to text
-            AI_Whisper-->>Backend: Transcription complete
+            Backend->>AI_Audio: Transcribe audio to text
+            AI_Audio-->>Backend: Transcription complete
             Backend->>AI_Gemini: Evaluate response text
             AI_Gemini-->>Backend: Return score and feedback (Real-time)
         end
