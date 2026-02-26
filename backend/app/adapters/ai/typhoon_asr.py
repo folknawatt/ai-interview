@@ -39,8 +39,7 @@ def transcribe_audio(audio_path: str) -> str:
     logger.info("Transcribing audio: %s", audio_path)
 
     try:
-        result_no_timestamps = transcribe(
-            audio_path, with_timestamps=False, device="auto")
+        result_no_timestamps = transcribe(audio_path, with_timestamps=False, device="auto")
 
         # Extract text from typhoon_asr result
         # The library can return different formats depending on version/settings
@@ -61,8 +60,7 @@ def transcribe_audio(audio_path: str) -> str:
                         )
                     else:
                         # Unknown list format - convert to strings and join
-                        text = " ".join(str(item)
-                                        for item in result_no_timestamps)
+                        text = " ".join(str(item) for item in result_no_timestamps)
                 else:
                     text = ""
             elif isinstance(result_no_timestamps, dict):
@@ -82,8 +80,7 @@ def transcribe_audio(audio_path: str) -> str:
                 else:
                     text = str(result_no_timestamps)
         except (AttributeError, KeyError, TypeError, IndexError) as e:
-            logger.error(
-                "Error accessing transcription result structure: %s", e)
+            logger.error("Error accessing transcription result structure: %s", e)
             logger.error("Result type: %s", type(result_no_timestamps))
             logger.error("Result value: %s", result_no_timestamps)
             raise TranscriptionError(
@@ -93,8 +90,7 @@ def transcribe_audio(audio_path: str) -> str:
         if not text or not text.strip():
             raise TranscriptionError("Transcription returned empty text")
 
-        logger.info(
-            "Transcription successful, length: %d characters", len(text))
+        logger.info("Transcription successful, length: %d characters", len(text))
         return text.strip()
 
     except ImportError as e:
@@ -134,8 +130,7 @@ def extract_audio(video_path: str, output_audio_path: str | None = None) -> str:
         fd, output_audio_path = tempfile.mkstemp(suffix=".mp3")
         os.close(fd)  # Close the file descriptor, we just need the path
 
-    logger.info("Extracting audio from %s to %s",
-                video_path, output_audio_path)
+    logger.info("Extracting audio from %s to %s", video_path, output_audio_path)
 
     command = [
         "ffmpeg",
@@ -155,8 +150,7 @@ def extract_audio(video_path: str, output_audio_path: str | None = None) -> str:
         logger.info("Audio extraction successful.")
     except subprocess.CalledProcessError as e:
         logger.error("ffmpeg failed: %s", e.stderr)
-        raise RuntimeError(
-            f"ffmpeg failed to extract audio: {e.stderr}") from e
+        raise RuntimeError(f"ffmpeg failed to extract audio: {e.stderr}") from e
     except FileNotFoundError as exc:
         logger.error("ffmpeg not found. Please install ffmpeg.")
         raise RuntimeError(
@@ -288,12 +282,10 @@ def split_audio_with_overlap(
             segment_duration = total_duration - start_time
 
         # Generate output path
-        output_path = os.path.join(
-            output_dir, f"{file_name_base}_overlap_{i:03d}{ext}")
+        output_path = os.path.join(output_dir, f"{file_name_base}_overlap_{i:03d}{ext}")
         chunk_files.append(output_path)
 
-        logger.info("   [Chunk %03d] Start: %s, Duration: %s",
-                    i, start_time, segment_duration)
+        logger.info("   [Chunk %03d] Start: %s, Duration: %s", i, start_time, segment_duration)
 
         # Build FFmpeg command
         cmd = [
