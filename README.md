@@ -30,7 +30,7 @@ An AI-powered interview platform that seamlessly integrates intelligent question
 ```bash
 git clone <repository-url>
 cd ai-interview
-cp .env.docker.example .env # Ensure you configure your GOOGLE_API_KEY
+cp .env.example .env # Ensure you configure your GOOGLE_API_KEY
 docker-compose up -d --build
 ```
 
@@ -59,6 +59,8 @@ npm run dev
 ```
 
 ## Workflow Process
+
+### 👤 Candidate Workflow
 
 ```mermaid
 sequenceDiagram
@@ -112,8 +114,50 @@ sequenceDiagram
         Frontend->>Backend: POST /interview/complete/{session_id}
         Backend->>DB: Aggregate scores from all questions
         Backend->>DB: Update InterviewSession status
-        Backend-->>Frontend: Return final recommendation & scores
-        Frontend-->>Candidate: Display Result Page
+        Backend-->>Frontend: Return completion status (Success)
+        Frontend-->>Candidate: Display "Interview Complete" & Thank You message
+    end
+```
+
+### 👔 Admin (HR) Workflow
+
+```mermaid
+sequenceDiagram
+    participant Admin as 👔 Admin (HR)
+    participant Frontend as 🖥️ Frontend (Nuxt)
+    participant Backend as ⚙️ Backend (FastAPI)
+    participant DB as 🗄️ Database (PostgreSQL)
+    participant AI_Gemini as 🧠 AI (Google Gemini)
+
+    %% 1. Role & Question Management
+    rect rgba(0, 150, 255, 0.1)
+        note right of Admin: 1. Role & Question Management
+        Admin->>Frontend: Create/Update Role Profile
+        Frontend->>Backend: POST /admin/roles
+        Backend->>AI_Gemini: Request role-specific questions
+        AI_Gemini-->>Backend: Return generated questions
+        Backend->>DB: Save Role & Question Bank
+        Backend-->>Frontend: Confirm creation
+    end
+
+    %% 2. Dashboard & Monitoring
+    rect rgba(255, 150, 0, 0.1)
+        note right of Admin: 2. Dashboard & Monitoring
+        Admin->>Frontend: Access Dashboard
+        Frontend->>Backend: GET /admin/dashboard
+        Backend->>DB: Fetch overall statistics & active sessions
+        Backend-->>Frontend: Return aggregated data
+        Frontend-->>Admin: Display platform metrics
+    end
+
+    %% 3. Candidate Review Phase
+    rect rgba(0, 255, 100, 0.1)
+        note right of Admin: 3. Candidate Review Phase
+        Admin->>Frontend: Select Candidate Session
+        Frontend->>Backend: GET /admin/session/{id}
+        Backend->>DB: Fetch detailed scores & transcripts
+        Backend-->>Frontend: Return session & evaluation data
+        Frontend-->>Admin: Display Candidate Evaluation Report
     end
 ```
 
