@@ -58,7 +58,52 @@ npm install
 npm run dev
 ```
 
-## 📖 Further Documentation
+## � Workflow Process
+
+```mermaid
+sequenceDiagram
+    participant Candidate as 👤 Candidate
+    participant Frontend as 🖥️ Frontend (Nuxt/Vue)
+    participant Backend as ⚙️ Backend (FastAPI)
+    participant AI_Gemini as 🧠 AI (Google Gemini)
+    participant AI_Whisper as 🎙️ AI (Whisper/TTS)
+
+    %% 1. Preparation Phase
+    rect rgb(240, 248, 255)
+        note right of Candidate: 1. Preparation Phase
+        Candidate->>Frontend: Upload Resume (PDF)
+        Frontend->>Backend: Send resume for analysis
+        Backend->>AI_Gemini: Process resume data
+        AI_Gemini-->>Backend: Generate personalized questions
+        Backend-->>Frontend: Combine with core role questions
+    end
+
+    %% 2. Interview Execution Phase
+    rect rgb(255, 245, 238)
+        note right of Candidate: 2. Interview Execution
+        loop For each question
+            Backend->>AI_Whisper: Generate text-to-speech audio
+            AI_Whisper-->>Frontend: Send audio & question text
+            Frontend->>Candidate: Display and read question
+            Candidate->>Frontend: Record video response
+            Frontend->>Backend: Send video/audio (Real-time)
+            Backend->>AI_Whisper: Transcribe audio to text
+            AI_Whisper-->>Backend: Transcription complete
+            Backend->>AI_Gemini: Evaluate response text
+            AI_Gemini-->>Backend: Return score and feedback (Real-time)
+        end
+    end
+
+    %% 3. Session Completion
+    rect rgb(240, 255, 240)
+        note right of Candidate: 3. Session Completion
+        Backend->>Backend: Aggregate scores
+        Backend-->>Frontend: Send final recommendation & feedback
+        Frontend-->>Candidate: Display preliminary result & feedback
+    end
+```
+
+## �📖 Further Documentation
 
 - [Architecture Overview](docs/architecture/overview.md)
 - [API Documentation](docs/api/README.md)
