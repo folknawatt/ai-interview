@@ -58,7 +58,7 @@ npm install
 npm run dev
 ```
 
-## � Workflow Process
+## Workflow Process
 
 ```mermaid
 sequenceDiagram
@@ -69,7 +69,7 @@ sequenceDiagram
     participant AI_Whisper as 🎙️ AI (Whisper/TTS)
 
     %% 1. Preparation Phase
-    rect rgb(240, 248, 255)
+    rect rgba(0, 150, 255, 0.1)
         note right of Candidate: 1. Preparation Phase
         Candidate->>Frontend: Upload Resume (PDF)
         Frontend->>Backend: Send resume for analysis
@@ -79,7 +79,7 @@ sequenceDiagram
     end
 
     %% 2. Interview Execution Phase
-    rect rgb(255, 245, 238)
+    rect rgba(255, 150, 0, 0.1)
         note right of Candidate: 2. Interview Execution
         loop For each question
             Backend->>AI_Whisper: Generate text-to-speech audio
@@ -95,7 +95,7 @@ sequenceDiagram
     end
 
     %% 3. Session Completion
-    rect rgb(240, 255, 240)
+    rect rgba(0, 255, 100, 0.1)
         note right of Candidate: 3. Session Completion
         Backend->>Backend: Aggregate scores
         Backend-->>Frontend: Send final recommendation & feedback
@@ -103,7 +103,7 @@ sequenceDiagram
     end
 ```
 
-## �📖 Further Documentation
+## 📖 Further Documentation
 
 - [Architecture Overview](docs/architecture/overview.md)
 - [API Documentation](docs/api/README.md)
