@@ -156,13 +156,22 @@ async def upload_and_analyze(
     }
     # Exceptions are handled by global exception handler in main.py
     return await InterviewService.process_answer(
-        session, api_key, file, question_id, question, candidate_data, candidate_repo, interview_repo
+        session,
+        api_key,
+        file,
+        question_id,
+        question,
+        candidate_data,
+        candidate_repo,
+        interview_repo,
     )
 
 
 @router.post("/complete/{session_id}")
 async def complete_interview(
-    session_id: str, session: AsyncSession = Depends(get_db), interview_repo=Depends(get_interview_repo)
+    session_id: str,
+    session: AsyncSession = Depends(get_db),
+    interview_repo=Depends(get_interview_repo),
 ) -> dict[str, Any]:
     """Mark interview as complete and calculate aggregated scores."""
     return await InterviewService.complete_interview(session, session_id, interview_repo)
@@ -170,7 +179,9 @@ async def complete_interview(
 
 @router.get("/summary/{session_id}")
 async def get_summary(
-    session_id: str, session: AsyncSession = Depends(get_db), interview_repo=Depends(get_interview_repo)
+    session_id: str,
+    session: AsyncSession = Depends(get_db),
+    interview_repo=Depends(get_interview_repo),
 ) -> dict[str, Any]:
     """Get interview summary from database."""
     return await InterviewService.get_summary(session, session_id, interview_repo)
