@@ -63,43 +63,57 @@ npm run dev
 ```mermaid
 sequenceDiagram
     participant Candidate as 👤 Candidate
-    participant Frontend as 🖥️ Frontend (Nuxt/Vue)
+    participant Frontend as 🖥️ Frontend (Nuxt)
     participant Backend as ⚙️ Backend (FastAPI)
+    participant DB as 🗄️ Database (PostgreSQL)
     participant AI_Gemini as 🧠 AI (Google Gemini)
-    participant AI_Audio as 🎙️ Audio Services (Typhoon/TTS)
+    participant AI_Vachana as 🗣️ AI (Vachana TTS)
+    participant AI_Typhoon as 📝 AI (Typhoon ASR)
 
     %% 1. Preparation Phase
     rect rgba(0, 150, 255, 0.1)
         note right of Candidate: 1. Preparation Phase
         Candidate->>Frontend: Upload Resume (PDF)
-        Frontend->>Backend: Send resume for analysis
-        Backend->>AI_Gemini: Process resume data
-        AI_Gemini-->>Backend: Generate personalized questions
-        Backend-->>Frontend: Combine with core role questions
+        Frontend->>Backend: POST /interview/upload-pdf
+        Backend->>AI_Gemini: Process resume text
+        AI_Gemini-->>Backend: Return personalized questions
+        Backend->>DB: Save session & questions snapshot
+        Backend-->>Frontend: Return session_id & questions
     end
 
     %% 2. Interview Execution Phase
     rect rgba(255, 150, 0, 0.1)
-        note right of Candidate: 2. Interview Execution
+        note right of Candidate: 2. Interview Execution Phase
         loop For each question
-            Backend->>AI_Audio: Generate text-to-speech audio
-            AI_Audio-->>Frontend: Send audio & question text
-            Frontend->>Candidate: Display and read question
+            Frontend->>Backend: GET /interview/session/{id}/question/{index}
+            Backend->>DB: Retrieve question snapshot
+            Backend->>AI_Vachana: Request TTS audio generation
+            AI_Vachana-->>Backend: Return audio file
+            Backend-->>Frontend: Return question text & audio_path
+
+            Frontend->>Candidate: Play audio & display question
             Candidate->>Frontend: Record video response
-            Frontend->>Backend: Send video/audio (Real-time)
-            Backend->>AI_Audio: Transcribe audio to text
-            AI_Audio-->>Backend: Transcription complete
-            Backend->>AI_Gemini: Evaluate response text
-            AI_Gemini-->>Backend: Return score and feedback (Real-time)
+            Frontend->>Backend: POST /interview/upload-answer (video blob)
+
+            Backend->>AI_Typhoon: Extract & transcribe audio to text
+            AI_Typhoon-->>Backend: Return transcript
+
+            Backend->>AI_Gemini: Evaluate transcript against role
+            AI_Gemini-->>Backend: Return scores & feedback
+
+            Backend->>DB: Save QuestionResult
+            Backend-->>Frontend: Return AnalysisResponse
         end
     end
 
     %% 3. Session Completion
     rect rgba(0, 255, 100, 0.1)
-        note right of Candidate: 3. Session Completion
-        Backend->>Backend: Aggregate scores
-        Backend-->>Frontend: Send final recommendation & feedback
-        Frontend-->>Candidate: Display preliminary result & feedback
+        note right of Candidate: 3. Session Completion Phase
+        Frontend->>Backend: POST /interview/complete/{session_id}
+        Backend->>DB: Aggregate scores from all questions
+        Backend->>DB: Update InterviewSession status
+        Backend-->>Frontend: Return final recommendation & scores
+        Frontend-->>Candidate: Display Result Page
     end
 ```
 
