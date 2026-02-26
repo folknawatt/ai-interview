@@ -5,11 +5,14 @@ This module handles loading configuration from Google Cloud Secret Manager
 variables used throughout the application.
 """
 
+import logging
 import os
 import time
 from io import StringIO
 
 from dotenv import dotenv_values
+
+logger = logging.getLogger(__name__)
 
 
 def _load_secrets_from_secret_manager():
@@ -54,8 +57,8 @@ def _load_secrets_from_secret_manager():
         for k, v in env_dict.items():
             os.environ[k] = v
 
-        print(f"[{time.time() - step_start:.3f}s] ✅ Secrets loaded from Secret Manager")
+        logger.info(f"[{time.time() - step_start:.3f}s] ✅ Secrets loaded from Secret Manager")
 
     except Exception as e:
         # Log error but don't crash - fall back to local .env
-        print(f"[{time.time() - step_start:.3f}s] ❌ Failed to load secrets: {e}")
+        logger.error(f"[{time.time() - step_start:.3f}s] ❌ Failed to load secrets: {e}")
