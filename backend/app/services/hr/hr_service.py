@@ -20,16 +20,7 @@ class HRService:
 
     @staticmethod
     def generate_questions(api_key: str, role_title: str, job_description: str) -> list[str]:
-        """Generate interview questions from job description using AI.
-        (Remains sync or can be async enabled if gen_questions supports it.
-         For now, the AI call is likely blocking, so running in threadpool is option,
-         but let's keep it simple if it's external API call.
-         Wait, gen_questions uses google.generativeai which might be sync.
-         Ideally this should be wrapped in asyncio.to_thread, but user asked for DB fix principally.
-         However, let's keep it sync for now as it doesn't touch DB, or make it async if we want consistency).
-
-         Actually, let's keep it sync for now as it doesn't touch the DB and user didn't request AI refactor.
-        """
+        """Generate interview questions from job description using AI."""
         response = gen_questions(api_key, role_title, job_description)
         return response.questions
 
@@ -73,12 +64,6 @@ class HRService:
             raise NotFoundError(f"Role '{role_id}' not found")
 
         await repo.update_role(session, role_id, questions=questions, title=title)
-
-        # RoleService is strictly file based? No. RoleService logic is weirdly circular.
-        # "RoleService.get_role_by_id(role_id)" was used in sync code.
-        # Let's see what RoleService does. If it just reads JSON, it's fine.
-        # But if we are moving to DB, we should read from DB.
-        # In this refactor, we should rely on what we just updated or fetch from repo.
 
         # Fetched updated role data from Repo strictly to avoid confusion
         updated_role_data = await repo.get_by_id(session, role_id)
