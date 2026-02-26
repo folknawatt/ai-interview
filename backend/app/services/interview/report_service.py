@@ -73,10 +73,12 @@ class ReportService:
             statement = statement.where(InterviewSession.role_id == role_id)
 
         if min_score is not None:
-            statement = statement.where(AggregatedScore.average_score >= min_score)
+            statement = statement.where(
+                AggregatedScore.average_score >= min_score)
 
         if recommendation:
-            statement = statement.where(AggregatedScore.overall_recommendation == recommendation)
+            statement = statement.where(
+                AggregatedScore.overall_recommendation == recommendation)
 
         if search_query:
             statement = statement.where(
@@ -95,7 +97,8 @@ class ReportService:
                 session_id=r[0],
                 name=r[1],
                 role_id=r[2],
-                interview_date=r[3].isoformat() if hasattr(r[3], "isoformat") else str(r[3]),
+                interview_date=r[3].isoformat() if hasattr(
+                    r[3], "isoformat") else str(r[3]),
                 average_score=r[4] if r[4] is not None else 0.0,
                 overall_recommendation=r[5] if r[5] else "Pending",
                 communication_avg=r[6],
@@ -110,7 +113,8 @@ class ReportService:
         """Get detailed report for a specific interview session."""
         # Get session
         result_sess = await session.exec(
-            select(InterviewSession).where(InterviewSession.session_id == session_id)
+            select(InterviewSession).where(
+                InterviewSession.session_id == session_id)
         )
         interview_sess = result_sess.first()
 
@@ -122,7 +126,8 @@ class ReportService:
         # we often need to fetch it explicitly or ensure it's loaded.
         # However, for simple FK relationships, we can fetch Candidate by ID.
         result_candidate = await session.exec(
-            select(Candidate).where(Candidate.id == interview_sess.candidate_id)
+            select(Candidate).where(
+                Candidate.id == interview_sess.candidate_id)
         )
         candidate = result_candidate.one()
 
@@ -136,7 +141,8 @@ class ReportService:
 
         # Get aggregated score
         result_agg = await session.exec(
-            select(AggregatedScore).where(AggregatedScore.session_id == session_id)
+            select(AggregatedScore).where(
+                AggregatedScore.session_id == session_id)
         )
         aggregated_score = result_agg.first()
 
@@ -164,7 +170,8 @@ class ReportService:
                 relevance_score=qr.relevance_score,
                 logical_thinking_score=qr.logical_thinking_score,
                 average_score=round(
-                    (qr.communication_score + qr.relevance_score + qr.logical_thinking_score) / 3, 2
+                    (qr.communication_score + qr.relevance_score +
+                     qr.logical_thinking_score) / 3, 2
                 ),
                 feedback=qr.feedback,
                 pass_prediction=qr.pass_prediction,
@@ -220,12 +227,14 @@ class ReportService:
 
         result_passed = await session.exec(
             select(func.count(AggregatedScore.id)).where(
-                AggregatedScore.overall_recommendation.in_(["Strong Pass", "Pass"])
-            )  # pylint: disable=no-member
+                AggregatedScore.overall_recommendation.in_(
+                    ["Strong Pass", "Pass"])
+            )
         )
         passed = result_passed.one() or 0
 
-        pass_rate = (passed / total_with_score) * 100 if total_with_score > 0 else 0
+        pass_rate = (passed / total_with_score) * \
+            100 if total_with_score > 0 else 0
 
         # Recommendation breakdown
         result_recs = await session.exec(
@@ -235,7 +244,7 @@ class ReportService:
         )
         recommendations = result_recs.all()
 
-        recommendation_breakdown = {rec: count for rec, count in recommendations}
+        recommendation_breakdown = dict(recommendations)
 
         return {
             "total_candidates": total_candidates,
