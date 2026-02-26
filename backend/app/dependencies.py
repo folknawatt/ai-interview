@@ -42,16 +42,17 @@ def get_api_key(app_settings: Settings = Depends(get_settings)) -> str:
     """
     # Validate API key is present before allowing AI operations
     if not app_settings.google_api_key:
-        raise HTTPException(
-            status_code=500, detail="Google API key not configured")
+        raise HTTPException(status_code=500, detail="Google API key not configured")
     return app_settings.google_api_key
 
 
 def get_candidate_repo(session=Depends(get_db)):
     from app.repositories.candidate_repository import CandidateRepository
+
     return CandidateRepository(session)
 
 
 def get_interview_repo(session=Depends(get_db)):
     from app.repositories.interview_repository import InterviewRepository
+
     return InterviewRepository(session)
