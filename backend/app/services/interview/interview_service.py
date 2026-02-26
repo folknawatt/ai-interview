@@ -149,13 +149,11 @@ class InterviewService:
 
         question_results = await interview_repo.get_question_results(session_id)
         if not question_results:
-            logger.warning(
-                "No question results found for session: %s", session_id)
+            logger.warning("No question results found for session: %s", session_id)
             raise ValidationError("No question results found for this session")
 
         total_questions = len(question_results)
-        aggregated_score_result = calculate_aggregated_score(
-            question_results, total_questions)
+        aggregated_score_result = calculate_aggregated_score(question_results, total_questions)
 
         # Save or update aggregated score
         existing_score = await interview_repo.get_aggregated_score(session_id)
@@ -225,7 +223,9 @@ class InterviewService:
         return session_id
 
     @staticmethod
-    async def get_summary(session: AsyncSession, session_id: str, interview_repo: InterviewRepository) -> dict[str, Any]:
+    async def get_summary(
+        session: AsyncSession, session_id: str, interview_repo: InterviewRepository
+    ) -> dict[str, Any]:
         """Retrieve interview summary with question results and aggregated scores."""
         interview_session = await interview_repo.get_by_session_id(session_id)
         if not interview_session:
