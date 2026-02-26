@@ -39,8 +39,13 @@ async def lifespan(_application: FastAPI):
 
     # Initialize database: create tables and seed initial data
     logger.info("Initializing database...")
-    await init_db()
-    logger.info("Database initialized successfully")
+    try:
+        await init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        # Stop application startup if database is unavailable
+        raise RuntimeError(f"Database connection failed: {e}")
 
     yield  # Application runs here
 
@@ -110,4 +115,5 @@ def root() -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host=settings.server_host, port=settings.server_port, reload=True)
+    uvicorn.run("app.main:app", host=settings.server_host,
+                port=settings.server_port, reload=True)
